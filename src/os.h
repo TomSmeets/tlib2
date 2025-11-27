@@ -1,8 +1,10 @@
 #pragma once
 #include "type.h"
 
-#define assert(cond) if(!(cond)) os_fail(#cond)
-#define assert_msg(cond, msg) if(!(cond)) os_fail(msg)
+#define assert(cond)                                                                                                                                 \
+    if (!(cond)) os_fail(#cond)
+#define assert_msg(cond, msg)                                                                                                                        \
+    if (!(cond)) os_fail(msg)
 
 static void *os_alloc(u32 size);
 static void os_fail(const char *message) __attribute__((__noreturn__));
@@ -16,11 +18,10 @@ typedef struct Library Library;
 static Library *os_dlopen(const char *path);
 static void *os_dlsym(Library *lib, const char *sym);
 
-
 // Linux
+#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 
 static void *os_alloc(u32 size) {
     return malloc(size);
@@ -32,7 +33,7 @@ static void os_fail(const char *message) {
 }
 
 static File *os_open(const char *path) {
-    return (File *) fopen(path, "rb");
+    return (File *)fopen(path, "rb");
 }
 
 static void os_close(File *file) {
@@ -51,5 +52,5 @@ static Library *os_dlopen(const char *path) {
     return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
 }
 static void *os_dlsym(Library *lib, const char *sym) {
-    return dlsym((void*) lib, sym);
+    return dlsym((void *)lib, sym);
 }

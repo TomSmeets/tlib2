@@ -11,7 +11,7 @@ typedef struct {
 } __attribute__((packed)) Dwarf_CU;
 
 static void dwarf_load(Elf *elf, File *file) {
-    Elf_Section *sect_info   = elf_find_section(elf, ".debug_info");
+    Elf_Section *sect_info = elf_find_section(elf, ".debug_info");
     Elf_Section *sect_abbrev = elf_find_section(elf, ".debug_abbrev");
     assert(sect_info);
     assert(sect_abbrev);

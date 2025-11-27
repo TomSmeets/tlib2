@@ -1,17 +1,17 @@
 #pragma once
-#include "type.h"
 #include "os.h"
 #include "str.h"
+#include "type.h"
 
 // API
 typedef struct {
     char *name;
     u64 offset; // File address
-    u64 addr; // Virtual address
-    u64 size; // Size of section
+    u64 addr;   // Virtual address
+    u64 size;   // Size of section
 } Elf_Section;
 
-typedef struct  {
+typedef struct {
     u64 entry;
     u32 section_count;
     Elf_Section *sections;
@@ -22,7 +22,7 @@ typedef struct  {
 static void *elf_base(Elf *elf, Library *handle) {
     extern char _start;
     void *addr = &_start;
-    if(handle) addr =  os_dlsym(handle, "_start");
+    if (handle) addr = os_dlsym(handle, "_start");
     return (u8 *)addr - elf->entry;
 }
 
@@ -31,14 +31,14 @@ static void *elf_base(Elf *elf, Library *handle) {
 static Elf_Section *elf_find_section(Elf *elf, const char *name) {
     for (u32 i = 0; i < elf->section_count; i++) {
         Elf_Section *sect = elf->sections + i;
-        if(str_eq(sect->name, name)) return sect;
+        if (str_eq(sect->name, name)) return sect;
     }
     return 0;
 }
 
 // Implementation
 typedef struct {
-    u8 ident[16]; // Magic number and other info
+    u8 ident[16];  // Magic number and other info
     u16 type;      // Object file type
     u16 machine;   // Architecture
     u32 version;   // Object file version
@@ -66,7 +66,6 @@ typedef struct {
     u64 addralign; // Alignment
     u64 entsize;   // Entry size if section holds table
 } Elf64_Shdr;
-
 
 static void *os_read_alloc(File *file, u32 size) {
     void *data = os_alloc(size);
