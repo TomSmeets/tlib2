@@ -1,0 +1,3 @@
+#!/bin/bash
+set -euo pipefail
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -o main src/main.c && ./main main
