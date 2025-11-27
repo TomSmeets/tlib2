@@ -18,6 +18,7 @@ static void *os_dlsym(Library *lib, const char *sym);
 
 
 // Linux
+#if __unix__
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -50,6 +51,8 @@ static void os_seek(File *file, u32 pos) {
 static Library *os_dlopen(const char *path) {
     return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
 }
+
 static void *os_dlsym(Library *lib, const char *sym) {
     return dlsym((void*) lib, sym);
 }
+#endif
