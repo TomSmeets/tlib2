@@ -1,8 +1,8 @@
-#include "dwarf.h"
-#include "elf.h"
-#include "os.h"
-#include "str.h"
-#include "type.h"
+#include "core/os.h"
+#include "core/str.h"
+#include "core/type.h"
+#include "elf/dwarf.h"
+#include "elf/elf.h"
 #include <dlfcn.h>
 #include <memory.h>
 #include <stdio.h>
@@ -10,7 +10,7 @@
 static u32 value_1 = 0xAABBCCDD;
 static u32 value_2;
 
-int main(int argc, char *argv[]) {
+void os_main(u32 argc, const char **argv) {
     if (argc != 2) os_fail("Usage: main <INPUT>");
 
     File *file = os_open(argv[1]);
@@ -54,5 +54,5 @@ int main(int argc, char *argv[]) {
 
     dwarf_load(elf, file);
     os_close(file);
-    return 0;
+    os_exit(0);
 }

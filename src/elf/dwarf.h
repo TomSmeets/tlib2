@@ -1,6 +1,6 @@
 #pragma once
-#include "elf.h"
-#include "str.h"
+#include "elf/elf.h"
+#include "core/str.h"
 
 typedef struct {
     u32 unit_length1;

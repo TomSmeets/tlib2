@@ -1,7 +1,7 @@
 #pragma once
-#include "os.h"
-#include "str.h"
-#include "type.h"
+#include "core/os.h"
+#include "core/str.h"
+#include "core/type.h"
 
 // API
 typedef struct {

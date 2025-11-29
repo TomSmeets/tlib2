@@ -36,3 +36,11 @@ typedef _Bool bool;
 #define false 0
 #endif
 static_assert(sizeof(bool) == 1);
+
+// Assertions
+#define TO_STRING0(x) #x
+#define TO_STRING(x) TO_STRING0(x)
+#define assert(cond)                                                                                                                                 \
+    if (!(cond)) os_fail(__FILE__ ":" TO_STRING(__LINE__) ": assert(" #cond ") failed\n")
+#define assert_msg(cond, msg)                                                                                                                        \
+    if (!(cond)) os_fail(__FILE__ ":" TO_STRING(__LINE__) ": assert(" #cond ") failed, " msg "\n")
