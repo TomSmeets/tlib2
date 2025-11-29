@@ -17,15 +17,6 @@ typedef struct {
     Elf_Section *sections;
 } Elf;
 
-// Get base address of library
-// pass null to get our own base address
-static void *elf_base(Elf *elf, Library *handle) {
-    extern char _start;
-    void *addr = &_start;
-    if (handle) addr = os_dlsym(handle, "_start");
-    return (u8 *)addr - elf->entry;
-}
-
 // Find section with name
 // or return null when not present
 static Elf_Section *elf_find_section(Elf *elf, const char *name) {

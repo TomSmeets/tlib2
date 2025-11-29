@@ -1,5 +1,6 @@
 #pragma once
 #include "core/os_api.h"
+#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +41,7 @@ static void os_seek(File *file, u32 pos) {
 static Library *os_dlopen(const char *path) {
     return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
 }
+
 static void *os_dlsym(Library *lib, const char *sym) {
     return dlsym((void *)lib, sym);
 }
