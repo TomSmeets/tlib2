@@ -1,4 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 mkdir -p out
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -o out/main src/main.c && ./out/main out/main
+# clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc/core -o out/main src/main.c && ./out/main out/main
+# clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/build src/build.c && ./out/build
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/main src/main.c && ./out/main out/main
