@@ -1,3 +1,4 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
 #include "core/os.h"
 #include "core/str.h"

@@ -1,3 +1,4 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
 #include "elf/elf.h"
 #include "core/str.h"

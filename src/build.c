@@ -1,3 +1,4 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #include "core/os.h"
 #include "hot/hot.h"
 
