@@ -1,13 +1,28 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
+#include "core/type.h"
 #include "core/os_api.h"
-#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+
+static void *linux_heap_start;
 
 static void *os_alloc(u32 size) {
-    return malloc(size);
+    // Reserve space if needed
+    if(!linux_heap_start) {
+        linux_heap_start = mmap(0, 1LLU << 40, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        assert(linux_heap_start != MAP_FAILED);
+    }
+
+    // Align size up to nearest 4k page
+    u32 mask = 1024*4 - 1;
+    size = (size + mask) & (~mask);
+
+    void *ptr = linux_heap_start;
+    linux_heap_start += size;
+    return ptr;
 }
 
 static void os_fail(const char *message) {

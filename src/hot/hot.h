@@ -16,11 +16,19 @@ static Hot *hot_new(void) {
     return hot;
 }
 
+typedef struct {
+    const char *fname;
+    void *fbase;
+    const char *sname;
+    void *saddr;
+} Dl_info;
+extern int dladdr(const void *__address, Dl_info *__info);
+
 static void *os_dlbase(Library *lib) {
     void *addr = os_dlsym(lib, "os_main");
     Dl_info info;
-    dladdr(addr,&info);
-    return info.dli_fbase;
+    dladdr(addr, &info);
+    return info.fbase;
 }
 
 // Load a (new) version of the library
