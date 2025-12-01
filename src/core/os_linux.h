@@ -7,22 +7,24 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-static void *linux_heap_start;
+static void *reserve_start;
 
 static void *os_alloc(u32 size) {
-    // Reserve space if needed
-    if (!linux_heap_start) {
-        linux_heap_start = mmap(0, 1LLU << 40, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        assert(linux_heap_start != MAP_FAILED);
-    }
 
     // Align size up to nearest 4k page
     u32 mask = 1024 * 4 - 1;
     size = (size + mask) & (~mask);
 
-    void *ptr = linux_heap_start;
-    linux_heap_start += size;
-    return ptr;
+    // Reserve space if needed
+    if (!reserve_start) {
+        reserve_start = mmap(0, 1LLU << 40, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+        assert(reserve_start != MAP_FAILED);
+    }
+
+    void *alloc = reserve_start;
+    mprotect(alloc, size, PROT_READ | PROT_WRITE);
+    reserve_start += size;
+    return alloc;
 }
 
 static void os_fail(const char *message) {
