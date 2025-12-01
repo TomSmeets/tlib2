@@ -1,7 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
-#include "os.h"
-#include "type.h"
+#include "core/os.h"
+#include "core/type.h"
 
 // General purpose allocator
 // - use only for big allocations in MB range
@@ -10,20 +10,62 @@
 // - Min allocation is 1 Mb
 // - Max allocation is 256 Gb
 // - For many small objects use 'Memory' arenas
-static void *gpa_alloc(u64 size);
-static void gpa_free(void *ptr);
-static u64 gpa_size(void *ptr);
+static void *chunk_alloc(u64 size);
+static void chunk_free(void *ptr);
+static u64 chunk_size(void *ptr);
+static u64 chunk_resize(void *ptr);
 
 // =============== INTERNALS =============
-#define CHUNK_SIZE (64 * 1024)
+typedef struct Chunk Chunk;
 
-typedef struct Allocation Allocation;
-struct Allocation {
-    bool used;
-    u32 count;
-    Allocation *next;
+struct Chunk {
+    u64 size;
+    Chunk *next;
 };
 
+static Chunk *free_list;
+
+// Find a free chunk of at least 'size'
+static Chunk *chunk_alloc(u64 size) {
+    for (Chunk **next = &free_list; *next; next = &(*next)->next) {
+        Chunk *chunk = *next;
+        if (chunk->size < size) continue;
+
+        if (chunk->size > size + sizeof(Chunk)) {
+            // Big chunk, split and return start
+            Chunk *new = (void *)chunk + size;
+            new->size = chunk->size - size;
+            new->next = chunk->next;
+            *next = new;
+
+            chunk->size = size;
+            chunk->next = 0;
+            return chunk;
+        } else {
+            // Exact match, return from freelist
+            *next = chunk->next;
+            chunk->next = 0;
+            return chunk;
+        }
+    }
+
+    // No match, allocate new chunk
+    Chunk *c = os_alloc(size);
+    c->size = size;
+    c->next = 0;
+    return c;
+}
+
+static void chunk_free(Chunk *chunk) {
+    Chunk *chunk_next = (void*) chunk + chunk->size;
+
+    for (Chunk **next = &free_list; *next; next = &(*next)->next) {
+        Chunk *free = *next;
+        if(free == chunk_next)
+    }
+}
+
+#if 0
 static Allocation *gpa_alloc_raw(u32 count);
 static void gpa_free_raw(Allocation *alloc);
 
@@ -148,3 +190,4 @@ static Chunk chunk_split(Chunk *chunk, u32 count) {
 
 static Chunk chunk_free(Chunk *chunk) {
 }
+#endif

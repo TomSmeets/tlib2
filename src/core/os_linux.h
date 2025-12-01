@@ -7,22 +7,31 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-static void *reserve_start;
+// Main function
+int main(i32 argc, const char **argv) {
+    for (;;) os_main(argc, argv);
+}
+
+
+static u32 u32_align_up(u32 value, u32 align) {
+    u32 mask = align - 1;
+    return (value + mask) & (~mask);
+}
 
 static void *os_alloc(u32 size) {
-
-    // Align size up to nearest 4k page
-    u32 mask = 1024 * 4 - 1;
-    size = (size + mask) & (~mask);
-
-    // Reserve space if needed
+    // Reserve a huge address space at the start
+    static void *reserve_start;
     if (!reserve_start) {
         reserve_start = mmap(0, 1LLU << 40, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
         assert(reserve_start != MAP_FAILED);
     }
 
+    // Align size up to nearest 4k page
+    size = u32_align_up(size, 4*1024);
+
+    // Commit allocated range
     void *alloc = reserve_start;
-    mprotect(alloc, size, PROT_READ | PROT_WRITE);
+    assert(mprotect(alloc, size, PROT_READ | PROT_WRITE) == 0);
     reserve_start += size;
     return alloc;
 }
@@ -66,8 +75,4 @@ static void *os_dlsym(Library *lib, const char *sym) {
 
 static i32 os_system(const char *command) {
     return system(command);
-}
-
-int main(i32 argc, const char **argv) {
-    for (;;) os_main(argc, argv);
 }

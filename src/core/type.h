@@ -48,6 +48,17 @@ static_assert(sizeof(bool) == 1);
 #define MIN(A, B) ((A) <= (B) ? (A) : (B))
 #define MAX(A, B) ((A) >= (B) ? (A) : (B))
 
+// Append an element to a singly linked list with first and last pointers
+#define LIST_APPEND(FIRST, LAST, EL)                                                                                                                 \
+    do {                                                                                                                                             \
+        if ((FIRST)) {                                                                                                                               \
+            (LAST)->next = (EL);                                                                                                                     \
+            (LAST) = (EL);                                                                                                                           \
+        } else {                                                                                                                                     \
+            (FIRST) = (LAST) = (EL);                                                                                                                 \
+        }                                                                                                                                            \
+    } while (0)
+
 static void std_memcpy(u8 *restrict dst, const u8 *restrict src, u32 size) {
     while (size--) *dst++ = *src++;
 }
