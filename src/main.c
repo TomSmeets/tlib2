@@ -10,7 +10,7 @@
 static u32 value_1 = 0xAABBCCDD;
 static u32 value_2;
 
-static u32 counter  = 0;
+static u32 counter = 0;
 static u32 counter2 = 123;
 
 void os_main(u32 argc, const char **argv) {
@@ -21,7 +21,7 @@ void os_main(u32 argc, const char **argv) {
         counter2++;
         return;
     }
-    
+
     if (argc != 2) os_fail("Usage: main <INPUT>");
 
     File *file = os_open(argv[1]);

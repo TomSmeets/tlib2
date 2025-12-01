@@ -26,4 +26,3 @@ static void *os_dlsym(Library *lib, const char *sym);
 
 // Shell command
 static i32 os_system(const char *command);
-

@@ -5,10 +5,10 @@
 static Hot *hot;
 
 void os_main(u32 argc, const char **argv) {
-    if(argc < 3) os_exit(1);
+    if (argc < 3) os_exit(1);
     const char *command = argv[1];
-    const char *source  = argv[2];
-    if(!str_eq(command, "run")) os_exit(1);
+    const char *source = argv[2];
+    if (!str_eq(command, "run")) os_exit(1);
 
     hot = hot_new();
     hot_load(hot, "./out/main.so");

@@ -41,7 +41,7 @@ static void hot_load(Hot *hot, const char *path) {
     os_close(file);
 
     // If application was already loaded
-    if(hot->lib) {
+    if (hot->lib) {
         void *base_old = os_dlbase(hot->lib);
         void *base_new = os_dlbase(lib);
 
@@ -52,16 +52,16 @@ static void hot_load(Hot *hot, const char *path) {
 
         // Copy over global variable data form old to new
         // Assuming same layout (works most of the time)
-        for(u32 i = 0; i < array_count(sections); ++i) {
-            Elf_Section *sect_old  = elf_find_section(hot->elf, sections[i]);
-            Elf_Section *sect_new  = elf_find_section(elf, sections[i]);
+        for (u32 i = 0; i < array_count(sections); ++i) {
+            Elf_Section *sect_old = elf_find_section(hot->elf, sections[i]);
+            Elf_Section *sect_new = elf_find_section(elf, sections[i]);
 
             void *addr_old = base_old + sect_old->addr;
             void *addr_new = base_new + sect_new->addr;
             u32 size_old = sect_old->size;
             u32 size_new = sect_new->size;
             u32 size_min = MIN(size_old, size_new);
-            printf("Section %s\n",  sections[i]);
+            printf("Section %s\n", sections[i]);
             printf("  Base old: addr=%p size=%d\n", addr_old, size_old);
             printf("  Base new: addr=%p size=%d\n", addr_new, size_new);
             std_memcpy(addr_new, addr_old, size_min);

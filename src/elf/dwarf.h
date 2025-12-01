@@ -1,7 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
-#include "elf/elf.h"
 #include "core/str.h"
+#include "elf/elf.h"
 
 typedef struct {
     u32 unit_length1;
