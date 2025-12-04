@@ -2,7 +2,7 @@
 #include "core/os.h"
 #include "hot/hot.h"
 
-
+static Memory *mem;
 
 typedef struct {
     bool match;
@@ -23,16 +23,18 @@ static bool cli_command(Cli *cli, const char *name) {
 }
 
 
+
 static Hot *hot;
+
 static void cmd_run(Cli *cli) {
     if (!cli_command(cli, "run")) return;
-    if(!hot) hot = hot_new();
+    if(!hot) hot = hot_new(mem);
     hot_load(hot, "./out/main.so");
-    hot->os_main(cli->argc, cli->argv);
-    hot->os_main(cli->argc, cli->argv);
+    hot_call(hot, cli->argc, cli->argv);
+    hot_call(hot, cli->argc, cli->argv);
     hot_load(hot, "./out/main2.so");
-    hot->os_main(cli->argc, cli->argv);
-    hot->os_main(cli->argc, cli->argv);
+    hot_call(hot, cli->argc, cli->argv);
+    hot_call(hot, cli->argc, cli->argv);
     os_exit(0);
 }
 
@@ -43,6 +45,8 @@ static void cmd_help(Cli *cli) {
 }
 
 void os_main(u32 argc, const char **argv) {
+    if (!mem) mem = mem_new();
+
     Cli cli = cli_init(argc, argv);
     cmd_run(&cli);
     cmd_help(&cli);

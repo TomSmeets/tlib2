@@ -6,7 +6,6 @@
 void os_main(u32 argc, const char **argv);
 
 // Allocate a new chunk of memory
-// That is usually right after the previous allocation
 static void *os_alloc(u32 size);
 static void os_fail(const char *message) __attribute__((__noreturn__));
 static void os_exit(u32 code) __attribute__((__noreturn__));
@@ -21,8 +20,15 @@ static void os_seek(File *file, u32 pos);
 
 // Dynamic library handling
 typedef struct Library Library;
+
+// Open a library by name or full path
 static Library *os_dlopen(const char *path);
+
+// Lookup a symbol in a library
 static void *os_dlsym(Library *lib, const char *sym);
 
-// Shell command
+// Get base pointer of a library
+static void *os_dlbase(Library *lib);
+
+// Execute a system command, returns the exit code
 static i32 os_system(const char *command);

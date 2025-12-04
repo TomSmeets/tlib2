@@ -1,34 +1,22 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
 #include "elf/elf.h"
+#include "core/mem.h"
 
-typedef struct {
+typedef struct Hot Hot;
+static Hot *hot_new(Memory *mem);
+static void hot_load(Hot *hot, const char *path);
+static void hot_call(Hot *hot, u32 argc, const char **argv);
+
+// =======================================================
+struct Hot {
     Library *lib;
     Elf *elf;
     void (*os_main)(u32 argc, const char **argv);
-} Hot;
+};
 
-static Hot *hot_new(void) {
-    Hot *hot = os_alloc(sizeof(Hot));
-    hot->lib = 0;
-    hot->elf = 0;
-    hot->os_main = 0;
-    return hot;
-}
-
-typedef struct {
-    const char *fname;
-    void *fbase;
-    const char *sname;
-    void *saddr;
-} Dl_info;
-extern int dladdr(const void *__address, Dl_info *__info);
-
-static void *os_dlbase(Library *lib) {
-    void *addr = os_dlsym(lib, "os_main");
-    Dl_info info;
-    dladdr(addr, &info);
-    return info.fbase;
+static Hot *hot_new(Memory *mem) {
+    return mem_struct(mem, Hot);
 }
 
 // Load a (new) version of the library
@@ -71,4 +59,9 @@ static void hot_load(Hot *hot, const char *path) {
     hot->lib = lib;
     hot->elf = elf;
     hot->os_main = os_dlsym(lib, "os_main");
+}
+
+static void hot_call(Hot *hot, u32 argc, const char **argv) {
+    if (!hot->os_main) return;
+    hot->os_main(argc, argv);
 }
