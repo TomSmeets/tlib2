@@ -21,7 +21,6 @@ static void *mem_alloc_zero(Memory *mem, u32 size);
 // Allocate an un-initialised array
 #define mem_array(MEM, TYPE, N) ((TYPE *)mem_alloc_uninit((MEM), sizeof(TYPE) * (N)))
 
-
 // A stack allocator for variable size allocations.
 // Each allocation should be smaller than the chunk size.
 struct Memory {

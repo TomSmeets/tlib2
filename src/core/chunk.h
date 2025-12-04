@@ -22,7 +22,7 @@ static void chunk_free(Chunk *chunk);
 // =============== INTERNALS =============
 // Min ->  1 MB
 // Max -> 64 GB
-#define CHUNK_SIZE (1ULL*1024*1024)
+#define CHUNK_SIZE (1ULL * 1024 * 1024)
 static Chunk *chunk_cache[16];
 
 typedef struct {
@@ -46,10 +46,9 @@ static Chunk_Class _chunk_class(u64 size) {
     };
 }
 
-
 static Chunk *chunk_alloc(u64 size) {
     Chunk_Class class = _chunk_class(size);
-    if(*class.cache) {
+    if (*class.cache) {
         Chunk *chunk = *class.cache;
         *class.cache = chunk->next;
         chunk->next = 0;

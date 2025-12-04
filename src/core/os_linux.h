@@ -27,7 +27,6 @@ static void os_exit(u32 code) {
     exit(code);
 }
 
-
 static File *os_open(const char *path) {
     return (File *)fopen(path, "rb");
 }
@@ -47,7 +46,6 @@ static u32 os_write(File *file, const void *data, u32 size) {
 static void os_seek(File *file, u32 pos) {
     fseek((FILE *)file, pos, SEEK_SET);
 }
-
 
 static Library *os_dlopen(const char *path) {
     return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
