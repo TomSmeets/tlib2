@@ -1,52 +1,79 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
 #include "core/os_api.h"
+#include "core/linux.h"
 #include "core/type.h"
-#include <dlfcn.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/mman.h>
+#include "core/str.h"
 
 // Main function
 int main(i32 argc, const char **argv) {
     for (;;) os_main(argc, argv);
 }
 
-static void *os_alloc(u32 size) {
-    void *ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+// =================================
+static void *os_alloc(u64 size) {
+    void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     assert(ptr != MAP_FAILED);
     return ptr;
 }
 
 static void os_fail(const char *message) {
-    fprintf(stderr, "Failed: %s\n", message);
-    exit(1);
+    linux_write(2, message, str_len(message));
+    os_exit(1);
 }
 
-static void os_exit(u32 code) {
-    exit(code);
+static void os_exit(i32 status) {
+    linux_exit_group(status);
 }
 
-static File *os_open(const char *path) {
-    return (File *)fopen(path, "rb");
+// =================================
+static File *os_open(const char *path, File_Mode mode) {
+    i32 flags = 0;
+    u32 perm = 0;
+    switch (mode) {
+    case Open_Read:
+        flags = O_RDONLY;
+        break;
+    case Open_Write:
+        flags = O_WRONLY;
+        perm = 0644;
+        break;
+    case Open_Create:
+        flags = O_WRONLY | O_CREAT | O_TRUNC;
+        perm = 0644;
+        break;
+    }
+
+    i32 fd = linux_open(path, flags, perm);
+    return fd_to_ptr(fd);
 }
 
 static void os_close(File *file) {
-    fclose((FILE *)file);
+    assert(file);
+    i32 ret = linux_close(ptr_to_fd(file));
+    assert(ret == 0);
 }
 
-static u32 os_read(File *file, void *data, u32 size) {
-    return fread(data, 1, size, (FILE *)file);
+static u64 os_read(File *file, void *data, u64 size) {
+    assert(file);
+    i64 result = linux_read(ptr_to_fd(file), data, size);
+    if (result < 0) return 0;
+    return result;
 }
 
-static u32 os_write(File *file, const void *data, u32 size) {
-    return fwrite(data, 1, size, (FILE *)file);
+static u64 os_write(File *file, const void *data, u64 size) {
+    assert(file);
+    i64 result = linux_write(ptr_to_fd(file), data, size);
+    if (result < 0) return 0;
+    return result;
 }
 
-static void os_seek(File *file, u32 pos) {
-    fseek((FILE *)file, pos, SEEK_SET);
+static void os_seek(File *file, u64 pos) {
+    assert(file);
+    i64 result = linux_seek(ptr_to_fd(file), pos, SEEK_SET);
 }
 
+// =================================
 static Library *os_dlopen(const char *path) {
     return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
 }
@@ -55,22 +82,34 @@ static void *os_dlsym(Library *lib, const char *sym) {
     return dlsym((void *)lib, sym);
 }
 
-typedef struct {
-    const char *fname;
-    void *fbase;
-    const char *sname;
-    void *saddr;
-} Dl_info;
-
-extern int dladdr(const void *__address, Dl_info *__info);
-
 static void *os_dlbase(Library *lib) {
-    void *addr = os_dlsym(lib, "os_main");
     Dl_info info;
+    void *addr = os_dlsym(lib, "os_main");
     dladdr(addr, &info);
     return info.fbase;
 }
 
+// ==== Time ====
+static u64 os_time(void) {
+    struct linux_timespec t = {};
+    linux_clock_gettime(CLOCK_MONOTONIC, &t);
+    return linux_timespec_to_us(&t);
+}
+
+static void os_sleep(u64 us) {
+    struct linux_timespec time = linux_us_to_timespec(us);
+    linux_nanosleep(&time, 0);
+}
+
+// ==== Random ====
+static u64 os_rand(void) {
+    u64 seed = 0;
+    i64 ret = linux_getrandom(&seed, sizeof(seed), 0);
+    assert_msg(ret == sizeof(seed), "linux getrandom failed");
+    return seed;
+}
+
+// ==== System Commands ====
 static i32 os_system(const char *command) {
     return system(command);
 }

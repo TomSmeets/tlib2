@@ -10,3 +10,9 @@ static bool str_eq(const char *a, const char *b) {
         b++;
     }
 }
+
+static u32 str_len(const char *str) {
+    u32 len = 0;
+    while (*str++) len++;
+    return len;
+}

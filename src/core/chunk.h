@@ -1,33 +1,37 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Memory allocator for big chunks that can be reused
 #pragma once
 #include "core/os.h"
 #include "core/type.h"
 
-typedef struct Chunk Chunk;
-
-struct Chunk {
-    // Total chunk size, including header
+typedef struct {
+    void *data;
     u64 size;
-
-    // Next chunk
-    Chunk *next;
-};
+} Buffer;
 
 // Allocate a chunk of a given minimum size
-static Chunk *chunk_alloc(u64 size);
+static Buffer chunk_alloc(u64 size);
 
 // Free the chunk
-static void chunk_free(Chunk *chunk);
+static void chunk_free(void *data, u64 size);
 
-// =============== INTERNALS =============
+// ==================================================
+//                    Internals
+// ==================================================
+typedef struct Chunk_Freelist Chunk_Freelist;
+struct Chunk_Freelist {
+    // Next chunk
+    Chunk_Freelist *next;
+};
+
 // Min ->  1 MB
 // Max -> 64 GB
 #define CHUNK_SIZE (1ULL * 1024 * 1024)
-static Chunk *chunk_cache[16];
+static Chunk_Freelist *chunk_cache[16];
 
 typedef struct {
     u64 size;
-    Chunk **cache;
+    Chunk_Freelist **cache;
     u32 class;
 } Chunk_Class;
 
@@ -46,23 +50,26 @@ static Chunk_Class _chunk_class(u64 size) {
     };
 }
 
-static Chunk *chunk_alloc(u64 size) {
+static Buffer chunk_alloc(u64 size) {
     Chunk_Class class = _chunk_class(size);
-    if (*class.cache) {
-        Chunk *chunk = *class.cache;
-        *class.cache = chunk->next;
-        chunk->next = 0;
-        return chunk;
+    Chunk_Freelist *cached_chunk = *class.cache;
+
+    // Allocate new memory when no cached chunk is found
+    if (!cached_chunk) {
+        void *data = os_alloc(class.size);
+        return (Buffer){data, class.size};
     }
 
-    Chunk *chunk = os_alloc(class.size);
-    chunk->size = class.size;
-    chunk->next = 0;
-    return chunk;
+    // Remove from freelist
+    *class.cache = cached_chunk->next;
+    return (Buffer){(void *)cached_chunk, class.size};
 }
 
-static void chunk_free(Chunk *chunk) {
-    Chunk_Class class = _chunk_class(chunk->size);
+static void chunk_free(void *data, u64 size) {
+    Chunk_Class class = _chunk_class(size);
+
+    // Add chunk to cache
+    Chunk_Freelist *chunk = data;
     chunk->next = *class.cache;
     *class.cache = chunk;
 }

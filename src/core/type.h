@@ -30,6 +30,9 @@ typedef double f64;
 static_assert(sizeof(f32) == 4);
 static_assert(sizeof(f64) == 8);
 
+// Current assumption
+static_assert(sizeof(u64) == sizeof(void *));
+
 #if __STDC_VERSION__ <= 201710L && !__cplusplus
 typedef _Bool bool;
 #define true 1
