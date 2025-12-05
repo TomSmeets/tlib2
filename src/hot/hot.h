@@ -2,6 +2,7 @@
 #pragma once
 #include "core/mem.h"
 #include "elf/elf.h"
+#include "core/fmt.h"
 
 typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);
@@ -21,10 +22,12 @@ static Hot *hot_new(Memory *mem) {
 
 // Load a (new) version of the library
 static void hot_load(Hot *hot, const char *path) {
-    printf("loading: %s\n", path);
+    fmt_s(stdout, "Loading: ");
+    fmt_s(stdout, path);
+    fmt_s(stdout, "\n");
     Library *lib = os_dlopen(path);
     assert(lib);
-    File *file = os_open(path);
+    File *file = os_open(path, Open_Read);
     Elf *elf = elf_load(file);
     os_close(file);
 
@@ -49,9 +52,11 @@ static void hot_load(Hot *hot, const char *path) {
             u32 size_old = sect_old->size;
             u32 size_new = sect_new->size;
             u32 size_min = MIN(size_old, size_new);
-            printf("Section %s\n", sections[i]);
-            printf("  Base old: addr=%p size=%d\n", addr_old, size_old);
-            printf("  Base new: addr=%p size=%d\n", addr_new, size_new);
+            fmt_ss(stdout, "Section ", sections[i], "\n");
+
+            // fmt_s(stdout, "  Base old:");
+            // fmt_sp(stdout, "addr=", addr_old, " ");
+            // fmt_su(stdout, "size=", size_old, "\n");
             std_memcpy(addr_new, addr_old, size_min);
         }
     }

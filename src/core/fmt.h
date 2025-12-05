@@ -1,0 +1,129 @@
+#pragma once
+#include "core/type.h"
+#include "core/mem.h"
+
+typedef struct Fmt Fmt;
+struct Fmt {
+    Memory *mem;
+    File *file;
+    bool flush_on_newline;
+    u64 size;
+    u64 used;
+    u8 *data;
+};
+
+static u8 stdout_buffer[1024];
+static Fmt stdout_struct = {
+    .file = (void *)2,
+    .size = sizeof(stdout_buffer),
+    .data = stdout_buffer,
+    .flush_on_newline = 1,
+};
+#define stdout (&stdout_struct)
+
+static u8 stderr_buffer[1024];
+static Fmt stderr_struct = {
+    .file = (void *)3,
+    .size = sizeof(stderr_buffer),
+    .data = stderr_buffer,
+    .flush_on_newline = 1,
+};
+#define stderr (&stderr_struct)
+
+// Create a new formatter that allocates memory
+static Fmt *fmt_new(Memory *mem) {
+    Fmt *fmt = mem_struct(mem, Fmt);
+    fmt->mem = mem;
+    return fmt;
+}
+
+// Create a fromatter that writes to a buffer
+static Fmt fmt_from(u8 *data, u64 size) {
+    Fmt fmt = {};
+    fmt.size = size;
+    fmt.data = data;
+    fmt.used = 0;
+    return fmt;
+}
+
+// Write all buffered data to file
+static void fmt_flush(Fmt *fmt) {
+    if (!fmt->file) return;
+    i64 written = os_write(fmt->file, fmt->data, fmt->used);
+    assert(written == fmt->used);
+    fmt->used = 0;
+}
+
+// Try to grow formatter to fit 'size' new data
+// Returns true if the new size would fit
+static bool fmt_grow(Fmt *fmt, u64 size) {
+    // Check if the buffer needs to grow
+    if(fmt->used + size <= fmt->size) return true;
+
+    // Try to flush to the file
+    fmt_flush(fmt);
+
+    // Check again
+    if (fmt->used + size <= fmt->size) return true;
+
+    // Cannot allocate if we have no memory
+    if(!fmt->mem) return false;
+
+    // Calculated new size (a power of two)
+    u64 new_size = fmt->size * 2;
+    if (new_size < 64) new_size = 64;
+    while (fmt->used + size > new_size) new_size *= 2;
+
+    // Allocate data
+    u8 *new_data = mem_array(fmt->mem, u8, new_size);
+    std_memcpy(new_data, fmt->data, fmt->used);
+    fmt->size = new_size;
+    fmt->data = new_data;
+    return true;
+}
+
+static void fmt_c(Fmt *fmt, u8 c) {
+    if(!fmt_grow(fmt, 1)) return;
+    fmt->data[fmt->used++] = c;
+    if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
+}
+
+static void fmt_buf(Fmt *fmt, const void *data, u64 size) {
+    for (u64 i = 0; i < size; ++i) {
+        fmt_c(fmt, ((u8 *)data)[i]);
+    }
+}
+
+static void fmt_s(Fmt *fmt, const char *str) {
+    u32 len = str_len(str);
+    fmt_buf(fmt, str, len);
+}
+
+static char *fmt_end(Fmt *fmt) {
+    if (fmt->file) {
+        fmt_flush(fmt);
+        return 0;
+    }
+
+    // Zero terminate
+    fmt_c(fmt, 0);
+    return (char *)fmt->data;
+}
+
+static void fmt_ss(Fmt *fmt, const char *arg1, const char *arg2, const char *arg3) {
+    fmt_s(fmt, arg1);
+    fmt_s(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+
+static void fmt_sp(Fmt *fmt, const char *arg1, void *arg2, const char *arg3) {
+    fmt_s(fmt, arg1);
+    // fmt_p(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+
+static void fmt_su(Fmt *fmt, const char *arg1, u64 arg2, const char *arg3) {
+    fmt_s(fmt, arg1);
+    // fmt_u(fmt, arg2);
+    fmt_s(fmt, arg3);
+}

@@ -10,4 +10,5 @@ void os_main(u32 argc, const char **argv) {
     printf("Counter2: %u\n", counter2);
     counter1++;
     counter2++;
+    os_sleep(1ULL * 1000 * 1000);
 }

@@ -7,24 +7,10 @@
 #include <memory.h>
 #include <stdio.h>
 
-static u32 value_1 = 0xAABBCCDD;
-static u32 value_2;
-
-static u32 counter = 0;
-static u32 counter2 = 123;
-
 void os_main(u32 argc, const char **argv) {
-    {
-        printf("Counter1: %u\n", counter);
-        printf("Counter2: %u\n", counter2);
-        counter++;
-        counter2++;
-        return;
-    }
-
     if (argc != 2) os_fail("Usage: main <INPUT>");
 
-    File *file = os_open(argv[1]);
+    File *file = os_open(argv[1], Open_Read);
     assert(file);
 
     Elf *elf = elf_load(file);

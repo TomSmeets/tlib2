@@ -54,18 +54,14 @@ static void os_close(File *file) {
     assert(ret == 0);
 }
 
-static u64 os_read(File *file, void *data, u64 size) {
+static i64 os_read(File *file, void *data, u64 size) {
     assert(file);
-    i64 result = linux_read(ptr_to_fd(file), data, size);
-    if (result < 0) return 0;
-    return result;
+    return linux_read(ptr_to_fd(file), data, size);
 }
 
-static u64 os_write(File *file, const void *data, u64 size) {
+static i64 os_write(File *file, const void *data, u64 size) {
     assert(file);
-    i64 result = linux_write(ptr_to_fd(file), data, size);
-    if (result < 0) return 0;
-    return result;
+    return linux_write(ptr_to_fd(file), data, size);
 }
 
 static void os_seek(File *file, u64 pos) {

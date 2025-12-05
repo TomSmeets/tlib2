@@ -20,8 +20,8 @@ typedef enum {
 
 static File *os_open(const char *path, File_Mode mode);
 static void os_close(File *file);
-static u64 os_read(File *file, void *data, u64 size);
-static u64 os_write(File *file, const void *data, u64 size);
+static i64 os_read(File *file, void *data, u64 size);
+static i64 os_write(File *file, const void *data, u64 size);
 static void os_seek(File *file, u64 pos);
 
 // Dynamic library handling

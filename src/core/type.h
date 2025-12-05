@@ -62,23 +62,23 @@ static_assert(sizeof(bool) == 1);
         }                                                                                                                                            \
     } while (0)
 
-static void std_memcpy(u8 *restrict dst, const u8 *restrict src, u32 size) {
+static void std_memcpy(u8 *restrict dst, const u8 *restrict src, u64 size) {
     while (size--) *dst++ = *src++;
 }
 
-static void std_memmove(u8 *dst, const u8 *src, u32 size) {
+static void std_memmove(u8 *dst, const u8 *src, u64 size) {
     while (size--) *dst++ = *src++;
 }
 
-static void std_memzero(u8 *dst, u32 size) {
+static void std_memzero(u8 *dst, u64 size) {
     while (size--) *dst++ = 0;
 }
 
-static void std_memset(u8 *dst, u8 value, u32 size) {
+static void std_memset(u8 *dst, u8 value, u64 size) {
     while (size--) *dst++ = value;
 }
 
-static bool std_memcmp(const u8 *restrict a, const u8 *restrict b, u32 size) {
+static bool std_memcmp(const u8 *restrict a, const u8 *restrict b, u64 size) {
     while (size--) {
         if (*a++ != *b++) return false;
     }
