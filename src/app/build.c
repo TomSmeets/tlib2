@@ -1,6 +1,6 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
-#include "core/os.h"
 #include "build/hot.h"
+#include "core/os.h"
 
 static Memory *mem;
 
