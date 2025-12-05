@@ -1,9 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // hot.h - Hot reloading helpers
 #pragma once
-#include "mem.h"
 #include "elf.h"
 #include "fmt.h"
+#include "mem.h"
 
 typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);
@@ -16,7 +16,6 @@ static void hot_load(Hot *hot, const char *path);
 
 // Run `os_main` of the loaded applcation
 static void hot_call(Hot *hot, u32 argc, const char **argv);
-
 
 // =======================================================
 struct Hot {

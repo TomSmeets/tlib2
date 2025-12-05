@@ -1,7 +1,7 @@
 #include "hot.h"
+#include "fmt.h"
 #include "os.h"
 #include "type.h"
-#include "fmt.h"
 
 static Memory *mem;
 static Memory *tmp;

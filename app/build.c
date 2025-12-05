@@ -1,16 +1,15 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+#include "cli.h"
 #include "hot.h"
 #include "os.h"
-#include "cli.h"
 
 static Memory *mem;
 static Hot *hot;
 
-
 // Generate a table
 // file | info | deps
 static void cmd_info(Cli *cli) {
-    const char *dirs[] = { "src", "app" };
+    const char *dirs[] = {"src", "app"};
 }
 
 static void cmd_run(Cli *cli) {

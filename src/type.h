@@ -65,7 +65,7 @@ static_assert(sizeof(bool) == 1);
     } while (0)
 
 // Prepend item onto a singly linked list
-#define LIST_PUSH(FIRST, EL)                                                                                                                       \
+#define LIST_PUSH(FIRST, EL)                                                                                                                         \
     do {                                                                                                                                             \
         (EL)->next = (FIRST);                                                                                                                        \
         (FIRST) = (EL);                                                                                                                              \

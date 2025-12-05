@@ -29,7 +29,7 @@ struct Cli_Command {
     const char *name;
     const char *info;
     Cli_Command *next;
-    Cli_Flag  *flags;
+    Cli_Flag *flags;
     Cli_Value *values;
 };
 
@@ -44,7 +44,7 @@ struct Cli_Value {
     const char *info;
     Cli_Value *next;
 };
- 
+
 struct Cli {
     bool has_match;
     u32 argc;
@@ -78,23 +78,23 @@ static bool cli_command(Cli *cli, const char *command, const char *info) {
 }
 
 static void cli_help(Cli *cli) {
-    if(cli->has_match) return;
+    if (cli->has_match) return;
 
     fmt_s(fmterr, "Usage:\n");
 
     u32 pad = 8;
-    for(Cli_Command *cmd = cli->doc_start; cmd; cmd = cmd->next) {
+    for (Cli_Command *cmd = cli->doc_start; cmd; cmd = cmd->next) {
         u32 len = str_len(cmd->name);
         if (len > pad) pad = len;
     }
-    
-    for(Cli_Command *cmd = cli->doc_start; cmd; cmd = cmd->next) {
+
+    for (Cli_Command *cmd = cli->doc_start; cmd; cmd = cmd->next) {
         fmt_s(fmterr, "  ");
         fmt_s(fmterr, cli->argv[0]);
         fmt_s(fmterr, " ");
         fmt_s(fmterr, cmd->name);
 
-        for(u32 i = str_len(cmd->name); i < pad; ++i) {
+        for (u32 i = str_len(cmd->name); i < pad; ++i) {
             fmt_c(fmterr, ' ');
         }
 
