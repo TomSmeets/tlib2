@@ -124,6 +124,27 @@ static void fmt_ss(Fmt *fmt, const char *arg1, const char *arg2, const char *arg
     fmt_s(fmt, arg3);
 }
 
+static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
+    u32 digit_count = 0;
+    u8 digit_list[64];
+    assert(base >= 2 && base <= 16);
+    if (pad > array_count(digit_list)) pad = array_count(digit_list);
+    do {
+        u8 digit = value % base;
+        u8 chr = digit < 10 ? '0' + digit : 'A' + (digit - 10);
+        digit_list[digit_count++] = chr;
+        value /= base;
+    } while (value > 0);
+
+    while(digit_count < pad) {
+        digit_list[digit_count++] = pad_char;
+    }
+
+    for (u32 i = 0; i < digit_count; ++i) {
+        fmt_c(fmt, digit_list[digit_count - i - 1]);
+    }
+}
+
 static void fmt_sp(Fmt *fmt, const char *arg1, void *arg2, const char *arg3) {
     fmt_s(fmt, arg1);
     // fmt_p(fmt, arg2);
