@@ -12,23 +12,31 @@ struct Fmt {
     u8 *data;
 };
 
-static u8 stdout_buffer[1024];
-static Fmt stdout_struct = {
-    .file = (void *)2,
-    .size = sizeof(stdout_buffer),
-    .data = stdout_buffer,
-    .flush_on_newline = 1,
-};
-#define stdout (&stdout_struct)
+// Standard formatters
+static Fmt *fmt_stdout(void) {
+    static u8 buffer[1024];
+    static Fmt fmt = {
+        .size = sizeof(buffer),
+        .data = buffer,
+        .flush_on_newline = 1,
+    };
+    if(!fmt.file) fmt.file = os_stdout();
+    return &fmt;
+}
 
-static u8 stderr_buffer[1024];
-static Fmt stderr_struct = {
-    .file = (void *)3,
-    .size = sizeof(stderr_buffer),
-    .data = stderr_buffer,
-    .flush_on_newline = 1,
-};
-#define stderr (&stderr_struct)
+static Fmt *fmt_stderr(void) {
+    static u8 buffer[1024];
+    static Fmt fmt = {
+        .size = sizeof(buffer),
+        .data = buffer,
+        .flush_on_newline = 1,
+    };
+    if(!fmt.file) fmt.file = os_stderr();
+    return &fmt;
+}
+
+#define stdout (fmt_stdout())
+#define stderr (fmt_stderr())
 
 // Create a new formatter that allocates memory
 static Fmt *fmt_new(Memory *mem) {

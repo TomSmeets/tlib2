@@ -27,6 +27,10 @@ static void os_exit(i32 status) {
 }
 
 // =================================
+static File *os_stdin(void) { return fd_to_ptr(0); }
+static File *os_stdout(void) { return fd_to_ptr(1); }
+static File *os_stderr(void) { return fd_to_ptr(2); }
+
 static File *os_open(const char *path, File_Mode mode) {
     i32 flags = 0;
     u32 perm = 0;

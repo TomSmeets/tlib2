@@ -18,6 +18,10 @@ typedef enum {
     Open_Create,
 } File_Mode;
 
+static File *os_stdin(void);
+static File *os_stdout(void);
+static File *os_stderr(void);
+
 static File *os_open(const char *path, File_Mode mode);
 static void os_close(File *file);
 static i64 os_read(File *file, void *data, u64 size);
