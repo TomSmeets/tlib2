@@ -1,6 +1,6 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
-#include "type.h"
+#include "core/type.h"
 
 static bool str_eq(const char *a, const char *b) {
     for (;;) {

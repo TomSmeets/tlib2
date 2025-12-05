@@ -1,3 +1,4 @@
+#include "core/fmt.h"
 #include "core/os.h"
 #include "core/str.h"
 #include "core/type.h"
@@ -10,9 +11,11 @@
 void os_main(u32 argc, const char **argv) {
     if (argc != 2) os_fail("Usage: main <INPUT>");
 
+    fmt_ss(fmtout, "Reading ", argv[1], " file...\n");
     File *file = os_open(argv[1], Open_Read);
     assert(file);
 
+    fmt_s(fmtout, "Parsing elf file...\n");
     Elf *elf = elf_load(file);
     assert(elf);
 

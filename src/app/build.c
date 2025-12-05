@@ -1,6 +1,6 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #include "core/os.h"
-#include "hot/hot.h"
+#include "build/hot.h"
 
 static Memory *mem;
 
@@ -38,7 +38,6 @@ static void cmd_run(Cli *cli) {
 
 static void cmd_help(Cli *cli) {
     if (cli->match) return;
-    printf("HELP!\n");
     os_exit(1);
 }
 
