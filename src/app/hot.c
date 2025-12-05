@@ -27,7 +27,7 @@ static i32 hot_compile(const char *input_path, const char *output_path) {
     fmt_s(fmt, " -fPIC");
     fmt_ss(fmt, " ", input_path, "");
     char *cmd = fmt_end(fmt);
-    fmt_ss(stdout, "Cmd: ", cmd, "\n");
+    fmt_ss(fmterr, "Cmd: ", cmd, "\n");
     return os_system(cmd);
 }
 
@@ -39,14 +39,14 @@ void os_main(u32 argc, const char **argv) {
         hot = hot_new(mem);
 
         if (argc < 2) {
-            fmt_s(stderr, "Usage: ");
-            fmt_s(stderr, argv[0]);
-            fmt_s(stderr, " <SOURCE> [ARGS...]\n");
+            fmt_s(fmterr, "Usage: ");
+            fmt_s(fmterr, argv[0]);
+            fmt_s(fmterr, " <SOURCE> [ARGS...]\n");
             os_exit(1);
         }
     }
     const char *source_file = argv[1];
-    fmt_ss(stderr, "Source: ", source_file, "\n");
+    fmt_ss(fmterr, "Source: ", source_file, "\n");
     char *output_path = hot_mktmp("/tmp/main");
     i32 ret = hot_compile(source_file, output_path);
     hot_load(hot, output_path);
