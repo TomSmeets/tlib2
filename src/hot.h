@@ -6,18 +6,39 @@
 
 typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);
+
+// Create a new unque temporary file path
+static char *hot_mktmp(Hot *hot, const char *prefix);
+
+// Load a new application from a given path
 static void hot_load(Hot *hot, const char *path);
+
+// Run `os_main` of the loaded applcation
 static void hot_call(Hot *hot, u32 argc, const char **argv);
+
 
 // =======================================================
 struct Hot {
+    Memory *mem;
     Library *lib;
     Elf *elf;
     void (*os_main)(u32 argc, const char **argv);
 };
 
 static Hot *hot_new(Memory *mem) {
-    return mem_struct(mem, Hot);
+    Hot *hot = mem_struct(mem, Hot);
+    hot->mem = mem;
+    return hot;
+}
+
+static char *hot_mktmp(Hot *hot, const char *prefix) {
+    u64 time = os_time();
+    Fmt *fmt = fmt_new(hot->mem);
+    fmt_s(fmt, prefix);
+    fmt_s(fmt, "_");
+    fmt_u_ex(fmt, os_time(), 16, 0, 0);
+    fmt_s(fmt, ".so");
+    return fmt_end(fmt);
 }
 
 // Load a (new) version of the library

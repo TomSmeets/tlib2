@@ -17,6 +17,10 @@ What is different?
 - Adding a new program should be no effort
 
 
+Ideas:
+- no sub dirs, only single files, but generate a nice table like below
+- To use Just copy those files where you want
+
 ## Contents
 
 | Folder               | Description                                       | Depends          |

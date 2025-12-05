@@ -8,16 +8,6 @@ static Memory *tmp;
 static u32 counter = 0;
 static Hot *hot;
 
-static char *hot_mktmp(const char *prefix) {
-    u64 time = os_time();
-    Fmt *fmt = fmt_new(tmp);
-    fmt_s(fmt, prefix);
-    fmt_s(fmt, "_");
-    fmt_u_ex(fmt, os_time(), 16, 0, 0);
-    fmt_s(fmt, ".so");
-    return fmt_end(fmt);
-}
-
 static i32 hot_compile(const char *input_path, const char *output_path) {
     Fmt *fmt = fmt_new(tmp);
     fmt_s(fmt, "clang");

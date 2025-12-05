@@ -51,6 +51,8 @@ static_assert(sizeof(bool) == 1);
 #define MIN(A, B) ((A) <= (B) ? (A) : (B))
 #define MAX(A, B) ((A) >= (B) ? (A) : (B))
 
+#define TYPEDEF_STRUCT(NAME) typedef struct NAME NAME
+
 // Append an element to a singly linked list with first and last pointers
 #define LIST_APPEND(FIRST, LAST, EL)                                                                                                                 \
     do {                                                                                                                                             \
@@ -60,6 +62,13 @@ static_assert(sizeof(bool) == 1);
         } else {                                                                                                                                     \
             (FIRST) = (LAST) = (EL);                                                                                                                 \
         }                                                                                                                                            \
+    } while (0)
+
+// Prepend item onto a singly linked list
+#define LIST_PUSH(FIRST, EL)                                                                                                                       \
+    do {                                                                                                                                             \
+        (EL)->next = (FIRST);                                                                                                                        \
+        (FIRST) = (EL);                                                                                                                              \
     } while (0)
 
 static void std_memcpy(u8 *restrict dst, const u8 *restrict src, u64 size) {
