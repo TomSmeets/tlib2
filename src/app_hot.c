@@ -1,6 +1,6 @@
+#include "core/fmt.h"
 #include "core/os.h"
 #include "core/type.h"
-#include "core/fmt.h"
 #include "hot/hot.h"
 
 static Memory *mem;
@@ -38,13 +38,12 @@ void os_main(u32 argc, const char **argv) {
         mem = mem_new();
         hot = hot_new(mem);
 
-        if(argc < 2) {
+        if (argc < 2) {
             fmt_s(stderr, "Usage: ");
             fmt_s(stderr, argv[0]);
             fmt_s(stderr, " <SOURCE> [ARGS...]\n");
             os_exit(1);
         }
-
     }
     const char *source_file = argv[1];
     fmt_ss(stderr, "Source: ", source_file, "\n");

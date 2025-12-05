@@ -1,6 +1,6 @@
 #pragma once
-#include "core/type.h"
 #include "core/mem.h"
+#include "core/type.h"
 
 typedef struct Fmt Fmt;
 struct Fmt {
@@ -20,7 +20,7 @@ static Fmt *fmt_stdout(void) {
         .data = buffer,
         .flush_on_newline = 1,
     };
-    if(!fmt.file) fmt.file = os_stdout();
+    if (!fmt.file) fmt.file = os_stdout();
     return &fmt;
 }
 
@@ -31,7 +31,7 @@ static Fmt *fmt_stderr(void) {
         .data = buffer,
         .flush_on_newline = 1,
     };
-    if(!fmt.file) fmt.file = os_stderr();
+    if (!fmt.file) fmt.file = os_stderr();
     return &fmt;
 }
 
@@ -66,7 +66,7 @@ static void fmt_flush(Fmt *fmt) {
 // Returns true if the new size would fit
 static bool fmt_grow(Fmt *fmt, u64 size) {
     // Check if the buffer needs to grow
-    if(fmt->used + size <= fmt->size) return true;
+    if (fmt->used + size <= fmt->size) return true;
 
     // Try to flush to the file
     fmt_flush(fmt);
@@ -75,7 +75,7 @@ static bool fmt_grow(Fmt *fmt, u64 size) {
     if (fmt->used + size <= fmt->size) return true;
 
     // Cannot allocate if we have no memory
-    if(!fmt->mem) return false;
+    if (!fmt->mem) return false;
 
     // Calculated new size (a power of two)
     u64 new_size = fmt->size * 2;
@@ -91,7 +91,7 @@ static bool fmt_grow(Fmt *fmt, u64 size) {
 }
 
 static void fmt_c(Fmt *fmt, u8 c) {
-    if(!fmt_grow(fmt, 1)) return;
+    if (!fmt_grow(fmt, 1)) return;
     fmt->data[fmt->used++] = c;
     if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
 }
@@ -136,7 +136,7 @@ static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
         value /= base;
     } while (value > 0);
 
-    while(digit_count < pad) {
+    while (digit_count < pad) {
         digit_list[digit_count++] = pad_char;
     }
 

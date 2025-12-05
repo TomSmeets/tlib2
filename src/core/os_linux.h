@@ -1,9 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
-#include "core/os_api.h"
 #include "core/linux.h"
-#include "core/type.h"
+#include "core/os_api.h"
 #include "core/str.h"
+#include "core/type.h"
 
 // Main function
 int main(i32 argc, const char **argv) {
@@ -27,9 +27,15 @@ static void os_exit(i32 status) {
 }
 
 // =================================
-static File *os_stdin(void) { return fd_to_ptr(0); }
-static File *os_stdout(void) { return fd_to_ptr(1); }
-static File *os_stderr(void) { return fd_to_ptr(2); }
+static File *os_stdin(void) {
+    return fd_to_ptr(0);
+}
+static File *os_stdout(void) {
+    return fd_to_ptr(1);
+}
+static File *os_stderr(void) {
+    return fd_to_ptr(2);
+}
 
 static File *os_open(const char *path, File_Mode mode) {
     i32 flags = 0;

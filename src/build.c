@@ -11,24 +11,22 @@ typedef struct {
 } Cli;
 
 static Cli cli_init(u32 argc, const char **argv) {
-    return (Cli) { .argc = argc, .argv = argv };
+    return (Cli){.argc = argc, .argv = argv};
 }
 
 static bool cli_command(Cli *cli, const char *name) {
-    if(cli->argc < 2) return false;
-    if(cli->match) return false;
-    if(!str_eq(cli->argv[1], name)) return false;
+    if (cli->argc < 2) return false;
+    if (cli->match) return false;
+    if (!str_eq(cli->argv[1], name)) return false;
     cli->match = true;
     return true;
 }
-
-
 
 static Hot *hot;
 
 static void cmd_run(Cli *cli) {
     if (!cli_command(cli, "run")) return;
-    if(!hot) hot = hot_new(mem);
+    if (!hot) hot = hot_new(mem);
     hot_load(hot, "./out/main.so");
     hot_call(hot, cli->argc, cli->argv);
     hot_call(hot, cli->argc, cli->argv);
@@ -39,7 +37,7 @@ static void cmd_run(Cli *cli) {
 }
 
 static void cmd_help(Cli *cli) {
-    if(cli->match) return;
+    if (cli->match) return;
     printf("HELP!\n");
     os_exit(1);
 }

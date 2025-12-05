@@ -15,11 +15,11 @@ void os_main(u32 argc, const char **argv) {
     printf("msg: %s\n", message);
 
     counter1++;
-    if(counter1 > 10) {
+    if (counter1 > 10) {
         counter2++;
         counter1 = 0;
     }
-    if(counter2 > 10) {
+    if (counter2 > 10) {
         counter3++;
         counter2 = 0;
     }

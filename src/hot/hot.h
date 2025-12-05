@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
+#include "core/fmt.h"
 #include "core/mem.h"
 #include "elf/elf.h"
-#include "core/fmt.h"
 
 typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);

@@ -10,7 +10,7 @@ static_assert(sizeof(void *) == sizeof(u64));
 
 // fd to handle conversion
 static int ptr_to_fd(void *ptr) {
-    if(!ptr) return -1;
+    if (!ptr) return -1;
     return (int)((u64)ptr - 1);
 }
 
@@ -43,7 +43,6 @@ static struct linux_timespec linux_us_to_timespec(u64 time) {
     ts.nsec = nsec;
     return ts;
 }
-
 
 // Functions from libc
 extern int system(const char *command);
