@@ -1,3 +1,5 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// fmt.h - String formatter
 #pragma once
 #include "core/mem.h"
 #include "core/type.h"

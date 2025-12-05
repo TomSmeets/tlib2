@@ -1,4 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// os_api.h - Operating System API Interface
 #pragma once
 #include "core/type.h"
 
