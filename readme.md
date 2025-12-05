@@ -1,20 +1,17 @@
-# Tlibc 2.0
+# Tom's Awesome C Library 2.0 (Not a framework)
 
-NOTE: This is not a framework!
+Why rewrite?
+- Starting from scratch helps with new approaches.
+- Keep The good ideas, skip the bad ideas
+- Each tlibc rewrite was better than the last.
 
-- This is not a framework
+What is different?
+- This is not a framework!
 - Should work with both Clang and Gcc
 - Most basic entry point possible
-- No 'Global' let 'hot' handle that
-- Decreaese dependency depth
-- So just c strings most of the time
-- Mem should support any size
-
-
-
-# Memory
-- os_alloc will do it's best to allocate sequential chunkcs
-
-AAABBB..CC.D.E..FF
-
-block(next, size)
+- No single 'Global' type, let 'hot' handle that
+- Decrease dependency depth
+- Keep C code simple, so just C strings where possible
+- Memory allocation should support ANY size
+- Fully unit test
+- Adding a new program should be no effort
