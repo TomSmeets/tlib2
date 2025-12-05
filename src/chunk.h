@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // Memory allocator for big chunks that can be reused
 #pragma once
-#include "core/os.h"
-#include "core/type.h"
+#include "os.h"
+#include "type.h"
 
 typedef struct {
     void *data;

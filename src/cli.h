@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // cli.h - Command line argument parser
 #pragma once
-#include "core/mem.h"
-#include "std/fmt.h"
+#include "fmt.h"
+#include "mem.h"
 
 typedef struct Cli Cli;
 

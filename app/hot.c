@@ -1,7 +1,7 @@
-#include "build/hot.h"
-#include "core/os.h"
-#include "core/type.h"
-#include "std/fmt.h"
+#include "hot.h"
+#include "os.h"
+#include "type.h"
+#include "fmt.h"
 
 static Memory *mem;
 static Memory *tmp;
@@ -37,7 +37,7 @@ void os_main(u32 argc, const char **argv) {
     }
     const char *source_file = argv[1];
     fmt_ss(fmterr, "Source: ", source_file, "\n");
-    char *output_path = hot_mktmp("/tmp/main");
+    char *output_path = hot_mktmp(hot, "/tmp/main");
     i32 ret = hot_compile(source_file, output_path);
     hot_load(hot, output_path);
     hot_call(hot, argc - 1, argv + 1);

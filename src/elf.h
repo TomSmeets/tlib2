@@ -1,8 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// elf.h - Elf File parsing
 #pragma once
-#include "core/os.h"
-#include "core/str.h"
-#include "core/type.h"
+#include "os.h"
+#include "str.h"
+#include "type.h"
 
 // API
 typedef struct {

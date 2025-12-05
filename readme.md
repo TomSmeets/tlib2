@@ -23,19 +23,8 @@ Ideas:
 
 ## Contents
 
-| Folder               | Description                                       | Depends          |
-|----------------------|---------------------------------------------------|------------------|
-| [core](./src/core)   | Basic types, OS abstraction and memory allocation |                  |
-| [std](./src/std)     | Advanced functions                                | core             |
-| [elf](./src/elf)     | ELF and DWARF file parsing                        | core, std        |
-| [build](./src/build) | Helpers for writing a build system                | core, std, elf   |
-| [app](./src/app)     | Example applications                              | \* |
-
-
 TODO: Generate this tabe based on file headers
 
-
-## Core
 
 | File     | Description                                  | Depends  |
 |----------|----------------------------------------------|----------|
@@ -47,17 +36,7 @@ TODO: Generate this tabe based on file headers
 | os       | OS API implementations                       | os_linux |
 | chunk    | Memory allocator for big power-of-two chunks | os       |
 | mem      | Memory allocator                             | chunk    |
-
-## Std
-
-| File     | Description                                  | Depends  |
-|----------|----------------------------------------------|----------|
 | fmt      | Text Formatter                               | mem      |
-
-## ELF
-
-| File     | Description                                  | Depends  |
-|----------|----------------------------------------------|----------|
 | elf      | ELF file parser                              | os       |
 | hot      | Hot reloading building blocks                | elf      |
 | dwarf    | DWARF Debug symbol parser                    | elf      |

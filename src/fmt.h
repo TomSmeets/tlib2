@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // fmt.h - String formatter
 #pragma once
-#include "core/mem.h"
-#include "core/type.h"
+#include "mem.h"
+#include "type.h"
 
 typedef struct Fmt Fmt;
 struct Fmt {

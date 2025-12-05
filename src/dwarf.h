@@ -1,9 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #pragma once
-#include "core/str.h"
-#include "elf/elf.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "str.h"
+#include "elf.h"
 
 typedef struct {
     u32 unit_length1;
@@ -21,9 +19,9 @@ static void dwarf_load(Elf *elf, File *file) {
 
     os_seek(file, sect_info->offset);
     Dwarf_CU *cu = os_read_alloc(file, sizeof(Dwarf_CU));
-    printf("off: %016llx\n", sect_info->offset);
-    printf("CU.len1: %016x\n", cu->unit_length1);
+    // printf("off: %016llx\n", sect_info->offset);
+    // printf("CU.len1: %016x\n", cu->unit_length1);
     // printf("CU.len2: %llu\n", cu->unit_length2);
-    printf("version: %u\n", cu->version);
+    // printf("version: %u\n", cu->version);
     (void)cu;
 }

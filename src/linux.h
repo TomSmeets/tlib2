@@ -1,7 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // linux.h - Platform syscall headers for Linux
 #pragma once
-#include "core/type.h"
+#include "type.h"
 
 // Basic Assumptions
 static_assert(sizeof(long) == sizeof(i64));

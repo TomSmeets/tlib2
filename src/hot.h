@@ -1,8 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// hot.h - Hot reloading helpers
 #pragma once
-#include "core/mem.h"
-#include "elf/elf.h"
-#include "std/fmt.h"
+#include "mem.h"
+#include "elf.h"
+#include "fmt.h"
 
 typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);

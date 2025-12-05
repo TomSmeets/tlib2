@@ -1,7 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // os_api.h - Operating System API Interface
 #pragma once
-#include "core/type.h"
+#include "type.h"
 
 // The main function, to exit call os_exit()
 void os_main(u32 argc, const char **argv);

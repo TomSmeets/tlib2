@@ -1,9 +1,9 @@
-#include "core/os.h"
-#include "core/str.h"
-#include "core/type.h"
-#include "elf/dwarf.h"
-#include "elf/elf.h"
-#include "std/fmt.h"
+#include "dwarf.h"
+#include "elf.h"
+#include "fmt.h"
+#include "os.h"
+#include "str.h"
+#include "type.h"
 #include <dlfcn.h>
 #include <memory.h>
 #include <stdio.h>

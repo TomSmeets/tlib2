@@ -1,9 +1,10 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// os_linux.h - Linux syscalls
 #pragma once
-#include "core/linux.h"
-#include "core/os_api.h"
-#include "core/str.h"
-#include "core/type.h"
+#include "linux.h"
+#include "os_api.h"
+#include "str.h"
+#include "type.h"
 
 // Main function
 int main(i32 argc, const char **argv) {

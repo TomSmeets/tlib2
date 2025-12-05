@@ -1,5 +1,5 @@
-#include "core/os.h"
-#include "core/type.h"
+#include "os.h"
+#include "type.h"
 #include <stdio.h>
 
 static u32 counter1;
