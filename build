@@ -5,3 +5,4 @@ clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o ou
 clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/build    src/app/build.c 
 clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/main     src/app/main.c 
 clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/counter  src/app/counter.c 
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/test     src/app/test.c 

@@ -147,6 +147,10 @@ static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
     }
 }
 
+static void fmt_u(Fmt *fmt, u64 value) {
+    fmt_u_ex(fmt, value, 10, 0, 0);
+}
+
 static void fmt_sp(Fmt *fmt, const char *arg1, void *arg2, const char *arg3) {
     fmt_s(fmt, arg1);
     // fmt_p(fmt, arg2);
@@ -157,4 +161,18 @@ static void fmt_su(Fmt *fmt, const char *arg1, u64 arg2, const char *arg3) {
     fmt_s(fmt, arg1);
     // fmt_u(fmt, arg2);
     fmt_s(fmt, arg3);
+}
+
+static void test_fmt(void) {
+    Memory *mem = mem_new();
+    Fmt *fmt = fmt_new(mem);
+    fmt_s(fmt, "Hello");
+    fmt_s(fmt, " ");
+    fmt_s(fmt, "World: ");
+    fmt_u(fmt, 1234);
+    fmt_s(fmt, "\n");
+
+    char *output = fmt_end(fmt);
+    assert(str_eq(output, "Hello World: 1234\n"));
+    mem_free(mem);
 }
