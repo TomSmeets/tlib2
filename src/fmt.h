@@ -39,6 +39,8 @@ static Fmt *fmt_stderr(void) {
 
 #define fmtout (fmt_stdout())
 #define fmterr (fmt_stderr())
+#define fout (fmt_stdout())
+#define ferr (fmt_stderr())
 
 // Create a new formatter that allocates memory
 static Fmt *fmt_new(Memory *mem) {

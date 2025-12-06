@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 mkdir -p out
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/hot      app/hot.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/build    app/build.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/main     app/main.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/counter  app/counter.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-function -Isrc -o out/test     app/test.c
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/hot      app/hot.c
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/build    app/build.c
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/main     app/main.c
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/counter  app/counter.c
+clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/test     app/test.c

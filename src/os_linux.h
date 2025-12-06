@@ -69,7 +69,7 @@ static void os_seek(File *file, u64 pos) {
     i64 result = linux_seek(ptr_to_fd(file), pos, SEEK_SET);
 }
 
-static u64 os_size(File *file) {
+static u64 os_file_size(File *file) {
     struct linux_stat sb = {};
     linux_fstat(ptr_to_fd(file), &sb);
     if (sb.st_size < 0) return 0;

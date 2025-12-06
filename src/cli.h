@@ -29,8 +29,9 @@ struct Cli_Command {
     const char *name;
     const char *info;
     Cli_Command *next;
-    Cli_Flag *flags;
-    Cli_Value *values;
+
+    Cli_Flag *flags, *flags_end;
+    Cli_Value *values, *values_end;
 };
 
 struct Cli_Flag {
@@ -47,6 +48,7 @@ struct Cli_Value {
 
 struct Cli {
     bool has_match;
+    u32 ix;
     u32 argc;
     const char **argv;
 
@@ -66,15 +68,51 @@ static Cli *cli_new(Memory *mem, u32 argc, const char **argv) {
 
 // Match a sub command
 static bool cli_command(Cli *cli, const char *command, const char *info) {
+    // Reset current arg index
+    cli->ix = 1;
+
     Cli_Command *doc = mem_struct(cli->mem, Cli_Command);
     doc->name = command;
     doc->info = info;
     LIST_APPEND(cli->doc_start, cli->doc_end, doc);
 
-    if (cli->argc < 2) return false;
-    if (!str_eq(cli->argv[1], command)) return false;
+    if (cli->ix >= cli->argc) return false;
+    if (!str_eq(cli->argv[cli->ix], command)) return false;
     cli->has_match = true;
+    cli->ix++;
     return true;
+}
+
+static const char *cli_value(Cli *cli, const char *name, const char *info) {
+    Cli_Command *cmd = cli->doc_end;
+    Cli_Value *doc = mem_struct(cli->mem, Cli_Value);
+    doc->name = name;
+    doc->info = info;
+    LIST_APPEND(cmd->values, cmd->values_end, doc);
+
+    if(cli->ix >= cli->argc) return 0;
+    return cli->argv[cli->ix++];
+}
+
+static void cli_cmdhelp(Cli *cli) {
+    Cli_Command *cmd = cli->doc_end;
+    fmt_s(fmterr, "Usage: ");
+    fmt_s(fmterr, cli->argv[0]);
+    fmt_s(fmterr, " ");
+    fmt_s(fmterr, cmd->name);
+    for (Cli_Value *val = cmd->values; val; val = val->next) {
+        fmt_s(fmterr, " ");
+        fmt_s(fmterr,val->name);
+    }
+    fmt_s(fmterr, "\n");
+    for (Cli_Value *val = cmd->values; val; val = val->next) {
+        fmt_s(fmterr, "    ");
+        fmt_s(fmterr,val->name);
+        fmt_s(fmterr, " | ");
+        fmt_s(fmterr,val->info);
+        fmt_s(fmterr, "\n");
+    }
+    os_exit(1);
 }
 
 static void cli_help(Cli *cli) {
