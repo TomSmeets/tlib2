@@ -4,32 +4,72 @@
 #include "type.h"
 
 // The main function, to exit call os_exit()
+// This function is called in an infinite loop
 void os_main(u32 argc, const char **argv);
 
 // Allocate a new chunk of memory
 static void *os_alloc(u64 size);
-static void os_fail(const char *message) __attribute__((__noreturn__));
+
+// Exit currnet application
 static void os_exit(i32 status) __attribute__((__noreturn__));
 
-// File handling
-typedef struct File File;
-typedef enum {
-    Open_Read,
-    Open_Write,
-    Open_Create,
-} File_Mode;
+// Exit with an error message (error dialog)
+static void os_fail(const char *message) __attribute__((__noreturn__));
 
+// ==================================
+//      File and Stream handling
+// ==================================
+
+typedef struct File File;
+
+// Standard file handles
 static File *os_stdin(void);
 static File *os_stdout(void);
 static File *os_stderr(void);
 
-static File *os_open(const char *path, File_Mode mode);
-static void os_close(File *file);
+// Write data from file or stream
 static i64 os_read(File *file, void *data, u64 size);
+
+// Read data to file or stream
 static i64 os_write(File *file, const void *data, u64 size);
+
+typedef enum {
+    // Read only
+    Open_Read,
+    // Read and Write, no truncation
+    Open_Write,
+    // Create new file or truncate existing
+    Open_Create,
+} File_Mode;
+
+// Open a file for reading or writing
+static File *os_open(const char *path, File_Mode mode);
+
+// Close a file
+static void os_close(File *file);
+
+// Seek to an absolute position in the current file
 static void os_seek(File *file, u64 pos);
 
-// Dynamic library handling
+// Get file size
+static u64 os_file_size(File *file);
+
+// Create an empty directory
+static bool os_mkdir(const char *path);
+
+// Remove an empty directory
+static bool os_rmdir(const char *path);
+
+// Remove a file
+static bool os_remove(const char *path);
+
+// List contents of a directory
+static u32 os_list(const char *path, void *buffer, u64 size);
+
+// ==================================
+//      Dynamic library handling
+// ==================================
+
 typedef struct Library Library;
 
 // Open a library by name or full path

@@ -11,7 +11,7 @@ int main(i32 argc, const char **argv) {
     for (;;) os_main(argc, argv);
 }
 
-// =================================
+// ==== File IO ======================================================
 static void *os_alloc(u64 size) {
     void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     assert(ptr != MAP_FAILED);
@@ -38,33 +38,6 @@ static File *os_stderr(void) {
     return fd_to_ptr(2);
 }
 
-static File *os_open(const char *path, File_Mode mode) {
-    i32 flags = 0;
-    u32 perm = 0;
-    switch (mode) {
-    case Open_Read:
-        flags = O_RDONLY;
-        break;
-    case Open_Write:
-        flags = O_WRONLY;
-        perm = 0644;
-        break;
-    case Open_Create:
-        flags = O_WRONLY | O_CREAT | O_TRUNC;
-        perm = 0644;
-        break;
-    }
-
-    i32 fd = linux_open(path, flags, perm);
-    return fd_to_ptr(fd);
-}
-
-static void os_close(File *file) {
-    assert(file);
-    i32 ret = linux_close(ptr_to_fd(file));
-    assert(ret == 0);
-}
-
 static i64 os_read(File *file, void *data, u64 size) {
     assert(file);
     return linux_read(ptr_to_fd(file), data, size);
@@ -75,9 +48,32 @@ static i64 os_write(File *file, const void *data, u64 size) {
     return linux_write(ptr_to_fd(file), data, size);
 }
 
+static File *os_open(const char *path, File_Mode mode) {
+    i32 flags = 0;
+    u32 perm = 0644;
+    if (mode == Open_Read) flags |= O_RDONLY;
+    if (mode == Open_Write) flags |= O_RDONLY | O_WRONLY;
+    if (mode == Open_Create) flags |= O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC;
+    i32 fd = linux_open(path, flags, perm);
+    return fd_to_ptr(fd);
+}
+
+static void os_close(File *file) {
+    assert(file);
+    i32 ret = linux_close(ptr_to_fd(file));
+    assert(ret == 0);
+}
+
 static void os_seek(File *file, u64 pos) {
     assert(file);
     i64 result = linux_seek(ptr_to_fd(file), pos, SEEK_SET);
+}
+
+static u64 os_size(File *file) {
+    struct linux_stat sb = {};
+    linux_fstat(ptr_to_fd(file), &sb);
+    if (sb.st_size < 0) return 0;
+    return sb.st_size;
 }
 
 // =================================
