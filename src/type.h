@@ -71,6 +71,11 @@ static_assert(sizeof(bool) == 1);
         (FIRST) = (EL);                                                                                                                              \
     } while (0)
 
+typedef struct {
+    void *data;
+    u64 size;
+} Buffer;
+
 static void std_memcpy(u8 *restrict dst, const u8 *restrict src, u64 size) {
     while (size--) *dst++ = *src++;
 }

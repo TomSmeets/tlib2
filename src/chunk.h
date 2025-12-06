@@ -4,11 +4,6 @@
 #include "os.h"
 #include "type.h"
 
-typedef struct {
-    void *data;
-    u64 size;
-} Buffer;
-
 // Allocate a chunk of a given minimum size
 static Buffer chunk_alloc(u64 size);
 
