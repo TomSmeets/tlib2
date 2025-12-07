@@ -1,15 +1,14 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 #include "buf.h"
 #include "cli.h"
+#include "dwarf.h"
 #include "hot.h"
 #include "os.h"
 #include "parse.h"
-#include "dwarf.h"
 #include "tlib.h"
 
 static Memory *mem;
 static Hot *hot;
-
 
 // Generate a table
 // file | info | deps
@@ -26,7 +25,7 @@ static void cmd_info(Cli *cli) {
     mod_expand_links(lib);
     mod_sort(lib);
 
-    for(Module *mod = lib->modules; mod; mod = mod->next) {
+    for (Module *mod = lib->modules; mod; mod = mod->next) {
         fmt_s(fout, mod->name);
         fmt_pad_line(fout, 10, ' ');
         fmt_s(fout, " | ");
@@ -34,7 +33,7 @@ static void cmd_info(Cli *cli) {
         fmt_pad_line(fout, 60, ' ');
         fmt_s(fout, " | ");
 
-        for(Module_Link *link = mod->deps; link; link = link->next) {
+        for (Module_Link *link = mod->deps; link; link = link->next) {
             fmt_s(fout, link->module->name);
             if (link->next) fmt_s(fout, ", ");
         }
@@ -60,7 +59,7 @@ static void cmd_run(Cli *cli) {
 
 static void cmd_dwarf(Cli *cli) {
     if (!cli_command(cli, "dwarf", "Read dwarf info")) return;
-    char *path= cli_value(cli, "<FILE>", "Input file");
+    char *path = cli_value(cli, "<FILE>", "Input file");
 
     File *file = os_open(path, Open_Read);
     Elf *elf = elf_load(mem, file);

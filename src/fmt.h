@@ -105,7 +105,7 @@ static void fmt_buf(Fmt *fmt, void *data, u64 size) {
 }
 
 static void fmt_s(Fmt *fmt, char *str) {
-    if(!str) return;
+    if (!str) return;
     u32 len = str_len(str);
     fmt_buf(fmt, str, len);
 }
@@ -153,7 +153,7 @@ static void fmt_u(Fmt *fmt, u64 value) {
 }
 
 static void fmt_i(Fmt *fmt, i64 value) {
-    if(value < 0) {
+    if (value < 0) {
         fmt_s(fmt, "-");
         value = -value;
     }

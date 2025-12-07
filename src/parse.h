@@ -65,16 +65,16 @@ static u8 parse_u8(Parse *parse) {
 static u64 parse_leb128(Parse *parse, bool is_signed) {
     u64 value = 0;
     u32 shift = 0;
-    for(;;) {
+    for (;;) {
         u8 byte = parse_u8(parse);
-        u8 byte_low  = byte & 0x7f;
+        u8 byte_low = byte & 0x7f;
         u8 byte_high = byte & 0x80;
         value |= (u64)byte_low << shift;
         if (byte_high == 0) break;
         shift += 7;
     }
 
-    if(is_signed) {
+    if (is_signed) {
         u32 move = 64 - shift;
 
         // Sign extend

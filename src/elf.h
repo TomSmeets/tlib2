@@ -1,9 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // elf.h - Elf File parsing
 #pragma once
+#include "mem.h"
 #include "os.h"
 #include "str.h"
-#include "mem.h"
 #include "type.h"
 
 // API

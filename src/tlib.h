@@ -1,15 +1,14 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // tlib - Helper functions for parsing tlib modules
 #pragma once
-#include "type.h"
 #include "fmt.h"
 #include "mem.h"
 #include "parse.h"
+#include "type.h"
 
 typedef struct Module Module;
 typedef struct Module_Link Module_Link;
 typedef struct TLib TLib;
-
 
 struct Module {
     char *name;
@@ -30,7 +29,6 @@ struct TLib {
     Module *modules, *modules_last;
 };
 
-
 static TLib *tlib_new(Memory *mem) {
     TLib *lib = mem_struct(mem, TLib);
     lib->mem = mem;
@@ -39,8 +37,8 @@ static TLib *tlib_new(Memory *mem) {
 
 // Parse module and f
 static Module *module_get(TLib *lib, char *name) {
-    for(Module *mod = lib->modules; mod; mod = mod->next) {
-        if(str_eq(mod->name, name)) return mod;
+    for (Module *mod = lib->modules; mod; mod = mod->next) {
+        if (str_eq(mod->name, name)) return mod;
     }
 
     Module *mod = mem_struct(lib->mem, Module);
@@ -159,7 +157,7 @@ static Module *module_parse(TLib *lib, char *path) {
 }
 
 static void mod_expand_links(TLib *lib) {
-    for(Module *mod = lib->modules; mod; mod = mod->next) {
+    for (Module *mod = lib->modules; mod; mod = mod->next) {
         for (Module_Link *link = mod->deps; link; link = link->next) {
             for (Module_Link *link2 = link->module->deps; link2; link2 = link2->next) {
                 module_get_link(lib, mod, link2->module);
@@ -171,12 +169,12 @@ static void mod_expand_links(TLib *lib) {
 static void mod_sort2(Module *mod, Module **unsorted, Module **sorted) {
     // Check if already sorted
     for (Module *m = *sorted; m; m = m->next) {
-        if(m == mod) return;
+        if (m == mod) return;
     }
 
     // Remove from unsorted list
     for (Module **ref = unsorted; *ref; ref = &(*ref)->next) {
-        if(*ref != mod) continue;
+        if (*ref != mod) continue;
 
         *ref = mod->next;
         mod->next = 0;
@@ -199,9 +197,9 @@ static void mod_sort(TLib *lib) {
     while (lib->modules) {
         u32 min_count = -1;
         Module *min_mod = lib->modules;
-        for(Module *mod = lib->modules; mod; mod = mod->next) {
+        for (Module *mod = lib->modules; mod; mod = mod->next) {
             u32 count = 0;
-            for(Module_Link *link = mod->deps; link; link = link->next) {
+            for (Module_Link *link = mod->deps; link; link = link->next) {
                 count++;
             }
             if (count < min_count) {
@@ -212,7 +210,7 @@ static void mod_sort(TLib *lib) {
         mod_sort2(min_mod, &lib->modules, &sorted);
     }
     lib->modules = 0;
-    while(sorted) {
+    while (sorted) {
         Module *mod = sorted;
         sorted = mod->next;
         mod->next = lib->modules;
