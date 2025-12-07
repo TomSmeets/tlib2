@@ -4,6 +4,7 @@
 #include "buf.h"
 #include "type.h"
 
+// Compare two strings for byte equality
 static bool str_eq(char *a, char *b) {
     for (;;) {
         if (*a == 0 && *b == 0) return 1;
@@ -20,7 +21,7 @@ static u32 str_len(char *str) {
     return len;
 }
 
-// Convert a zero terminated string to a buffer
+// Convert a zero terminated string to a buffer with a length
 static Buffer str_buf(char *str) {
     return (Buffer){
         str,

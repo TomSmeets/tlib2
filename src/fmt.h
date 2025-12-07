@@ -105,6 +105,7 @@ static void fmt_buf(Fmt *fmt, void *data, u64 size) {
 }
 
 static void fmt_s(Fmt *fmt, char *str) {
+    if(!str) return;
     u32 len = str_len(str);
     fmt_buf(fmt, str, len);
 }
