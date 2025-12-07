@@ -9,20 +9,20 @@ typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);
 
 // Create a new unque temporary file path
-static char *hot_mktmp(Hot *hot, const char *prefix);
+static char *hot_mktmp(Hot *hot, char *prefix);
 
 // Load a new application from a given path
-static void hot_load(Hot *hot, const char *path);
+static void hot_load(Hot *hot, char *path);
 
 // Run `os_main` of the loaded applcation
-static void hot_call(Hot *hot, u32 argc, const char **argv);
+static void hot_call(Hot *hot, u32 argc, char **argv);
 
 // =======================================================
 struct Hot {
     Memory *mem;
     Library *lib;
     Elf *elf;
-    void (*os_main)(u32 argc, const char **argv);
+    void (*os_main)(u32 argc, char **argv);
 };
 
 static Hot *hot_new(Memory *mem) {
@@ -31,7 +31,7 @@ static Hot *hot_new(Memory *mem) {
     return hot;
 }
 
-static char *hot_mktmp(Hot *hot, const char *prefix) {
+static char *hot_mktmp(Hot *hot, char *prefix) {
     u64 time = os_time();
     Fmt *fmt = fmt_new(hot->mem);
     fmt_s(fmt, prefix);
@@ -42,7 +42,7 @@ static char *hot_mktmp(Hot *hot, const char *prefix) {
 }
 
 // Load a (new) version of the library
-static void hot_load(Hot *hot, const char *path) {
+static void hot_load(Hot *hot, char *path) {
     Library *lib = os_dlopen(path);
     assert(lib);
 
@@ -55,7 +55,7 @@ static void hot_load(Hot *hot, const char *path) {
         void *base_old = os_dlbase(hot->lib);
         void *base_new = os_dlbase(lib);
 
-        const char *sections[] = {
+        char *sections[] = {
             ".data",
             ".bss",
         };
@@ -80,7 +80,7 @@ static void hot_load(Hot *hot, const char *path) {
     hot->os_main = os_dlsym(lib, "os_main");
 }
 
-static void hot_call(Hot *hot, u32 argc, const char **argv) {
+static void hot_call(Hot *hot, u32 argc, char **argv) {
     if (!hot->os_main) return;
     hot->os_main(argc, argv);
 }

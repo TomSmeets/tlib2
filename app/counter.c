@@ -8,7 +8,7 @@ static u32 counter3;
 
 const char *message = "Hello World!";
 
-void os_main(u32 argc, const char **argv) {
+void os_main(u32 argc, char **argv) {
     printf("Counter1: %u\n", counter1);
     printf("Counter2: %u\n", counter2);
     printf("Counter3: %u\n", counter3);

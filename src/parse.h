@@ -52,7 +52,7 @@ static Buffer parse_line(Parse *parse) {
     };
 }
 
-static bool parse_symbol(Parse *parse, const char *symbol) {
+static bool parse_symbol(Parse *parse,  char *symbol) {
     u32 len = str_len(symbol);
 
     // Check fit

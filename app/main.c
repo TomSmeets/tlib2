@@ -8,14 +8,14 @@
 #include <memory.h>
 #include <stdio.h>
 
-void os_main(u32 argc, const char **argv) {
+void os_main(u32 argc, char **argv) {
     if (argc != 2) os_fail("Usage: main <INPUT>");
 
-    fmt_ss(fmtout, "Reading ", argv[1], " file...\n");
+    fmt_ss(fout, "Reading ", argv[1], " file...\n");
     File *file = os_open(argv[1], Open_Read);
     assert(file);
 
-    fmt_s(fmtout, "Parsing elf file...\n");
+    fmt_s(fout, "Parsing elf file...\n");
     Elf *elf = elf_load(file);
     assert(elf);
 

@@ -7,7 +7,7 @@
 #include "type.h"
 
 // Main function
-int main(i32 argc, const char **argv) {
+int main(i32 argc, char **argv) {
     for (;;) os_main(argc, argv);
 }
 
@@ -18,7 +18,7 @@ static void *os_alloc(u64 size) {
     return ptr;
 }
 
-static void os_fail(const char *message) {
+static void os_fail(char *message) {
     linux_write(2, message, str_len(message));
     os_exit(1);
 }
@@ -43,12 +43,12 @@ static i64 os_read(File *file, void *data, u64 size) {
     return linux_read(ptr_to_fd(file), data, size);
 }
 
-static i64 os_write(File *file, const void *data, u64 size) {
+static i64 os_write(File *file, void *data, u64 size) {
     assert(file);
     return linux_write(ptr_to_fd(file), data, size);
 }
 
-static File *os_open(const char *path, File_Mode mode) {
+static File *os_open(char *path, File_Mode mode) {
     i32 flags = 0;
     u32 perm = 0644;
     if (mode == Open_Read) flags |= O_RDONLY;
@@ -77,11 +77,11 @@ static u64 os_file_size(File *file) {
 }
 
 // =================================
-static Library *os_dlopen(const char *path) {
+static Library *os_dlopen(char *path) {
     return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
 }
 
-static void *os_dlsym(Library *lib, const char *sym) {
+static void *os_dlsym(Library *lib, char *sym) {
     return dlsym((void *)lib, sym);
 }
 
@@ -113,6 +113,6 @@ static u64 os_rand(void) {
 }
 
 // ==== System Commands ====
-static i32 os_system(const char *command) {
+static i32 os_system(char *command) {
     return system(command);
 }

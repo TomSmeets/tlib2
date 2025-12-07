@@ -1,5 +1,11 @@
 # Tom's Awesome C Library 2.0 (Not a framework)
 
+## Usage
+- Use this library by copying only the '.h' files you use into your project, or alternatively add this project as a submodule.
+- When copying files, you could implement a two way sync using 'unison'
+
+## Rewrite
+
 Why rewrite?
 - Starting from scratch helps with new approaches.
 - Keep The good ideas, skip the bad ideas
@@ -16,10 +22,16 @@ What is different?
 - Fully unit test
 - Adding a new program should be no effort
 
+What stays the same
+- No 'const', such as in 'const char *' does not have a lot of added value.
 
 Ideas:
 - no sub dirs, only single files, but generate a nice table like below
 - To use Just copy those files where you want
+
+
+Constness:
+- const char *
 
 ## Contents
 

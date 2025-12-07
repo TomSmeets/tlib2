@@ -1,5 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
-// fmt.h - String formatter
+// fmt.h - Text formatter
 #pragma once
 #include "mem.h"
 #include "type.h"
@@ -37,8 +37,6 @@ static Fmt *fmt_stderr(void) {
     return &fmt;
 }
 
-#define fmtout (fmt_stdout())
-#define fmterr (fmt_stderr())
 #define fout (fmt_stdout())
 #define ferr (fmt_stderr())
 
@@ -100,13 +98,13 @@ static void fmt_c(Fmt *fmt, u8 c) {
     if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
 }
 
-static void fmt_buf(Fmt *fmt, const void *data, u64 size) {
+static void fmt_buf(Fmt *fmt, void *data, u64 size) {
     for (u64 i = 0; i < size; ++i) {
         fmt_c(fmt, ((u8 *)data)[i]);
     }
 }
 
-static void fmt_s(Fmt *fmt, const char *str) {
+static void fmt_s(Fmt *fmt, char *str) {
     u32 len = str_len(str);
     fmt_buf(fmt, str, len);
 }
@@ -122,7 +120,7 @@ static char *fmt_end(Fmt *fmt) {
     return (char *)fmt->data;
 }
 
-static void fmt_ss(Fmt *fmt, const char *arg1, const char *arg2, const char *arg3) {
+static void fmt_ss(Fmt *fmt, char *arg1, char *arg2, char *arg3) {
     fmt_s(fmt, arg1);
     fmt_s(fmt, arg2);
     fmt_s(fmt, arg3);
@@ -153,16 +151,33 @@ static void fmt_u(Fmt *fmt, u64 value) {
     fmt_u_ex(fmt, value, 10, 0, 0);
 }
 
-static void fmt_sp(Fmt *fmt, const char *arg1, void *arg2, const char *arg3) {
+static void fmt_sp(Fmt *fmt, char *arg1, void *arg2, char *arg3) {
     fmt_s(fmt, arg1);
     // fmt_p(fmt, arg2);
     fmt_s(fmt, arg3);
 }
 
-static void fmt_su(Fmt *fmt, const char *arg1, u64 arg2, const char *arg3) {
+static void fmt_su(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
     fmt_s(fmt, arg1);
     // fmt_u(fmt, arg2);
     fmt_s(fmt, arg3);
+}
+
+static void fmt_pad_line(Fmt *fmt, u32 line_len, u8 pad_char) {
+    u64 line_start = fmt->used;
+    u64 line_end   = fmt->used;
+
+    for(;;) {
+        if (line_start == 0) break;
+        if (fmt->data[line_start - 1] == '\n') {
+            break;
+        }
+        line_start--;
+    }
+
+    for (u64 i = line_end; i < line_start + line_len; ++i) {
+        fmt_c(fmt, pad_char);
+    }
 }
 
 static void test_fmt(void) {

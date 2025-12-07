@@ -1,5 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
-// Memory allocator for big chunks that can be reused
+// Memory allocator for big chunks
 #pragma once
 #include "os.h"
 #include "type.h"

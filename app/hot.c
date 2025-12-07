@@ -8,7 +8,7 @@ static Memory *tmp;
 static u32 counter = 0;
 static Hot *hot;
 
-static i32 hot_compile(const char *input_path, const char *output_path) {
+static i32 hot_compile(char *input_path, char *output_path) {
     Fmt *fmt = fmt_new(tmp);
     fmt_s(fmt, "clang");
     fmt_ss(fmt, " -o ", output_path, "");
@@ -17,11 +17,11 @@ static i32 hot_compile(const char *input_path, const char *output_path) {
     fmt_s(fmt, " -fPIC");
     fmt_ss(fmt, " ", input_path, "");
     char *cmd = fmt_end(fmt);
-    fmt_ss(fmterr, "Cmd: ", cmd, "\n");
+    fmt_ss(ferr, "Cmd: ", cmd, "\n");
     return os_system(cmd);
 }
 
-void os_main(u32 argc, const char **argv) {
+void os_main(u32 argc, char **argv) {
     tmp = mem_new();
 
     if (!hot) {
@@ -29,14 +29,14 @@ void os_main(u32 argc, const char **argv) {
         hot = hot_new(mem);
 
         if (argc < 2) {
-            fmt_s(fmterr, "Usage: ");
-            fmt_s(fmterr, argv[0]);
-            fmt_s(fmterr, " <SOURCE> [ARGS...]\n");
+            fmt_s(ferr, "Usage: ");
+            fmt_s(ferr, argv[0]);
+            fmt_s(ferr, " <SOURCE> [ARGS...]\n");
             os_exit(1);
         }
     }
-    const char *source_file = argv[1];
-    fmt_ss(fmterr, "Source: ", source_file, "\n");
+    char *source_file = argv[1];
+    fmt_ss(ferr, "Source: ", source_file, "\n");
     char *output_path = hot_mktmp(hot, "/tmp/main");
     i32 ret = hot_compile(source_file, output_path);
     hot_load(hot, output_path);

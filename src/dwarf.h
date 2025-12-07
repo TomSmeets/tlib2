@@ -1,4 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// dwarf.h - Dwarf file format parser
 #pragma once
 #include "elf.h"
 #include "str.h"

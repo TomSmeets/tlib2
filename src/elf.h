@@ -21,7 +21,7 @@ typedef struct {
 
 // Find section with name
 // or return null when not present
-static Elf_Section *elf_find_section(Elf *elf, const char *name) {
+static Elf_Section *elf_find_section(Elf *elf, char *name) {
     for (u32 i = 0; i < elf->section_count; i++) {
         Elf_Section *sect = elf->sections + i;
         if (str_eq(sect->name, name)) return sect;
