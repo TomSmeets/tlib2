@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // str.h - String helper functions
 #pragma once
-#include "type.h"
 #include "buf.h"
+#include "type.h"
 
 static bool str_eq(char *a, char *b) {
     for (;;) {

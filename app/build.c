@@ -20,7 +20,7 @@ static Buffer os_read_file(Memory *mem, char *path) {
 
 static char *fs_base(char *path) {
     u32 i = str_len(path) - 1;
-    for(;;) {
+    for (;;) {
         if (path[i] == '/') return path + i + 1;
         if (i == 0) break;
         i--;
@@ -38,7 +38,7 @@ static void cmd_info(Cli *cli) {
         if (!path) break;
 
         Buffer name = str_buf(fs_base(path));
-        name.size -=2;
+        name.size -= 2;
 
         Buffer buf = os_read_file(mem, path);
         Parse *parse = parse_new(mem, buf.data, buf.size);
@@ -59,7 +59,7 @@ static void cmd_info(Cli *cli) {
 
             if (parse_symbol(parse, "//")) {
                 Buffer line = parse_line(parse);
-                if(info.data) continue;
+                if (info.data) continue;
                 info = line;
                 // Split on first '-' char
                 for (u32 i = 0; i < info.size; ++i) {
@@ -98,14 +98,14 @@ static void cmd_info(Cli *cli) {
             }
             break;
         }
-     
+
         fmt_buf(fout, name.data, name.size);
         fmt_pad_line(fout, 10, ' ');
         fmt_s(fout, " | ");
         fmt_buf(fout, info.data, info.size);
         fmt_pad_line(fout, 50, ' ');
         fmt_s(fout, " | ");
-        for(u32 i = 0; i < dep_count; ++i) {
+        for (u32 i = 0; i < dep_count; ++i) {
             fmt_buf(fout, deps[i].data, deps[i].size);
             if (i != dep_count - 1) fmt_s(fout, ", ");
         }

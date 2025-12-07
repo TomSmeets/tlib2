@@ -165,9 +165,9 @@ static void fmt_su(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
 
 static void fmt_pad_line(Fmt *fmt, u32 line_len, u8 pad_char) {
     u64 line_start = fmt->used;
-    u64 line_end   = fmt->used;
+    u64 line_end = fmt->used;
 
-    for(;;) {
+    for (;;) {
         if (line_start == 0) break;
         if (fmt->data[line_start - 1] == '\n') {
             break;

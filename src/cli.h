@@ -1,9 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // cli.h - Command line argument parser
-// 
+//
 // This program parses the following command format.
 // > ./main <COMMAND> [VALUE...] [FLAG...]
-// 
+//
 // Help text is generated automatically
 #pragma once
 #include "fmt.h"
@@ -25,7 +25,6 @@ static void cli_help(Cli *cli);
 
 // Collect remaining arguments into a new argv array
 static u32 cli_get_remaining(Cli *cli, u32 count, char **argv);
-
 
 // ==== Implementation ====
 typedef struct Cli_Command Cli_Command;
@@ -122,7 +121,7 @@ static bool cli_command(Cli *cli, char *command, char *info) {
 
     // Check if the argument matches
     Cli_Arg *arg = _cli_find_subcommand(cli);
-    if(!arg) return false;
+    if (!arg) return false;
     if (!str_eq(arg->name, command)) return false;
 
     // Match!
@@ -138,9 +137,9 @@ static char *cli_value(Cli *cli, char *name, char *info) {
     doc->info = info;
     LIST_APPEND(cmd->values, cmd->values_last, doc);
 
-    for(Cli_Arg *arg = cli->args; arg; arg = arg->next) {
-        if(arg->is_used) continue;
-        if(arg->is_flag) continue;
+    for (Cli_Arg *arg = cli->args; arg; arg = arg->next) {
+        if (arg->is_used) continue;
+        if (arg->is_flag) continue;
         arg->is_used = true;
         return arg->name;
     }
@@ -160,7 +159,7 @@ static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info) {
         if (arg->is_used) continue;
         if (!arg->is_flag) continue;
         bool match_short = str_eq(arg->name, name_short);
-        bool match_long  = str_eq(arg->name, name_long);
+        bool match_long = str_eq(arg->name, name_long);
         if (!match_short && !match_long) continue;
         arg->is_used = true;
         return true;
@@ -177,14 +176,14 @@ static void cli_cmdhelp(Cli *cli) {
     fmt_s(ferr, cmd->name);
     for (Cli_Value *val = cmd->values; val; val = val->next) {
         fmt_s(ferr, " ");
-        fmt_s(ferr,val->name);
+        fmt_s(ferr, val->name);
     }
     fmt_s(ferr, "\n");
     for (Cli_Value *val = cmd->values; val; val = val->next) {
         fmt_s(ferr, "    ");
-        fmt_s(ferr,val->name);
+        fmt_s(ferr, val->name);
         fmt_s(ferr, " | ");
-        fmt_s(ferr,val->info);
+        fmt_s(ferr, val->info);
         fmt_s(ferr, "\n");
     }
     for (Cli_Flag *flag = cmd->flags; flag; flag = flag->next) {
@@ -193,10 +192,10 @@ static void cli_cmdhelp(Cli *cli) {
             fmt_s(ferr, flag->name_short);
             fmt_s(ferr, ", ");
         }
-        fmt_s(ferr,flag->name_long);
+        fmt_s(ferr, flag->name_long);
         fmt_pad_line(ferr, 20, ' ');
         fmt_s(ferr, " | ");
-        fmt_s(ferr,flag->info);
+        fmt_s(ferr, flag->info);
         fmt_s(ferr, "\n");
     }
     os_exit(1);
@@ -223,7 +222,7 @@ static void cli_help(Cli *cli) {
 static u32 cli_get_remaining(Cli *cli, u32 count, char **argv) {
     u32 i = 0;
     for (Cli_Arg *arg = cli->args; arg; arg = arg->next) {
-        if(i == count) break;
+        if (i == count) break;
         if (arg->is_used) continue;
         argv[i++] = arg->name;
     }

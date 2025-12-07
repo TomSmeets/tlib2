@@ -41,7 +41,7 @@ static Buffer parse_line(Parse *parse) {
     u64 line_start = parse->cursor;
     do {
         u8 chr = parse_peek(parse);
-        if(chr == '\n') break;
+        if (chr == '\n') break;
     } while (parse_next(parse));
     u64 line_end = parse->cursor;
     // Consume newline char (if not eof)
@@ -52,7 +52,7 @@ static Buffer parse_line(Parse *parse) {
     };
 }
 
-static bool parse_symbol(Parse *parse,  char *symbol) {
+static bool parse_symbol(Parse *parse, char *symbol) {
     u32 len = str_len(symbol);
 
     // Check fit
