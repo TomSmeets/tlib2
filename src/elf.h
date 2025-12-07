@@ -3,6 +3,7 @@
 #pragma once
 #include "os.h"
 #include "str.h"
+#include "mem.h"
 #include "type.h"
 
 // API
@@ -60,15 +61,15 @@ typedef struct {
     u64 entsize;   // Entry size if section holds table
 } Elf64_Shdr;
 
-static void *os_read_alloc(File *file, u32 size) {
-    void *data = os_alloc(size);
+static void *os_read_alloc(Memory *mem, File *file, u32 size) {
+    u8 *data = mem_array(mem, u8, size);
     if (os_read(file, data, size) != size) {
         return 0;
     }
     return data;
 }
 
-static Elf *elf_load(File *file) {
+static Elf *elf_load(Memory *mem, File *file) {
     Elf64_Ehdr header;
     assert(os_read(file, &header, sizeof(header)) == sizeof(header));
 
@@ -78,20 +79,20 @@ static Elf *elf_load(File *file) {
     assert(header.ident[2] == 'L');
     assert(header.ident[3] == 'F');
 
-    Elf *elf = os_alloc(sizeof(Elf));
+    Elf *elf = mem_struct(mem, Elf);
     elf->entry = header.entry;
     elf->section_count = header.shnum;
-    elf->sections = os_alloc(sizeof(Elf_Section) * elf->section_count);
+    elf->sections = mem_array(mem, Elf_Section, elf->section_count);
 
     // Read section headers
     os_seek(file, header.shoff);
-    Elf64_Shdr *table = os_read_alloc(file, header.shnum * sizeof(Elf64_Shdr));
+    Elf64_Shdr *table = os_read_alloc(mem, file, header.shnum * sizeof(Elf64_Shdr));
     assert(table);
 
     // Read section header string table
     Elf64_Shdr *strtab = &table[header.shstrndx];
     os_seek(file, strtab->offset);
-    char *str = os_read_alloc(file, strtab->size);
+    char *str = os_read_alloc(mem, file, strtab->size);
     assert(str);
 
     for (u32 i = 0; i < elf->section_count; i++) {

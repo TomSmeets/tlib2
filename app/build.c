@@ -4,6 +4,7 @@
 #include "hot.h"
 #include "os.h"
 #include "parse.h"
+#include "dwarf.h"
 #include "tlib.h"
 
 static Memory *mem;
@@ -57,11 +58,22 @@ static void cmd_run(Cli *cli) {
     os_exit(0);
 }
 
+static void cmd_dwarf(Cli *cli) {
+    if (!cli_command(cli, "dwarf", "Read dwarf info")) return;
+    char *path= cli_value(cli, "<FILE>", "Input file");
+
+    File *file = os_open(path, Open_Read);
+    Elf *elf = elf_load(mem, file);
+    dwarf_load(mem, elf, file);
+    os_exit(0);
+}
+
 void os_main(u32 argc, char **argv) {
     if (!mem) mem = mem_new();
 
     Cli *cli = cli_new(mem, argc, argv);
     cmd_run(cli);
     cmd_info(cli);
+    cmd_dwarf(cli);
     cli_help(cli);
 }

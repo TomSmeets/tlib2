@@ -152,6 +152,19 @@ static void fmt_u(Fmt *fmt, u64 value) {
     fmt_u_ex(fmt, value, 10, 0, 0);
 }
 
+static void fmt_i(Fmt *fmt, i64 value) {
+    if(value < 0) {
+        fmt_s(fmt, "-");
+        value = -value;
+    }
+    fmt_u_ex(fmt, value, 10, 0, 0);
+}
+
+static void fmt_x(Fmt *fmt, u64 value) {
+    fmt_s(fmt, "0x");
+    fmt_u_ex(fmt, value, 16, 0, 0);
+}
+
 static void fmt_sp(Fmt *fmt, char *arg1, void *arg2, char *arg3) {
     fmt_s(fmt, arg1);
     // fmt_p(fmt, arg2);
@@ -160,7 +173,18 @@ static void fmt_sp(Fmt *fmt, char *arg1, void *arg2, char *arg3) {
 
 static void fmt_su(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
     fmt_s(fmt, arg1);
-    // fmt_u(fmt, arg2);
+    fmt_u(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+static void fmt_si(Fmt *fmt, char *arg1, i64 arg2, char *arg3) {
+    fmt_s(fmt, arg1);
+    fmt_i(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+
+static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
+    fmt_s(fmt, arg1);
+    fmt_x(fmt, arg2);
     fmt_s(fmt, arg3);
 }
 

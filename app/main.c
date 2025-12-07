@@ -10,13 +10,14 @@
 
 void os_main(u32 argc, char **argv) {
     if (argc != 2) os_fail("Usage: main <INPUT>");
+    Memory *mem = mem_new();
 
     fmt_ss(fout, "Reading ", argv[1], " file...\n");
     File *file = os_open(argv[1], Open_Read);
     assert(file);
 
     fmt_s(fout, "Parsing elf file...\n");
-    Elf *elf = elf_load(file);
+    Elf *elf = elf_load(mem, file);
     assert(elf);
 
     // List section names
@@ -54,5 +55,6 @@ void os_main(u32 argc, char **argv) {
 
     // dwarf_load(elf, file);
     os_close(file);
+    mem_free(mem);
     os_exit(0);
 }

@@ -47,7 +47,7 @@ static void hot_load(Hot *hot, char *path) {
     assert(lib);
 
     File *file = os_open(path, Open_Read);
-    Elf *elf = elf_load(file);
+    Elf *elf = elf_load(hot->mem, file);
     os_close(file);
 
     // If application was already loaded

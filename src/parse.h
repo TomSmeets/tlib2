@@ -21,19 +21,81 @@ static Parse *parse_new(Memory *mem, void *data, u64 size) {
     return parse;
 }
 
+// Check for end of file stream
 static bool parse_eof(Parse *parse) {
     return parse->cursor >= parse->size;
 }
 
+// Peek next byte
 static u8 parse_peek(Parse *parse) {
     if (parse_eof(parse)) return 0;
     return parse->data[parse->cursor];
 }
 
+// Go to the next byte
 static bool parse_next(Parse *parse) {
     if (parse_eof(parse)) return 0;
     parse->cursor++;
     return true;
+}
+
+static void *parse_data(Parse *parse, u32 size) {
+    if (parse->cursor + size > parse->size) {
+        parse->cursor = parse->size;
+        return 0;
+    }
+    void *ret = parse->data + parse->cursor;
+    parse->cursor += size;
+    return ret;
+}
+
+static u32 parse_u32(Parse *parse) {
+    return *(u32 *)parse_data(parse, sizeof(u32));
+}
+
+static u16 parse_u16(Parse *parse) {
+    return *(u16 *)parse_data(parse, sizeof(u16));
+}
+
+static u8 parse_u8(Parse *parse) {
+    return *(u8 *)parse_data(parse, sizeof(u8));
+}
+
+// Parse unsigned LEB128 integer
+static u64 parse_leb128(Parse *parse, bool is_signed) {
+    u64 value = 0;
+    u32 shift = 0;
+    for(;;) {
+        u8 byte = parse_u8(parse);
+        u8 byte_low  = byte & 0x7f;
+        u8 byte_high = byte & 0x80;
+        value |= (u64)byte_low << shift;
+        if (byte_high == 0) break;
+        shift += 7;
+    }
+
+    if(is_signed) {
+        u32 move = 64 - shift;
+
+        // Sign extend
+        i64 s_value = value << move;
+
+        // Shift back while sign extending
+        s_value >>= move;
+
+        value = s_value;
+    }
+    return value;
+}
+
+// Parse unsigned LEB128 integer
+static u64 parse_uleb128(Parse *parse) {
+    return parse_leb128(parse, false);
+}
+
+// Parse signed LEB128 integer
+static i64 parse_ileb128(Parse *parse) {
+    return parse_leb128(parse, true);
 }
 
 // Parse single line, excluding newline
