@@ -11,6 +11,7 @@ static bool str_eq(const char *a, const char *b) {
     }
 }
 
+// Number of chars in a zero terminated string
 static u32 str_len(const char *str) {
     u32 len = 0;
     while (*str++) len++;
