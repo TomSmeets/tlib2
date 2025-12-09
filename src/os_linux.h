@@ -117,7 +117,6 @@ static i32 os_system(char *command) {
     return system(command);
 }
 
-
 // Create a new file watches
 static File *os_watch_new(void) {
     i64 fd = linux_inotify_init(O_NONBLOCK);

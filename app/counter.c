@@ -1,5 +1,5 @@
-#include "os.h"
 #include "fmt.h"
+#include "os.h"
 #include "type.h"
 
 static u32 counter1;
@@ -11,7 +11,7 @@ void os_main(u32 argc, char **argv) {
     fmt_su(fout, "Counter1: ", counter1, "\n");
     fmt_su(fout, "Counter2: ", counter2, "\n");
     fmt_su(fout, "Counter3: ", counter3, "\n");
-    fmt_ss(fout, "msg: ", (char*)message, "\n");
+    fmt_ss(fout, "msg: ", (char *)message, "\n");
     // message[0] = 'X';
 
     counter1++;

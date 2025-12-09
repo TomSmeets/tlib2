@@ -93,8 +93,6 @@ static u64 os_rand(void);
 // Execute a system command, returns the exit code
 static i32 os_system(char *command);
 
-
-
 // Create a new file watches
 static File *os_watch_new(void);
 
