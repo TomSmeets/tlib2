@@ -92,3 +92,14 @@ static u64 os_rand(void);
 
 // Execute a system command, returns the exit code
 static i32 os_system(char *command);
+
+
+
+// Create a new file watches
+static File *os_watch_new(void);
+
+// Start watching a file or directory for changes
+static void os_watch_add(File *watch, char *path);
+
+// Return true if a watched file was changed
+static bool os_watch_check(File *watch);

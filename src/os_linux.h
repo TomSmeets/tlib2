@@ -116,3 +116,38 @@ static u64 os_rand(void) {
 static i32 os_system(char *command) {
     return system(command);
 }
+
+
+// Create a new file watches
+static File *os_watch_new(void) {
+    i64 fd = linux_inotify_init(O_NONBLOCK);
+    assert(fd >= 0);
+    return fd_to_ptr(fd);
+}
+
+// Start watching a file or directory for changes
+static void os_watch_add(File *watch, char *path) {
+    i64 fd = ptr_to_fd(watch);
+    i32 wd = linux_inotify_add_watch(fd, path, IN_MODIFY | IN_CREATE | IN_DELETE);
+    assert(wd >= 0);
+}
+
+// Return true if a watched file was changed
+static bool os_watch_check(File *watch) {
+    i64 fd = ptr_to_fd(watch);
+    u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
+
+    for (;;) {
+        i64 length = linux_read(fd, buffer, sizeof(buffer));
+
+        // No more data
+        if (length == -EAGAIN) return false;
+
+        // Some other error
+        assert(length >= 0);
+
+        // Change!
+        struct inotify_event *event = (struct inotify_event *)buffer;
+        return true;
+    }
+}
