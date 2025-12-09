@@ -1,3 +1,5 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// hot.h - Memory allocator
 #include "hot.h"
 #include "fmt.h"
 #include "os.h"
