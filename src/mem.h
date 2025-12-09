@@ -118,3 +118,9 @@ static void *mem_alloc_zero(Memory *mem, u64 size) {
     std_memzero(ptr, size);
     return ptr;
 }
+
+static void *mem_clone(Memory *mem, void *data, u64 size) {
+    void *new_data = mem_alloc_uninit(mem, size);
+    std_memcmp(new_data, data, size);
+    return new_data;
+}
