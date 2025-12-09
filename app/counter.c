@@ -1,18 +1,18 @@
 #include "os.h"
+#include "fmt.h"
 #include "type.h"
-#include <stdio.h>
 
 static u32 counter1;
 static u32 counter2;
 static u32 counter3;
-
-const char *message = "Hello World!";
+static const char *message = "Hello World!";
 
 void os_main(u32 argc, char **argv) {
-    printf("Counter1: %u\n", counter1);
-    printf("Counter2: %u\n", counter2);
-    printf("Counter3: %u\n", counter3);
-    printf("msg: %s\n", message);
+    fmt_su(fout, "Counter1: ", counter1, "\n");
+    fmt_su(fout, "Counter2: ", counter2, "\n");
+    fmt_su(fout, "Counter3: ", counter3, "\n");
+    fmt_ss(fout, "msg: ", (char*)message, "\n");
+    // message[0] = 'X';
 
     counter1++;
     if (counter1 > 10) {
