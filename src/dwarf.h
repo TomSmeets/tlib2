@@ -100,7 +100,4 @@ static void dwarf_load(Memory *mem, Elf *elf, File *file) {
         fmt_su(fout, "Count: ", attr_count, "\n");
     }
     fmt_su(fout, "Total Count: ", abbrev_count, "\n");
-
-    abbrev->attr_count = attr_count;
-    abbrev->attr_list = mem_clone(mem, attr_list, attr_count * sizeof(attr_list[0]));
 }
