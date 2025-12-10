@@ -8,9 +8,6 @@
 typedef struct Hot Hot;
 static Hot *hot_new(Memory *mem);
 
-// Create a new unque temporary file path
-static char *hot_mktmp(Hot *hot, char *prefix);
-
 // Load a new application from a given path
 static void hot_load(Hot *hot, char *path);
 
@@ -18,6 +15,17 @@ static void hot_load(Hot *hot, char *path);
 static void hot_call(Hot *hot, u32 argc, char **argv);
 
 // =======================================================
+
+// Format a unique temp file path
+static char *os_mktmp(Memory *mem, char *suffix) {
+    u64 time = os_time();
+    Fmt *fmt = fmt_new(mem);
+    fmt_s(fmt, "/tmp/temp_");
+    fmt_u_ex(fmt, os_time(), 16, 0, 0);
+    fmt_s(fmt, suffix);
+    return fmt_end(fmt);
+}
+
 struct Hot {
     Memory *mem;
     Library *lib;
@@ -31,15 +39,6 @@ static Hot *hot_new(Memory *mem) {
     return hot;
 }
 
-static char *hot_mktmp(Hot *hot, char *prefix) {
-    u64 time = os_time();
-    Fmt *fmt = fmt_new(hot->mem);
-    fmt_s(fmt, prefix);
-    fmt_s(fmt, "_");
-    fmt_u_ex(fmt, os_time(), 16, 0, 0);
-    fmt_s(fmt, ".so");
-    return fmt_end(fmt);
-}
 
 // Load a (new) version of the library
 static void hot_load(Hot *hot, char *path) {
