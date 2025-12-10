@@ -40,6 +40,9 @@ typedef enum {
     Open_Write,
     // Create new file or truncate existing
     Open_Create,
+
+    // Create new executable file
+    Open_CreateExe,
 } File_Mode;
 
 // Open a file for reading or writing
@@ -78,8 +81,8 @@ static Library *os_dlopen(char *path);
 // Lookup a symbol in a library
 static void *os_dlsym(Library *lib, char *sym);
 
-// Get base pointer of a library
-static void *os_dlbase(Library *lib);
+// Get base address of a library based on a pointer inside that library
+static void *os_dlbase(void *ptr);
 
 // Get current time in micro seconds
 static u64 os_time(void);

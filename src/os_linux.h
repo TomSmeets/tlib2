@@ -53,7 +53,8 @@ static File *os_open(char *path, File_Mode mode) {
     u32 perm = 0644;
     if (mode == Open_Read) flags |= O_RDONLY;
     if (mode == Open_Write) flags |= O_RDONLY | O_WRONLY;
-    if (mode == Open_Create) flags |= O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC;
+    if (mode == Open_Create || mode == Open_CreateExe) flags |= O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC;
+    if (mode == Open_CreateExe) perm = 0755;
     i32 fd = linux_open(path, flags, perm);
     return fd_to_ptr(fd);
 }
@@ -85,10 +86,9 @@ static void *os_dlsym(Library *lib, char *sym) {
     return dlsym((void *)lib, sym);
 }
 
-static void *os_dlbase(Library *lib) {
+static void *os_dlbase(void *ptr) {
     Dl_info info;
-    void *addr = os_dlsym(lib, "os_main");
-    dladdr(addr, &info);
+    dladdr(ptr, &info);
     return info.fbase;
 }
 
