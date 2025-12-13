@@ -18,8 +18,8 @@ static char *os_mktmp(Memory *mem, char *prefix, char *suffix) {
 static void os_file_copy(char *src_path, char *dst_path) {
     File *src = os_open(src_path, Open_Read);
     File *dst = os_open(dst_path, Open_CreateExe);
-    u8 buffer[4*1024];
-    for(;;) {
+    u8 buffer[4 * 1024];
+    for (;;) {
         i64 bytes_read = os_read(src, buffer, sizeof(buffer));
         assert(bytes_read >= 0);
         if (bytes_read == 0) break;
@@ -41,7 +41,6 @@ static Hot *hot_new(Memory *mem) {
     hot->mem = mem;
     return hot;
 }
-
 
 // Load a (new) version of the library
 static void *hot_load(Hot *hot, char *path, char *symbol) {

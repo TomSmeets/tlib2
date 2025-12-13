@@ -8,7 +8,7 @@ static int counter = 0;
 void os_main(int argc, char **argv) {
     printf("Hello world: %d!\n", counter);
     counter++;
-    usleep(100*1000); // sleep 5 ms
+    usleep(100 * 1000); // sleep 5 ms
 }
 
 // Used when compiled as a normal application

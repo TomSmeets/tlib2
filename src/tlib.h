@@ -171,7 +171,7 @@ static void mod_expand_links(TLib *lib) {
 static Module *mod_sort_split(Module *mod) {
     Module *fast = mod;
     Module *slow = mod;
-    while(fast && fast->next) {
+    while (fast && fast->next) {
         fast = fast->next->next;
         if (fast) slow = slow->next;
     }
@@ -183,13 +183,13 @@ static Module *mod_sort_split(Module *mod) {
 // Compare two modules for sorting
 static i32 mod_compare(Module *left, Module *right) {
     i32 cmp = 0;
-    if(cmp == 0) cmp = (i32) left->sort_index - (i32)right->sort_index;
-    if(cmp == 0) cmp = (i32) str_len(left->name) - (i32) str_len(right->name);
+    if (cmp == 0) cmp = (i32)left->sort_index - (i32)right->sort_index;
+    if (cmp == 0) cmp = (i32)str_len(left->name) - (i32)str_len(right->name);
     return cmp;
 }
 
 static void mod_number(Module *mod) {
-    if(mod->sort_index > 0) return;
+    if (mod->sort_index > 0) return;
     mod->sort_index = 1;
 
     for (Module_Link *link = mod->deps; link; link = link->next) {
@@ -208,11 +208,11 @@ static i32 link_compare(Module_Link *left, Module_Link *right) {
 static void mod_sort(TLib *lib) {
     Module *sorted = 0;
 
-    for(Module *mod = lib->modules; mod; mod = mod->next) {
+    for (Module *mod = lib->modules; mod; mod = mod->next) {
         mod->sort_index = 0;
     }
 
-    for(Module *mod = lib->modules; mod; mod = mod->next) {
+    for (Module *mod = lib->modules; mod; mod = mod->next) {
         mod_number(mod);
         mod->deps = list_sort(mod->deps, offset_of(Module_Link, next), (void *)link_compare);
     }

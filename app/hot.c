@@ -21,7 +21,7 @@ static void (*entry_method)(u32, char **);
 
 void os_main(u32 argc, char **argv) {
     bool init = !hot;
-    if(init) {
+    if (init) {
         // Check arguments
         if (argc < 4) {
             fmt_s(ferr, "Usage: ");

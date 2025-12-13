@@ -43,8 +43,6 @@ static void cmd_info(Cli *cli) {
     os_exit(0);
 }
 
-
-
 static void cmd_run(Cli *cli) {
     static bool init;
     static Hot *hot;
@@ -79,7 +77,7 @@ static void cmd_run(Cli *cli) {
         child_argc = cli_get_remaining(cli, input_path, array_count(child_argv), (char **)child_argv);
     }
 
-    if(os_watch_check(watch) || !init) {
+    if (os_watch_check(watch) || !init) {
         child_main = 0;
         i32 ret = os_system(build_command);
         if (ret == 0) child_main = hot_load(hot, output_path, "os_main");
@@ -104,6 +102,12 @@ static void cmd_dwarf(Cli *cli) {
     os_exit(0);
 }
 
+static void cmd_format(Cli *cli) {
+    if (!cli_command(cli, "format", "Format tlib")) return;
+    i32 ret = os_system("clang-format --verbose -i app/* src/*");
+    os_exit(ret);
+}
+
 void os_main(u32 argc, char **argv) {
     if (!mem) mem = mem_new();
 
@@ -111,5 +115,6 @@ void os_main(u32 argc, char **argv) {
     cmd_run(cli);
     cmd_info(cli);
     cmd_dwarf(cli);
+    cmd_format(cli);
     cli_help(cli);
 }
