@@ -27,10 +27,10 @@ static void cmd_info(Cli *cli) {
 
     for (Module *mod = lib->modules; mod; mod = mod->next) {
         fmt_s(fout, mod->name);
-        fmt_pad_line(fout, 10, ' ');
+        fmt_pad_line(fout, 20, ' ');
         fmt_s(fout, " | ");
         fmt_s(fout, mod->info);
-        fmt_pad_line(fout, 60, ' ');
+        fmt_pad_line(fout, 70, ' ');
         fmt_s(fout, " | ");
 
         for (Module_Link *link = mod->deps; link; link = link->next) {
@@ -42,19 +42,55 @@ static void cmd_info(Cli *cli) {
     os_exit(0);
 }
 
-static void cmd_run(Cli *cli) {
-    if (!cli_command(cli, "run", "Run with hot reloading")) return;
-    if (!hot) hot = hot_new(mem);
-    hot_load(hot, "./out/main.so");
 
-    char *argv[64] = {};
-    u32 argc = cli_get_remaining(cli, array_count(argv), (char **)argv);
-    hot_call(hot, argc, argv);
-    hot_call(hot, argc, argv);
-    hot_load(hot, "./out/main2.so");
-    hot_call(hot, argc, argv);
-    hot_call(hot, argc, argv);
-    os_exit(0);
+
+static void cmd_run(Cli *cli) {
+    static bool init;
+    static Hot *hot;
+    static void (*child_main)(u32, char **);
+    static File *watch;
+    static char *build_command;
+
+    static u32 child_argc;
+    static char *child_argv[64];
+
+    char *output_path = "out/hot.so";
+    if (!cli_command(cli, "run", "Run with hot reloading")) return;
+    char *input_path = cli_value(cli, "FILE", "Main source file");
+
+    if (!init) {
+        hot = hot_new(mem);
+
+        watch = os_watch_new();
+        os_watch_add(watch, "src");
+        os_watch_add(watch, "app");
+
+        Fmt *f = fmt_new(mem);
+        fmt_s(f, "clang");
+        fmt_ss(f, " -o ", output_path, "");
+        fmt_s(f, " -Isrc");
+        fmt_s(f, " -shared");
+        fmt_s(f, " -fPIC");
+        fmt_s(f, " ");
+        fmt_ss(f, " ", input_path, "");
+        build_command = fmt_end(f);
+
+        child_argc = cli_get_remaining(cli, input_path, array_count(child_argv), (char **)child_argv);
+    }
+
+    if(os_watch_check(watch) || !init) {
+        child_main = 0;
+        i32 ret = os_system(build_command);
+        if (ret == 0) child_main = hot_load(hot, output_path, "os_main");
+    }
+
+    if (child_main) {
+        child_main(child_argc, child_argv);
+    } else {
+        os_sleep(50ULL * 1000);
+    }
+
+    init = 1;
 }
 
 static void cmd_dwarf(Cli *cli) {

@@ -4,6 +4,7 @@
 
 // Helper macros
 #define static_assert(cond) _Static_assert(cond, "")
+#define offset_of(type, field) __builtin_offsetof(type, field)
 #define array_count(a) (sizeof(a) / sizeof(a[0]))
 
 // Base types

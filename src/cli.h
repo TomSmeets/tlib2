@@ -24,7 +24,7 @@ static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info);
 static void cli_help(Cli *cli);
 
 // Collect remaining arguments into a new argv array
-static u32 cli_get_remaining(Cli *cli, u32 count, char **argv);
+static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv);
 
 // ==== Implementation ====
 typedef struct Cli_Command Cli_Command;
@@ -219,10 +219,11 @@ static void cli_help(Cli *cli) {
     os_exit(1);
 }
 
-static u32 cli_get_remaining(Cli *cli, u32 count, char **argv) {
+static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv) {
     u32 i = 0;
+    if (argv0 && count > 0) argv[i++] = argv0;
     for (Cli_Arg *arg = cli->args; arg; arg = arg->next) {
-        if (i == count) break;
+        if (i >= count) break;
         if (arg->is_used) continue;
         argv[i++] = arg->name;
     }
