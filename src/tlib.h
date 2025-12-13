@@ -2,6 +2,7 @@
 // tlib - Helper functions for parsing tlib modules
 #pragma once
 #include "fmt.h"
+#include "list.h"
 #include "mem.h"
 #include "parse.h"
 #include "type.h"
@@ -15,7 +16,7 @@ struct Module {
     char *path;
     char *info;
     u32 sort_index;
-    Module_Link *deps, *deps_last;
+    Module_Link *deps;
     Module *next;
 };
 
@@ -26,7 +27,7 @@ struct Module_Link {
 
 struct TLib {
     Memory *mem;
-    Module *modules, *modules_last;
+    Module *modules;
 };
 
 static TLib *tlib_new(Memory *mem) {
@@ -43,7 +44,7 @@ static Module *module_get(TLib *lib, char *name) {
 
     Module *mod = mem_struct(lib->mem, Module);
     mod->name = name;
-    LIST_APPEND(lib->modules, lib->modules_last, mod);
+    LIST_PUSH(lib->modules, mod);
     return mod;
 }
 
@@ -57,7 +58,7 @@ static Module_Link *module_get_link(TLib *lib, Module *mod, Module *dep) {
     // Create a new link
     Module_Link *link = mem_struct(lib->mem, Module_Link);
     link->module = dep;
-    LIST_APPEND(mod->deps, mod->deps_last, link);
+    LIST_PUSH(mod->deps, link);
     return link;
 }
 
@@ -166,65 +167,6 @@ static void mod_expand_links(TLib *lib) {
     }
 }
 
-static void *list_next(void *list, u32 next) {
-    return *(void **)(list + next);
-}
-
-// Generic 'next' for a linked list
-#define LIST_NEXT(LIST, NEXT) (*(void **)((LIST) + NEXT))
-
-// Split linked list into two
-static void *list_sort_split(void *list, u32 next) {
-    void *fast = list;
-    void *slow = list;
-    while (fast && LIST_NEXT(fast, next)) {
-        fast = LIST_NEXT(fast, next);
-        fast = LIST_NEXT(fast, next);
-        if (fast) slow = LIST_NEXT(slow, next);
-    }
-
-    void *mid = LIST_NEXT(slow, next);
-    LIST_NEXT(slow, next) = 0;
-    return mid;
-}
-
-static void list_append(void **start, void **end, void *item, u32 next) {
-    if(!*start) {
-        *start = *end = item;
-        return;
-    }
-    LIST_NEXT(*end, next) = item;
-    *end = item;
-}
-
-static void *list_sort_merge(void *left, void *right, u32 next, int (*compare)(void *, void *)) {
-    if (!left) return right;
-    if (!right) return left;
-
-    void *list_start = 0;
-    void *list_end = 0;
-    while (left || right) {
-        if (!right || (left && compare(left, right) <= 0)) {
-            list_append(&list_start, &list_end, left, next);
-            left = LIST_NEXT(left, next);
-        } else {
-            list_append(&list_start, &list_end, right, next);
-            right = LIST_NEXT(right, next);
-        }
-    }
-    return list_start;
-}
-
-static void *list_sort(void *list, u32 next, int (*compare)(void *, void *)) {
-    if (!list) return list;
-    if (!LIST_NEXT(list, next)) return list;
-    void *left = list;
-    void *right = list_sort_split(list, next);
-    left = list_sort(left, next, compare);
-    right = list_sort(right, next, compare);
-    return list_sort_merge(left, right, next, compare);
-}
-
 // Split linked list into two
 static Module *mod_sort_split(Module *mod) {
     Module *fast = mod;
@@ -238,56 +180,12 @@ static Module *mod_sort_split(Module *mod) {
     return mid;
 }
 
-static i32 str_compare(char *a, char *b) {
-    for (;;) {
-        if (*a == 0 && *b == 0) return 0;
-        if (*a < *b) return -1;
-        if (*a > *b) return 1;
-        a++;
-        b++;
-    }
-}
-
+// Compare two modules for sorting
 static i32 mod_compare(Module *left, Module *right) {
     i32 cmp = 0;
     if(cmp == 0) cmp = (i32) left->sort_index - (i32)right->sort_index;
     if(cmp == 0) cmp = (i32) str_len(left->name) - (i32) str_len(right->name);
     return cmp;
-}
-
-static Module *mod_sort_merge(Module *left, Module *right) {
-    if (!left) return right;
-    if (!right) return left;
-
-    Module *list_start = 0;
-    Module *list_end = 0;
-    while (left && right) {
-        if (mod_compare(left, right)) {
-            LIST_APPEND(list_start, list_end, left);
-            left = left->next;
-        } else {
-            LIST_APPEND(list_start, list_end, right);
-            right = right->next;
-        }
-    }
-
-    // Append remaining
-    list_end->next = left ? left : right;
-    return list_start;
-}
-
-static Module *mod_sort2(Module *list) {
-    if (!list) return list;
-    if (!list->next) return list;
-
-    Module *left  = list;
-    Module *right = mod_sort_split(list);
-    assert(left != right);
-    assert(left);
-    assert(right);
-    left = mod_sort2(left);
-    right = mod_sort2(right);
-    return mod_sort_merge(left, right);
 }
 
 static void mod_number(Module *mod) {
@@ -316,14 +214,7 @@ static void mod_sort(TLib *lib) {
 
     for(Module *mod = lib->modules; mod; mod = mod->next) {
         mod_number(mod);
-
-        // Sort deps
         mod->deps = list_sort(mod->deps, offset_of(Module_Link, next), (void *)link_compare);
-
-        Module_Link *last = mod->deps;
-        while(last && last->next) last = last->next;
-        mod->deps_last = last;
     }
-
     lib->modules = list_sort(lib->modules, offset_of(Module, next), (void *)mod_compare);
 }

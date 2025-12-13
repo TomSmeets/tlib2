@@ -1,3 +1,5 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// test.c - Run all unit tests
 #include "fmt.h"
 #include "os.h"
 

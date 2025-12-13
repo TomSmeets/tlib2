@@ -1,4 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// build.c - Optional build tool for tlib
 #include "buf.h"
 #include "cli.h"
 #include "dwarf.h"

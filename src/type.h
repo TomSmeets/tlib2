@@ -53,21 +53,3 @@ static_assert(sizeof(bool) == 1);
 #define MAX(A, B) ((A) >= (B) ? (A) : (B))
 
 #define TYPEDEF_STRUCT(NAME) typedef struct NAME NAME
-
-// Append an element to a singly linked list with first and last pointers
-#define LIST_APPEND(FIRST, LAST, EL)                                                                                                                 \
-    do {                                                                                                                                             \
-        if ((FIRST)) {                                                                                                                               \
-            (LAST)->next = (EL);                                                                                                                     \
-            (LAST) = (EL);                                                                                                                           \
-        } else {                                                                                                                                     \
-            (FIRST) = (LAST) = (EL);                                                                                                                 \
-        }                                                                                                                                            \
-    } while (0)
-
-// Prepend item onto a singly linked list
-#define LIST_PUSH(FIRST, EL)                                                                                                                         \
-    do {                                                                                                                                             \
-        (EL)->next = (FIRST);                                                                                                                        \
-        (FIRST) = (EL);                                                                                                                              \
-    } while (0)

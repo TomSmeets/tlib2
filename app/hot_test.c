@@ -1,3 +1,5 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// hot_test.h - Test application for hot reloading
 #include <stdio.h>
 #include <unistd.h>
 
@@ -10,6 +12,6 @@ void os_main(int argc, char **argv) {
 }
 
 // Used when compiled as a normal application
-int main(void) {
-    while (1) os_main(0, 0);
+int main(int argc, char **argv) {
+    while (1) os_main(argc, argv);
 }

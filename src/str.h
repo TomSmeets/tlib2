@@ -28,3 +28,18 @@ static Buffer str_buf(char *str) {
         str_len(str),
     };
 }
+
+// Compare two strings
+// Returns:
+//   -1 if A < B
+//    0 if A == B
+//   +1 if A > B
+static i32 str_compare(char *a, char *b) {
+    for (;;) {
+        if (*a == 0 && *b == 0) return 0;
+        if (*a < *b) return -1;
+        if (*a > *b) return 1;
+        a++;
+        b++;
+    }
+}

@@ -1,3 +1,5 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// dwarf_types.h - Enum values for DWARF format
 #pragma once
 typedef enum {
     DW_TAG_array_type = 0x01,

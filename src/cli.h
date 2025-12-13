@@ -7,6 +7,7 @@
 // Help text is generated automatically
 #pragma once
 #include "fmt.h"
+#include "list.h"
 #include "mem.h"
 
 typedef struct Cli Cli;
