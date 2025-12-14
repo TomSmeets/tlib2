@@ -23,10 +23,6 @@
 
 #define LIST_NEXT(LIST, NEXT) (*(void **)((LIST) + (NEXT)))
 
-static void **list_next(void *list, u32 next) {
-    return (void **)(list + next);
-}
-
 static void list_append(void **first, void **last, void *el, u32 next) {
     // First time init
     if (!*first) {
