@@ -20,59 +20,62 @@ typedef struct {
     Dwarf_Abbrev_Attr *attr_list;
 } Dwarf_Abbrev;
 
-static void dwarf_load(Memory *mem, Elf *elf, File *file) {
-    Elf_Section *sect_info = elf_find_section(elf, ".debug_info");
-    Elf_Section *sect_abbrev = elf_find_section(elf, ".debug_abbrev");
-    assert(sect_info);
-    assert(sect_abbrev);
+typedef struct {
+    u32 count;
+    Dwarf_Abbrev *abbrev;
+} Dwarf_Abbrev_List;
 
-    fmt_su(fout, "Section Offset: ", sect_info->offset, "\n");
-    fmt_su(fout, "Section Size: ", sect_info->size, "\n");
-    os_seek(file, sect_info->offset);
-    u64 info_size = sect_info->size;
-    u8 *info_data = os_read_alloc(mem, file, info_size);
-    Parse *parse = parse_new(mem, info_data, info_size);
+typedef struct {
+    Memory *mem;
+    File *file;
+    Elf *elf;
+    Buffer sect_info;
+    Buffer sect_abbrev;
+    Buffer sect_str;
+    Buffer sect_str_offsets;
+} Dwarf_File;
 
-    u32 unit_length = parse_u32(parse);
-    u16 version = parse_u16(parse);
-    u8 unit_type = parse_u8(parse);
-    u8 addr_size = parse_u8(parse);
-    u32 debug_abbrev_offset = parse_u32(parse);
+static Buffer elf_read_section(Memory *mem, char *name, Elf *elf, File *file) {
+    Elf_Section *sect = elf_find_section(elf, name);
+    if (!sect) return (Buffer){0, 0};
+    os_seek(file, sect->offset);
+    u64 size = sect->size;
+    u8 *data = os_read_alloc(mem, file, size);
+    return (Buffer){data, size};
+}
 
-    fmt_su(fout, "unit_length: ", unit_length, "\n");
-    fmt_su(fout, "version: ", version, "\n");
-    fmt_su(fout, "unit_type: ", unit_type, "\n");
-    fmt_su(fout, "addr_size: ", addr_size, "\n");
-    fmt_su(fout, "debug_abbrev_offset: ", debug_abbrev_offset, "\n");
-    assert_msg(unit_length < 0xfffffff0, "64 bit dwarf not supported yet");
-    assert_msg(unit_type == 1, "Only supporting DW_UT_compile unit");
+static Dwarf_File *dwarf_open(Memory *mem, Elf *elf, File *file) {
+    Dwarf_File *dwarf = mem_struct(mem, Dwarf_File);
+    dwarf->mem = mem;
+    dwarf->file = file;
+    dwarf->elf = elf;
+    dwarf->sect_info = elf_read_section(mem, ".debug_info", elf, file);
+    dwarf->sect_abbrev = elf_read_section(mem, ".debug_abbrev", elf, file);
+    dwarf->sect_str = elf_read_section(mem, ".debug_str", elf, file);
+    dwarf->sect_str_offsets = elf_read_section(mem, ".debug_str_offsets", elf, file);
+    return dwarf;
+}
 
-    os_seek(file, sect_abbrev->offset);
-    u64 abbrev_size = sect_abbrev->size;
-    u8 *abbrev_data = os_read_alloc(mem, file, abbrev_size);
+static Dwarf_Abbrev_List dwarf_load_abbrev(Dwarf_File *file) {
+    // debug_abbrev contains the structure of each DIE
+    Parse *parse = parse_new(file->mem, file->sect_abbrev.data, file->sect_abbrev.size);
 
-    parse = parse_new(mem, abbrev_data, abbrev_size);
-
+    // Allocate a big enogh array for abbreviatoon list
+    u32 abbrev_capacity = 1024 * 4;
     u32 abbrev_count = 0;
-    Dwarf_Abbrev abbrev_list[1024 * 4];
+    Dwarf_Abbrev *abbrev_list = mem_array(file->mem, Dwarf_Abbrev, abbrev_capacity);
     for (;;) {
         if (parse_eof(parse)) break;
-
         u64 abbrev_code = parse_uleb128(parse);
-        fmt_sx(fout, "Abbrev: ", abbrev_code, "\n");
 
         // Code 0 is used for padding
         if (abbrev_code == 0) continue;
-        assert(abbrev_code < array_count(abbrev_list));
+        assert(abbrev_code < abbrev_capacity);
         if (abbrev_code >= abbrev_count) abbrev_count = abbrev_code + 1;
 
         Dwarf_Abbrev *abbrev = &abbrev_list[abbrev_code];
         abbrev->tag = parse_uleb128(parse);
-        fmt_sx(fout, "DIE: ", abbrev->tag, "\n");
-
         abbrev->has_children = parse_u8(parse);
-        fmt_su(fout, "has_children: ", abbrev->has_children, "\n");
-
         u32 attr_count = 0;
         Dwarf_Abbrev_Attr attr_list[64];
         for (;;) {
@@ -82,22 +85,191 @@ static void dwarf_load(Memory *mem, Elf *elf, File *file) {
             Dwarf_Abbrev_Attr *attr = &attr_list[attr_count++];
             attr->name = attr_name;
             attr->form = attr_form;
-
-            fmt_s(fout, "attr: ");
-            fmt_s(fout, dwarf_attribute_type_to_string(attr_name));
-            fmt_s(fout, " -> ");
-            fmt_s(fout, dwarf_form_to_string(attr_form));
-            fmt_s(fout, "\n");
-
             if (attr_form == DW_FORM_implicit_const) {
                 attr->implicit_const_value = parse_ileb128(parse);
-                fmt_si(fout, "Implicit const: ", attr->implicit_const_value, "\n");
             }
         }
-
         abbrev->attr_count = attr_count;
-        abbrev->attr_list = mem_clone(mem, attr_list, attr_count * sizeof(attr_list[0]));
-        fmt_su(fout, "Count: ", attr_count, "\n");
+        abbrev->attr_list = mem_clone(file->mem, attr_list, attr_count * sizeof(Dwarf_Abbrev_Attr));
     }
-    fmt_su(fout, "Total Count: ", abbrev_count, "\n");
+    return (Dwarf_Abbrev_List){
+        .count = abbrev_count,
+        .abbrev = abbrev_list,
+    };
+}
+
+static u64 parse_u64_form(Parse *parse, Dwarf_Form form) {
+    switch (form) {
+    case DW_FORM_strx:
+    case DW_FORM_addrx:
+    case DW_FORM_ref_udata:
+    case DW_FORM_udata:
+    case DW_FORM_rnglistx:
+        return parse_uleb128(parse);
+    case DW_FORM_sdata:
+        return parse_ileb128(parse);
+    case DW_FORM_strx1:
+    case DW_FORM_data1:
+    case DW_FORM_addrx1:
+    case DW_FORM_ref1:
+        return parse_u8(parse);
+    case DW_FORM_strx2:
+    case DW_FORM_data2:
+    case DW_FORM_addrx2:
+    case DW_FORM_ref2:
+        return parse_u16(parse);
+    case DW_FORM_addrx3:
+        return parse_u24(parse);
+    case DW_FORM_strx4:
+    case DW_FORM_data4:
+    case DW_FORM_addrx4:
+    case DW_FORM_ref4:
+        return parse_u32(parse);
+    case DW_FORM_data8:
+    case DW_FORM_ref8:
+        return parse_u64(parse);
+    case DW_FORM_data16:
+        (void)parse_u64(parse);
+        return parse_u64(parse);
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+static u64 parse_form_data(Parse *parse, Dwarf_Form form) {
+    u64 offset = 0;
+    switch (form) {
+    case DW_FORM_strx:
+        offset = parse_uleb128(parse);
+        // break;
+    case DW_FORM_strx1:
+        offset = parse_u8(parse);
+        break;
+    case DW_FORM_strx2:
+        offset = parse_u16(parse);
+        break;
+    case DW_FORM_strx4:
+        offset = parse_u32(parse);
+        break;
+    default:
+        assert(0);
+        return 0;
+    }
+    return offset;
+}
+
+static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
+    Parse *parse = parse_new(dwarf->mem, dwarf->sect_info.data, dwarf->sect_info.size);
+
+    u32 unit_length = parse_u32(parse);
+    fmt_su(fout, "unit_length: ", unit_length, "\n");
+    assert_msg(unit_length < 0xfffffff0, "64 bit dwarf not supported yet");
+
+    u16 version = parse_u16(parse);
+    fmt_su(fout, "version: ", version, "\n");
+    assert_msg(version == 5, "Only supports DWARF5");
+
+    u8 unit_type = parse_u8(parse);
+    fmt_su(fout, "unit_type: ", unit_type, "\n");
+    assert_msg(unit_type == DW_UT_compile, "Only supports DW_UT_compile unit");
+
+    u8 addr_size = parse_u8(parse);
+    fmt_su(fout, "addr_size: ", addr_size, "\n");
+    assert(addr_size == 8);
+
+    u32 debug_abbrev_offset = parse_u32(parse);
+    fmt_su(fout, "debug_abbrev_offset: ", debug_abbrev_offset, "\n");
+    assert(debug_abbrev_offset == 0);
+
+    while (1) {
+        u64 die_abbrev_id = parse_uleb128(parse);
+        // 0 is reserved for alignment
+        if (die_abbrev_id == 0) continue;
+
+        fmt_s(fout, "\n");
+        fmt_su(fout, "Abbrev: ", die_abbrev_id, "\n");
+
+        Dwarf_Abbrev *die_abbrev = abbrev->abbrev + die_abbrev_id;
+        fmt_ss(fout, "", dwarf_tag_to_string(die_abbrev->tag), "\n");
+        for (u32 i = 0; i < die_abbrev->attr_count; ++i) {
+            Dwarf_Abbrev_Attr *attr = die_abbrev->attr_list + i;
+            fmt_s(fout, "  ");
+            fmt_s(fout, dwarf_attribute_type_to_string(attr->name));
+            fmt_s(fout, " ");
+            fmt_pad_line(fout, 30, ' ');
+            fmt_s(fout, dwarf_form_to_string(attr->form));
+            fmt_s(fout, " ");
+            fmt_pad_line(fout, 55, ' ');
+
+            switch (attr->form) {
+            case DW_FORM_strx:
+            case DW_FORM_strx1:
+            case DW_FORM_strx2:
+            case DW_FORM_strx4: {
+                u64 off = parse_u64_form(parse, attr->form);
+                fmt_su(fout, "offset = ", off, "\n");
+            } break;
+            case DW_FORM_udata:
+            case DW_FORM_sdata:
+            case DW_FORM_data1:
+            case DW_FORM_data2:
+            case DW_FORM_data4:
+            case DW_FORM_data8:
+            case DW_FORM_data16: {
+                u64 data = parse_u64_form(parse, attr->form);
+                fmt_su(fout, "data = ", data, "\n");
+            } break;
+            case DW_FORM_sec_offset: {
+                u32 off = parse_u32(parse);
+                fmt_su(fout, "offset = ", off, "\n");
+            } break;
+            case DW_FORM_addrx:
+            case DW_FORM_addrx1:
+            case DW_FORM_addrx2:
+            case DW_FORM_addrx3:
+            case DW_FORM_addrx4: {
+                u64 data = parse_u64_form(parse, attr->form);
+                fmt_su(fout, "addr = ", data, "\n");
+            } break;
+            case DW_FORM_ref_udata:
+            case DW_FORM_ref1:
+            case DW_FORM_ref2:
+            case DW_FORM_ref4:
+            case DW_FORM_ref8: {
+                u64 data = parse_u64_form(parse, attr->form);
+                fmt_su(fout, "ref = ", data, "\n");
+            } break;
+            case DW_FORM_exprloc: {
+                u64 len = parse_uleb128(parse);
+                parse_data(parse, len);
+                fmt_su(fout, "exprloc = ", len, "\n");
+            } break;
+            case DW_FORM_flag_present: {
+                fmt_su(fout, "flag = ", 1, "\n");
+            } break;
+            case DW_FORM_flag: {
+                u8 present = parse_u8(parse);
+                fmt_su(fout, "flag = ", present, "\n");
+            } break;
+            case DW_FORM_rnglistx: {
+                u64 ix = parse_uleb128(parse);
+                fmt_su(fout, "range_ix = ", ix, "\n");
+               } break;
+
+            default: {
+                fmt_s(fout, "?\n");
+                assert(0);
+            } break;
+            }
+        }
+    }
+}
+
+static void dwarf_load(Memory *mem, Elf *elf, File *file) {
+    Dwarf_File *dwarf = dwarf_open(mem, elf, file);
+
+    // Load abbreviation list
+    Dwarf_Abbrev_List abbrev = dwarf_load_abbrev(dwarf);
+    dwarf_load_die(dwarf, &abbrev);
 }

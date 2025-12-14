@@ -48,6 +48,9 @@ static void *parse_data(Parse *parse, u32 size) {
     parse->cursor += size;
     return ret;
 }
+static u64 parse_u64(Parse *parse) {
+    return *(u64 *)parse_data(parse, sizeof(u64));
+}
 
 static u32 parse_u32(Parse *parse) {
     return *(u32 *)parse_data(parse, sizeof(u32));
@@ -60,6 +63,15 @@ static u16 parse_u16(Parse *parse) {
 static u8 parse_u8(Parse *parse) {
     return *(u8 *)parse_data(parse, sizeof(u8));
 }
+
+static u32 parse_u24(Parse *parse) {
+    u32 data = 0;
+    data |= ((u32) parse_u8(parse)) << 0;
+    data |= ((u32) parse_u8(parse)) << 8;
+    data |= ((u32)parse_u8(parse)) << 16;
+    return data;
+}
+
 
 // Parse unsigned LEB128 integer
 static u64 parse_leb128(Parse *parse, bool is_signed) {

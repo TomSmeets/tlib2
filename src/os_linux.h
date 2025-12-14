@@ -68,6 +68,7 @@ static void os_close(File *file) {
 static void os_seek(File *file, u64 pos) {
     assert(file);
     i64 result = linux_seek(ptr_to_fd(file), pos, SEEK_SET);
+    assert(result >= 0);
 }
 
 static u64 os_file_size(File *file) {
@@ -147,6 +148,7 @@ static bool os_watch_check(File *watch) {
 
         // Change!
         struct inotify_event *event = (struct inotify_event *)buffer;
+        (void) event;
         return true;
     }
 }

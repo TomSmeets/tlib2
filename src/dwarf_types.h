@@ -489,3 +489,14 @@ static char *dwarf_attribute_type_to_string(Dwarf_Attribute_Type type) {
     if (type == DW_AT_hi_user) return "DW_AT_hi_user";
     return "(unknown)";
 }
+
+typedef enum {
+    DW_UT_compile = 0x01,
+    DW_UT_type = 0x02,
+    DW_UT_partial = 0x03,
+    DW_UT_skeleton = 0x04,
+    DW_UT_split_compile = 0x05,
+    DW_UT_split_type = 0x06,
+    DW_UT_lo_user = 0x80,
+    DW_UT_hi_user = 0xff,
+} Dwarf_Unit_Type;
