@@ -66,12 +66,11 @@ static u8 parse_u8(Parse *parse) {
 
 static u32 parse_u24(Parse *parse) {
     u32 data = 0;
-    data |= ((u32) parse_u8(parse)) << 0;
-    data |= ((u32) parse_u8(parse)) << 8;
+    data |= ((u32)parse_u8(parse)) << 0;
+    data |= ((u32)parse_u8(parse)) << 8;
     data |= ((u32)parse_u8(parse)) << 16;
     return data;
 }
-
 
 // Parse unsigned LEB128 integer
 static u64 parse_leb128(Parse *parse, bool is_signed) {

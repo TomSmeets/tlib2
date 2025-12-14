@@ -255,7 +255,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_rnglistx: {
                 u64 ix = parse_uleb128(parse);
                 fmt_su(fout, "range_ix = ", ix, "\n");
-               } break;
+            } break;
 
             default: {
                 fmt_s(fout, "?\n");

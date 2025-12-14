@@ -148,7 +148,7 @@ static bool os_watch_check(File *watch) {
 
         // Change!
         struct inotify_event *event = (struct inotify_event *)buffer;
-        (void) event;
+        (void)event;
         return true;
     }
 }
