@@ -180,7 +180,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
     assert(debug_abbrev_offset == 0);
 
     while (1) {
-        if(parse_eof(parse)) break;
+        if (parse_eof(parse)) break;
 
         u64 off = parse->cursor;
         u64 die_abbrev_id = parse_uleb128(parse);
