@@ -56,6 +56,7 @@ static void cmd_run(Cli *cli) {
     char *output_path = "out/hot.so";
     if (!cli_command(cli, "run", "Run with hot reloading")) return;
     char *input_path = cli_value(cli, "FILE", "Main source file");
+    if(!input_path) cli_cmdhelp(cli);
 
     if (!init) {
         hot = hot_new(mem);
