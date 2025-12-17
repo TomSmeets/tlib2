@@ -1,6 +1,5 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
-
 ColumnLimit: 150
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true

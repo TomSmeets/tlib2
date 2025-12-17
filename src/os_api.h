@@ -8,12 +8,15 @@
 void os_main(u32 argc, char **argv);
 
 // Allocate a new chunk of memory
+// - returns null on failure
 static void *os_alloc(u64 size);
 
 // Exit currnet application
+// - Does not return
 static void os_exit(i32 status) __attribute__((__noreturn__));
 
 // Exit with an error message (error dialog)
+// - Does not return
 static void os_fail(char *message) __attribute__((__noreturn__));
 
 // ==================================
@@ -28,10 +31,14 @@ static File *os_stdout(void);
 static File *os_stderr(void);
 
 // Write data from file or stream
-static i64 os_read(File *file, void *data, u64 size);
+// - Returns actual number of bytes read in 'used'
+// - Returns false on failure
+static bool os_read(File *file, void *data, u64 size, u64 *used);
 
 // Read data to file or stream
-static i64 os_write(File *file, void *data, u64 size);
+// - Returns actual number of bytes written in 'used'
+// - Returns false on failure
+static bool os_write(File *file, void *data, u64 size, u64 *used);
 
 typedef enum {
     // Read only
@@ -40,22 +47,33 @@ typedef enum {
     Open_Write,
     // Create new file or truncate existing
     Open_Create,
-
     // Create new executable file
     Open_CreateExe,
 } File_Mode;
 
 // Open a file for reading or writing
+// - Returns 0 on failure
 static File *os_open(char *path, File_Mode mode);
 
 // Close a file
-static void os_close(File *file);
+// - Returns false on failure
+static bool os_close(File *file);
 
 // Seek to an absolute position in the current file
-static void os_seek(File *file, u64 pos);
+// - Returns false on failure
+static bool os_seek(File *file, u64 pos);
 
 // Get file size
-static u64 os_file_size(File *file);
+typedef struct {
+    u64 size;
+    u64 mtime;
+    bool is_file;
+    bool is_dir;
+} File_Info;
+
+// Returns info in File_Info struct
+// Returns false when the file does not exist
+static bool os_stat(char *path, File_Info *info);
 
 // Create an empty directory
 static bool os_mkdir(char *path);
@@ -66,13 +84,12 @@ static bool os_rmdir(char *path);
 // Remove a file
 static bool os_remove(char *path);
 
-// List contents of a directory
+// List contents of a directory (?)
 static u32 os_list(char *path, void *buffer, u64 size);
 
 // ==================================
 //      Dynamic library handling
 // ==================================
-
 typedef struct Library Library;
 
 // Open a library by name or full path
@@ -84,6 +101,7 @@ static void *os_dlsym(Library *lib, char *sym);
 // Get base address of a library based on a pointer inside that library
 static void *os_dlbase(void *ptr);
 
+
 // Get current time in micro seconds
 static u64 os_time(void);
 
@@ -93,14 +111,25 @@ static void os_sleep(u64 us);
 // Get a random 64 bit number from the os
 static u64 os_rand(void);
 
-// Execute a system command, returns the exit code
+// Execute a shell command, returns the exit code
 static i32 os_system(char *command);
 
-// Create a new file watches
-static File *os_watch_new(void);
+// Execute a process, returns the exit code
+static i32 os_exec(u32 argc, char **argv);
 
-// Start watching a file or directory for changes
-static void os_watch_add(File *watch, char *path);
+// ==================================
+//            File watcher
+// ==================================
+typedef struct Watch Watch;
 
-// Return true if a watched file was changed
-static bool os_watch_check(File *watch);
+// Create a new file watcher
+// - Returns 0 on failure or when not supported
+static Watch *os_watch_new(void);
+
+// Start watching a directory for changes
+// - Returns 0 on failure
+static bool os_watch_add(Watch *watch, char *path);
+
+// Check directories for changes without blocking
+// - Returns 1 if one or more files changed since last check
+static bool os_watch_check(Watch *watch);

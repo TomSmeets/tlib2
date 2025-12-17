@@ -35,7 +35,7 @@ Constness:
 
 ## Contents
 
-TODO: Generate this tabe based on file headers
+TODO: Generate this table based on file headers
 
 
 | File     | Description                                  | Depends  |

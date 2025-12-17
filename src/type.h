@@ -52,4 +52,6 @@ static_assert(sizeof(bool) == 1);
 #define MIN(A, B) ((A) <= (B) ? (A) : (B))
 #define MAX(A, B) ((A) >= (B) ? (A) : (B))
 
+#define U32_MAX 0xffffffff
+
 #define TYPEDEF_STRUCT(NAME) typedef struct NAME NAME

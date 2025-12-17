@@ -8,15 +8,15 @@ static_assert(sizeof(long) == sizeof(i64));
 static_assert(sizeof(int) == sizeof(i32));
 static_assert(sizeof(void *) == sizeof(u64));
 
-// fd to handle conversion
-static int ptr_to_fd(void *ptr) {
-    if (!ptr) return -1;
-    return (int)((u64)ptr - 1);
+// Linux file descriptor to generic "handle" conversion
+static void *linux_file(i32 fd) {
+    if(fd < 0) return 0;
+    return (void *)((u64)fd + 1);
 }
 
-static void *fd_to_ptr(int fd) {
-    if (fd < 0) return 0;
-    return (void *)((u64)fd + 1);
+static i32 linux_fd(void *file) {
+    if(!file) return -1;
+    return (i32)((u64)file - 1);
 }
 
 // Timespec conversion helpers
@@ -30,11 +30,16 @@ struct linux_timeval {
     i64 usec;
 };
 
-static u64 linux_timespec_to_us(struct linux_timespec *t) {
-    return t->sec * 1000 * 1000 + t->nsec / 1000;
+// We use micro seconds, which should be enogh
+static u64 time_from_ns(u64 sec, u64 nsec) {
+    return sec * 1000 * 1000 + nsec / 1000;
 }
 
-static struct linux_timespec linux_us_to_timespec(u64 time) {
+static u64 time_from_timespec(struct linux_timespec *t) {
+    return time_from_ns(t->sec, t->nsec);
+}
+
+static struct linux_timespec time_to_timespec(u64 time) {
     u64 sec = time / (1000 * 1000);
     u64 nsec = (time - sec * 1000 * 1000) * 1000;
 
@@ -207,8 +212,21 @@ struct linux_stat {
     i64 __unused[3];
 };
 
+#define S_IFMT   0170000 // bit mask for the file type bit field
+#define S_IFSOCK 0140000 // socket
+#define S_IFLNK  0120000 // symbolic link
+#define S_IFREG  0100000 // regular file
+#define S_IFBLK  0060000 // block device
+#define S_IFDIR  0040000 // directory
+#define S_IFCHR  0020000 // character device
+#define S_IFIFO  0010000 // FIFO
+
 static i32 linux_fstat(i32 fd, struct linux_stat *buf) {
     return linux_syscall2(0x05, fd, (i64)buf);
+}
+
+static i32 linux_lstat(char *path, struct linux_stat *buf) {
+    return linux_syscall2(0x06, (i64)path, (i64)buf);
 }
 
 // ==== Seek ====
