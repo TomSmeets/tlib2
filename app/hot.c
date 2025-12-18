@@ -11,7 +11,7 @@ static Memory *mem;
 static Hot *hot;
 
 // File watcher state
-static File *watch;
+static Watch *watch;
 
 static char *build_command;
 static char *output_path;

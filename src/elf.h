@@ -63,15 +63,13 @@ typedef struct {
 
 static void *os_read_alloc(Memory *mem, File *file, u32 size) {
     u8 *data = mem_array(mem, u8, size);
-    if (os_read(file, data, size) != size) {
-        return 0;
-    }
+    if (!os_read(file, data, size, 0)) return 0;
     return data;
 }
 
 static Elf *elf_load(Memory *mem, File *file) {
     Elf64_Ehdr header;
-    assert(os_read(file, &header, sizeof(header)) == sizeof(header));
+    assert(os_read(file, &header, sizeof(header), 0));
 
     // Check ELF magic number
     assert(header.ident[0] == 0x7f);

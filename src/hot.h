@@ -20,10 +20,10 @@ static void os_file_copy(char *src_path, char *dst_path) {
     File *dst = os_open(dst_path, Open_CreateExe);
     u8 buffer[4 * 1024];
     for (;;) {
-        i64 bytes_read = os_read(src, buffer, sizeof(buffer));
-        assert(bytes_read >= 0);
+        u64 bytes_read = 0;
+        assert(os_read(src, buffer, sizeof(buffer), &bytes_read));
         if (bytes_read == 0) break;
-        os_write(dst, buffer, bytes_read);
+        assert(os_write(dst, buffer, bytes_read, 0));
     }
     os_close(src);
     os_close(dst);

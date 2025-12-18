@@ -64,12 +64,16 @@ static Module_Link *module_get_link(TLib *lib, Module *mod, Module *dep) {
 
 // Read entire file into memory
 static Buffer os_read_file(Memory *mem, char *path) {
+    File_Info info = {};
+    assert(os_stat(path, &info));
+
     File *fd = os_open(path, Open_Read);
-    u64 file_size = os_file_size(fd);
-    u8 *file_data = mem_array(mem, u8, file_size);
-    assert(os_read(fd, file_data, file_size) == file_size);
-    os_close(fd);
-    return (Buffer){file_data, file_size};
+    u8 *file_data = mem_array(mem, u8, info.size);
+    u64 bytes_read = 0;
+    assert(os_read(fd, file_data, info.size, &bytes_read));
+    assert(bytes_read == info.size);
+    assert(os_close(fd));
+    return (Buffer){file_data, info.size};
 }
 
 // Get file name of a path

@@ -47,7 +47,7 @@ static void cmd_run(Cli *cli) {
     static bool init;
     static Hot *hot;
     static void (*child_main)(u32, char **);
-    static File *watch;
+    static Watch *watch;
     static char *build_command;
 
     static u32 child_argc;
