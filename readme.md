@@ -21,6 +21,7 @@ What is different?
 - Memory allocation should support ANY size
 - Fully unit test
 - Adding a new program should be no effort
+- Thread safe
 
 What stays the same
 - No 'const', such as in 'const char *' does not have a lot of added value.
