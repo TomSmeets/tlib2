@@ -4,12 +4,13 @@
 #include "type.h"
 
 // The main function, to exit call os_exit()
-// This function is called in an infinite loop
+// - This function is called in an infinite loop
+// - not defined as static to support hot reloading
 void os_main(u32 argc, char **argv);
 
 // Allocate a new chunk of memory
 // - returns null on failure
-static void *os_alloc(u64 size);
+static void *os_alloc(size_t size);
 
 // Exit currnet application
 // - Does not return
@@ -22,7 +23,6 @@ static void os_fail(char *message) __attribute__((__noreturn__));
 // ==================================
 //      File and Stream handling
 // ==================================
-
 typedef struct File File;
 
 // Standard file handles
@@ -31,29 +31,29 @@ static File *os_stdout(void);
 static File *os_stderr(void);
 
 // Write data from file or stream
-// - Returns actual number of bytes read in 'used'
+// - Returns actual number of bytes read in 'used' on success
 // - Returns false on failure
-static bool os_read(File *file, void *data, u64 size, u64 *used);
+static bool os_read(File *file, void *data, size_t size, size_t *used);
 
 // Read data to file or stream
-// - Returns actual number of bytes written in 'used'
+// - Returns actual number of bytes written in 'used' on success
 // - Returns false on failure
-static bool os_write(File *file, void *data, u64 size, u64 *used);
+static bool os_write(File *file, void *data, size_t size, size_t *used);
 
 typedef enum {
     // Read only
-    Open_Read,
+    FileMode_Read,
     // Read and Write, no truncation
-    Open_Write,
+    FileMode_Write,
     // Create new file or truncate existing
-    Open_Create,
+    FileMode_Create,
     // Create new executable file
-    Open_CreateExe,
-} File_Mode;
+    FileMode_CreateExe,
+} FileMode;
 
 // Open a file for reading or writing
 // - Returns 0 on failure
-static File *os_open(char *path, File_Mode mode);
+static File *os_open(char *path, FileMode mode);
 
 // Close a file
 // - Returns false on failure
@@ -61,19 +61,27 @@ static bool os_close(File *file);
 
 // Seek to an absolute position in the current file
 // - Returns false on failure
-static bool os_seek(File *file, u64 pos);
+// - Files can be > 4GB
+static bool os_seek(File *file, size_t pos);
+
+
+typedef enum {
+    FileType_None,
+    FileType_File,
+    FileType_Directory,
+    FileType_Other,
+} FileType;
 
 // Get file size
 typedef struct {
-    u64 size;
-    u64 mtime;
-    bool is_file;
-    bool is_dir;
-} File_Info;
+    size_t size;
+    time_t mtime;
+    FileType type;
+} FileInfo;
 
 // Returns info in File_Info struct
 // Returns false when the file does not exist
-static bool os_stat(char *path, File_Info *info);
+static bool os_stat(char *path, FileInfo *info);
 
 // Create an empty directory
 static bool os_mkdir(char *path);
@@ -84,8 +92,10 @@ static bool os_rmdir(char *path);
 // Remove a file
 static bool os_remove(char *path);
 
-// List contents of a directory (?)
-static u32 os_list(char *path, void *buffer, u64 size);
+typedef bool os_list_cb(void *user, char *name, FileType type);
+
+// List directory contents
+static bool os_list(char *path, os_list_cb *callback, void *user);
 
 // ==================================
 //      Dynamic library handling
@@ -101,21 +111,33 @@ static void *os_dlsym(Library *lib, char *sym);
 // Get base address of a library based on a pointer inside that library
 static void *os_dlbase(void *ptr);
 
+// ==================================
+//               Time
+// ==================================
 
-// Get current time in micro seconds
-static u64 os_time(void);
+// Get unix timestamp in micro seconds
+static time_t os_time(void);
 
 // Sleep for a given time in micro seconds
-static void os_sleep(u64 us);
+static void os_sleep(time_t us);
 
 // Get a random 64 bit number from the os
 static u64 os_rand(void);
+
+// ==================================
+//              Process
+// ==================================
+typedef struct Process Process;
 
 // Execute a shell command, returns the exit code
 static i32 os_system(char *command);
 
 // Execute a process, returns the exit code
-static i32 os_exec(u32 argc, char **argv);
+// - argv is a null terminated list of strings
+static Process *os_exec(char **argv);
+
+// Wait for process to exit and return exit code
+static i32 os_wait(Process *proc);
 
 // ==================================
 //            File watcher

@@ -15,8 +15,8 @@ static bool str_eq(char *a, char *b) {
 }
 
 // Get length of the zero terminated string
-static u32 str_len(char *str) {
-    u32 len = 0;
+static size_t str_len(char *str) {
+    size_t len = 0;
     while (*str++) len++;
     return len;
 }

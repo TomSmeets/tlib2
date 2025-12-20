@@ -13,8 +13,8 @@ static Memory *mem_new(void);
 static void mem_free(Memory *mem);
 
 // Basic memory allocation methods
-static void *mem_alloc_uninit(Memory *mem, u64 size);
-static void *mem_alloc_zero(Memory *mem, u64 size);
+static void *mem_alloc_uninit(Memory *mem, u32 size);
+static void *mem_alloc_zero(Memory *mem, u32 size);
 
 // Allocate a zero-initialised type
 #define mem_struct(MEM, TYPE) ((TYPE *)mem_alloc_zero((MEM), sizeof(TYPE)))
@@ -27,7 +27,7 @@ static void *mem_alloc_zero(Memory *mem, u64 size);
 // =====================================
 typedef struct Memory_Chunk Memory_Chunk;
 struct Memory_Chunk {
-    u64 size;
+    u32 size;
     Memory_Chunk *next;
 };
 
@@ -60,19 +60,20 @@ static void mem_free(Memory *mem) {
     }
 }
 
-// Align a u64 integer to a power of two
-static u64 u64_align_up(u64 value, u64 align) {
-    u64 mask = align - 1;
+// Align a u32 integer to a power of two
+static u32 u32_align_up(u32 value, u32 align) {
+    u32 mask = align - 1;
     return (value + mask) & ~mask;
 }
 
 // Align a pointer to a power of two
-static void *ptr_align_up(void *ptr, u64 align) {
-    return (void *)u64_align_up((u64)ptr, align);
+static void *ptr_align_up(void *ptr, u32 align) {
+    u32 mask = align - 1;
+    return (void *)(((uptr)ptr + mask) & ~mask);
 }
 
 // Allocate 'size' bytes of uninitialized memory
-static void *mem_alloc_uninit(Memory *mem, u64 size) {
+static void *mem_alloc_uninit(Memory *mem, u32 size) {
     // Primitives should be aligned to their own size.
     //   int8 -> no alignment needed
     //   int32 -> 4 byte alignment
@@ -90,7 +91,7 @@ static void *mem_alloc_uninit(Memory *mem, u64 size) {
     if (mem->mem_start + size > mem->mem_end) {
         // The allocation odes not fit in the current chunk.
         // We need to allocat a new chunk.
-        u64 header_size = u64_align_up(sizeof(Memory_Chunk), align);
+        u32 header_size = u32_align_up(sizeof(Memory_Chunk), align);
         Buffer buf = chunk_alloc(header_size + size);
 
         Memory_Chunk *chunk = buf.data;
@@ -101,7 +102,7 @@ static void *mem_alloc_uninit(Memory *mem, u64 size) {
         // Set new memory region
         mem->mem_start = buf.data + header_size;
         mem->mem_end = buf.data + buf.size;
-        assert((u64)mem->mem_start % align == 0);
+        assert((uptr)mem->mem_start % align == 0);
         assert(mem->mem_end - mem->mem_start >= size);
     }
 
@@ -113,13 +114,13 @@ static void *mem_alloc_uninit(Memory *mem, u64 size) {
 }
 
 // Allocate exactly 'size' bytes of zero initialized memory
-static void *mem_alloc_zero(Memory *mem, u64 size) {
+static void *mem_alloc_zero(Memory *mem, u32 size) {
     void *ptr = mem_alloc_uninit(mem, size);
     std_memzero(ptr, size);
     return ptr;
 }
 
-static void *mem_clone(Memory *mem, void *data, u64 size) {
+static void *mem_clone(Memory *mem, void *data, u32 size) {
     void *new_data = mem_alloc_uninit(mem, size);
     std_memcpy(new_data, data, size);
     return new_data;

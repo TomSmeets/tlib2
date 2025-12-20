@@ -10,13 +10,13 @@ static_assert(sizeof(void *) == sizeof(u64));
 
 // Linux file descriptor to generic "handle" conversion
 static void *linux_file(i32 fd) {
-    if(fd < 0) return 0;
-    return (void *)((u64)fd + 1);
+    if (fd < 0) return 0;
+    return (void *)((uptr)fd + 1);
 }
 
 static i32 linux_fd(void *file) {
-    if(!file) return -1;
-    return (i32)((u64)file - 1);
+    if (!file) return -1;
+    return (i32)((uptr)file - 1);
 }
 
 // Timespec conversion helpers
@@ -212,14 +212,14 @@ struct linux_stat {
     i64 __unused[3];
 };
 
-#define S_IFMT   0170000 // bit mask for the file type bit field
+#define S_IFMT 0170000   // bit mask for the file type bit field
 #define S_IFSOCK 0140000 // socket
-#define S_IFLNK  0120000 // symbolic link
-#define S_IFREG  0100000 // regular file
-#define S_IFBLK  0060000 // block device
-#define S_IFDIR  0040000 // directory
-#define S_IFCHR  0020000 // character device
-#define S_IFIFO  0010000 // FIFO
+#define S_IFLNK 0120000  // symbolic link
+#define S_IFREG 0100000  // regular file
+#define S_IFBLK 0060000  // block device
+#define S_IFDIR 0040000  // directory
+#define S_IFCHR 0020000  // character device
+#define S_IFIFO 0010000  // FIFO
 
 static i32 linux_fstat(i32 fd, struct linux_stat *buf) {
     return linux_syscall2(0x05, fd, (i64)buf);

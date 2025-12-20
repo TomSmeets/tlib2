@@ -8,32 +8,49 @@
 #define array_count(a) (sizeof(a) / sizeof(a[0]))
 
 // Base types
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+typedef __UINT8_TYPE__  u8;
+typedef __UINT16_TYPE__ u16;
+typedef __UINT32_TYPE__ u32;
+typedef __UINT64_TYPE__ u64;
 static_assert(sizeof(u8) == 1);
 static_assert(sizeof(u16) == 2);
 static_assert(sizeof(u32) == 4);
 static_assert(sizeof(u64) == 8);
 
-typedef signed char i8;
-typedef signed short i16;
-typedef signed int i32;
-typedef signed long long i64;
+typedef __INT8_TYPE__  i8;
+typedef __INT16_TYPE__ i16;
+typedef __INT32_TYPE__ i32;
+typedef __INT64_TYPE__ i64;
 static_assert(sizeof(i8) == 1);
 static_assert(sizeof(i16) == 2);
 static_assert(sizeof(i32) == 4);
 static_assert(sizeof(i64) == 8);
 
+// Biggest allocation size (unsigned)
+typedef __SIZE_TYPE__ size_t;
+static_assert(sizeof(size_t) == sizeof(void *));
+
+#define SIZE_KB ((size_t)1 << 10)
+#define SIZE_MB ((size_t)1 << 20)
+#define SIZE_GB ((size_t)1 << 30)
+
+// Signed pointer storage (signed)
+typedef __INTPTR_TYPE__ intptr_t;
+static_assert(sizeof(intptr_t) == sizeof(void *));
+
+// Floats
 typedef float f32;
 typedef double f64;
 static_assert(sizeof(f32) == 4);
 static_assert(sizeof(f64) == 8);
 
-// Current assumption
-static_assert(sizeof(u64) == sizeof(void *));
+// Time in micro seconds
+// - if Absolute -> Unix epoch time
+typedef i64 time_t;
+#define TIME_MS ((time_t)1000)
+#define TIME_SEC ((time_t)1000000)
 
+// Boolean
 #if __STDC_VERSION__ <= 201710L && !__cplusplus
 typedef _Bool bool;
 #define true 1
@@ -49,6 +66,7 @@ static_assert(sizeof(bool) == 1);
 #define assert_msg(cond, msg)                                                                                                                        \
     if (!(cond)) os_fail(__FILE__ ":" TO_STRING(__LINE__) ": assert(" #cond ") failed, " msg "\n")
 
+// Other macros
 #define MIN(A, B) ((A) <= (B) ? (A) : (B))
 #define MAX(A, B) ((A) >= (B) ? (A) : (B))
 

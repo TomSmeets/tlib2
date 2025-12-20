@@ -10,10 +10,12 @@ struct Parse {
     Memory *mem;
     u64 cursor;
     u64 size;
+
+    // TODO: don't read everything at once to support files > 4GB
     u8 *data;
 };
 
-static Parse *parse_new(Memory *mem, void *data, u64 size) {
+static Parse *parse_new(Memory *mem, void *data, u32 size) {
     Parse *parse = mem_struct(mem, Parse);
     parse->cursor = 0;
     parse->size = size;

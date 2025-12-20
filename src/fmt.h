@@ -2,6 +2,7 @@
 // fmt.h - Text formatter
 #pragma once
 #include "mem.h"
+#include "str.h"
 #include "type.h"
 
 typedef struct Fmt Fmt;
@@ -9,8 +10,8 @@ struct Fmt {
     Memory *mem;
     File *file;
     bool flush_on_newline;
-    u64 size;
-    u64 used;
+    u32 size;
+    u32 used;
     u8 *data;
 };
 
@@ -48,7 +49,7 @@ static Fmt *fmt_new(Memory *mem) {
 }
 
 // Create a fromatter that writes to a buffer
-static Fmt fmt_from(u8 *data, u64 size) {
+static Fmt fmt_from(u8 *data, u32 size) {
     Fmt fmt = {};
     fmt.size = size;
     fmt.data = data;
@@ -59,7 +60,7 @@ static Fmt fmt_from(u8 *data, u64 size) {
 // Write all buffered data to file
 static void fmt_flush(Fmt *fmt) {
     if (!fmt->file) return;
-    u64 written = 0;
+    u32 written = 0;
     assert(os_write(fmt->file, fmt->data, fmt->used, &written));
     assert(written == fmt->used);
     fmt->used = 0;
@@ -67,7 +68,7 @@ static void fmt_flush(Fmt *fmt) {
 
 // Try to grow formatter to fit 'size' new data
 // Returns true if the new size would fit
-static bool fmt_grow(Fmt *fmt, u64 size) {
+static bool fmt_grow(Fmt *fmt, u32 size) {
     // Check if the buffer needs to grow
     if (fmt->used + size <= fmt->size) return true;
 
@@ -81,7 +82,7 @@ static bool fmt_grow(Fmt *fmt, u64 size) {
     if (!fmt->mem) return false;
 
     // Calculated new size (a power of two)
-    u64 new_size = fmt->size * 2;
+    u32 new_size = fmt->size * 2;
     if (new_size < 64) new_size = 64;
     while (fmt->used + size > new_size) new_size *= 2;
 
@@ -99,8 +100,8 @@ static void fmt_c(Fmt *fmt, u8 c) {
     if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
 }
 
-static void fmt_buf(Fmt *fmt, void *data, u64 size) {
-    for (u64 i = 0; i < size; ++i) {
+static void fmt_buf(Fmt *fmt, void *data, u32 size) {
+    for (u32 i = 0; i < size; ++i) {
         fmt_c(fmt, ((u8 *)data)[i]);
     }
 }
@@ -190,8 +191,8 @@ static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
 }
 
 static void fmt_pad_line(Fmt *fmt, u32 line_len, u8 pad_char) {
-    u64 line_start = fmt->used;
-    u64 line_end = fmt->used;
+    u32 line_start = fmt->used;
+    u32 line_end = fmt->used;
 
     for (;;) {
         if (line_start == 0) break;
@@ -201,7 +202,7 @@ static void fmt_pad_line(Fmt *fmt, u32 line_len, u8 pad_char) {
         line_start--;
     }
 
-    for (u64 i = line_end; i < line_start + line_len; ++i) {
+    for (u32 i = line_end; i < line_start + line_len; ++i) {
         fmt_c(fmt, pad_char);
     }
 }

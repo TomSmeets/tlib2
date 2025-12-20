@@ -1,18 +1,10 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // chunk.h - Memory allocator for big chunks
 #pragma once
+#include "buf.h"
 #include "os.h"
 #include "type.h"
 
-// Allocate a chunk of a given minimum size
-static Buffer chunk_alloc(u64 size);
-
-// Free the chunk
-static void chunk_free(void *data, u64 size);
-
-// ==================================================
-//                    Internals
-// ==================================================
 typedef struct Chunk_Freelist Chunk_Freelist;
 struct Chunk_Freelist {
     // Next chunk
@@ -20,33 +12,41 @@ struct Chunk_Freelist {
 };
 
 // Min ->  1 MB
-// Max -> 64 GB
-#define CHUNK_SIZE (1ULL * 1024 * 1024)
-static Chunk_Freelist *chunk_cache[16];
+// Max ->  1 TB
+#define CHUNK_CLASS_MIN (20)
+#define CHUNK_CLASS_MAX (40)
+#define CHUNK_SIZE_MIN ((size_t)1 << CHUNK_CLASS_MIN)
+#define CHUNK_SIZE_MAX ((size_t)1 << CHUNK_CLASS_MAX)
+static Chunk_Freelist *chunk_cache[CHUNK_CLASS_MAX - CHUNK_CLASS_MIN];
 
 typedef struct {
-    u64 size;
+    size_t size;
     Chunk_Freelist **cache;
-    u32 class;
 } Chunk_Class;
 
-static Chunk_Class _chunk_class(u64 size) {
-    u64 chunk_size = CHUNK_SIZE;
-    u32 chunk_class = 0;
-    while (chunk_size < size) {
-        chunk_size *= 2;
-        chunk_class++;
-    }
-    assert(chunk_class < array_count(chunk_cache));
+// Calculate smallest N for which size <= 2^N
+static u32 size_bits(size_t size) {
+    if (size == 0) return 1;
+    if (sizeof(size) == sizeof(u32)) return 32 - __builtin_clz(size - 1);
+    if (sizeof(size) == sizeof(u64)) return 64 - __builtin_clzll(size - 1);
+    os_fail("Invalid size");
+}
+
+static Chunk_Class chunk_class(size_t size) {
+    u32 bits = size_bits(size);
+    if (bits < CHUNK_CLASS_MIN) bits = CHUNK_CLASS_MIN;
+    if (bits >= CHUNK_CLASS_MAX) os_fail("Invlaid size");
+
+    size_t chunk_size = (size_t)1 << bits;
+    Chunk_Freelist **list = &chunk_cache[ bits - CHUNK_CLASS_MIN];
     return (Chunk_Class){
-        .size = chunk_size,
-        .class = chunk_class,
-        .cache = &chunk_cache[chunk_class],
+        .size = (size_t)1 << bits,
+        .cache = &chunk_cache[ bits - CHUNK_CLASS_MIN],
     };
 }
 
-static Buffer chunk_alloc(u64 size) {
-    Chunk_Class class = _chunk_class(size);
+static Buffer chunk_alloc(size_t size) {
+    Chunk_Class class = chunk_class(size);
     Chunk_Freelist *cached_chunk = *class.cache;
 
     // Allocate new memory when no cached chunk is found
@@ -60,8 +60,8 @@ static Buffer chunk_alloc(u64 size) {
     return (Buffer){(void *)cached_chunk, class.size};
 }
 
-static void chunk_free(void *data, u64 size) {
-    Chunk_Class class = _chunk_class(size);
+static void chunk_free(void *data, size_t size) {
+    Chunk_Class class = chunk_class(size);
 
     // Add chunk to cache
     Chunk_Freelist *chunk = data;
