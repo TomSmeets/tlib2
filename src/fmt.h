@@ -5,15 +5,14 @@
 #include "str.h"
 #include "type.h"
 
-typedef struct Fmt Fmt;
-struct Fmt {
+typedef struct {
     Memory *mem;
     File *file;
     bool flush_on_newline;
-    u32 size;
-    u32 used;
+    size_t size;
+    size_t used;
     u8 *data;
-};
+} Fmt;
 
 // Standard formatters
 static Fmt *fmt_stdout(void) {
@@ -49,7 +48,7 @@ static Fmt *fmt_new(Memory *mem) {
 }
 
 // Create a fromatter that writes to a buffer
-static Fmt fmt_from(u8 *data, u32 size) {
+static Fmt fmt_from(u8 *data, size_t size) {
     Fmt fmt = {};
     fmt.size = size;
     fmt.data = data;
@@ -60,7 +59,7 @@ static Fmt fmt_from(u8 *data, u32 size) {
 // Write all buffered data to file
 static void fmt_flush(Fmt *fmt) {
     if (!fmt->file) return;
-    u32 written = 0;
+    size_t written = 0;
     assert(os_write(fmt->file, fmt->data, fmt->used, &written));
     assert(written == fmt->used);
     fmt->used = 0;
@@ -68,7 +67,7 @@ static void fmt_flush(Fmt *fmt) {
 
 // Try to grow formatter to fit 'size' new data
 // Returns true if the new size would fit
-static bool fmt_grow(Fmt *fmt, u32 size) {
+static bool fmt_grow(Fmt *fmt, size_t size) {
     // Check if the buffer needs to grow
     if (fmt->used + size <= fmt->size) return true;
 
@@ -82,13 +81,13 @@ static bool fmt_grow(Fmt *fmt, u32 size) {
     if (!fmt->mem) return false;
 
     // Calculated new size (a power of two)
-    u32 new_size = fmt->size * 2;
+    size_t new_size = fmt->size * 2;
     if (new_size < 64) new_size = 64;
     while (fmt->used + size > new_size) new_size *= 2;
 
     // Allocate data
     u8 *new_data = mem_array(fmt->mem, u8, new_size);
-    std_memcpy(new_data, fmt->data, fmt->used);
+    mem_copy(new_data, fmt->data, fmt->used);
     fmt->size = new_size;
     fmt->data = new_data;
     return true;
@@ -100,15 +99,15 @@ static void fmt_c(Fmt *fmt, u8 c) {
     if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
 }
 
-static void fmt_buf(Fmt *fmt, void *data, u32 size) {
-    for (u32 i = 0; i < size; ++i) {
+static void fmt_buf(Fmt *fmt, void *data, size_t size) {
+    for (size_t i = 0; i < size; ++i) {
         fmt_c(fmt, ((u8 *)data)[i]);
     }
 }
 
 static void fmt_s(Fmt *fmt, char *str) {
     if (!str) return;
-    u32 len = str_len(str);
+    size_t len = str_len(str);
     fmt_buf(fmt, str, len);
 }
 
@@ -190,9 +189,9 @@ static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
     fmt_s(fmt, arg3);
 }
 
-static void fmt_pad_line(Fmt *fmt, u32 line_len, u8 pad_char) {
-    u32 line_start = fmt->used;
-    u32 line_end = fmt->used;
+static void fmt_pad_line(Fmt *fmt, size_t line_len, u8 pad_char) {
+    size_t line_start = fmt->used;
+    size_t line_end = fmt->used;
 
     for (;;) {
         if (line_start == 0) break;
@@ -202,7 +201,7 @@ static void fmt_pad_line(Fmt *fmt, u32 line_len, u8 pad_char) {
         line_start--;
     }
 
-    for (u32 i = line_end; i < line_start + line_len; ++i) {
+    for (size_t i = line_end; i < line_start + line_len; ++i) {
         fmt_c(fmt, pad_char);
     }
 }

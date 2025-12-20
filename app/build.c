@@ -65,6 +65,16 @@ static void cmd_run(Cli *cli) {
         os_watch_add(watch, "src");
         os_watch_add(watch, "app");
 
+        u32 argc = 0;
+        char *argv[64];
+        argv[argc++] = "clang";
+        argv[argc++] = "-o";
+        argv[argc++] = output_path;
+        argv[argc++] = "-shared";
+        argv[argc++] = "-fPIC";
+        argv[argc++] = input_path;
+        argv[argc] = 0;
+
         Fmt *f = fmt_new(mem);
         fmt_s(f, "clang");
         fmt_ss(f, " -o ", output_path, "");
@@ -97,7 +107,7 @@ static void cmd_dwarf(Cli *cli) {
     if (!cli_command(cli, "dwarf", "Read dwarf info")) return;
     char *path = cli_value(cli, "<FILE>", "Input file");
 
-    File *file = os_open(path, Open_Read);
+    File *file = os_open(path, FileMode_Read);
     Elf *elf = elf_load(mem, file);
     dwarf_load(mem, elf, file);
     os_exit(0);

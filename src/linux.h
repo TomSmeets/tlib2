@@ -11,12 +11,12 @@ static_assert(sizeof(void *) == sizeof(u64));
 // Linux file descriptor to generic "handle" conversion
 static void *linux_file(i32 fd) {
     if (fd < 0) return 0;
-    return (void *)((uptr)fd + 1);
+    return (void *)((intptr_t)fd + 1);
 }
 
 static i32 linux_fd(void *file) {
     if (!file) return -1;
-    return (i32)((uptr)file - 1);
+    return (i32)((intptr_t)file - 1);
 }
 
 // Timespec conversion helpers

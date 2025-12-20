@@ -7,17 +7,17 @@
 
 // Create a unique path to a temporary file
 static char *os_mktmp(Memory *mem, char *prefix, char *suffix) {
-    u64 time = os_time();
+    time_t time = os_time();
     Fmt *fmt = fmt_new(mem);
     fmt_s(fmt, prefix);
-    fmt_u_ex(fmt, os_time(), 16, 0, 0);
+    fmt_u_ex(fmt, time, 16, 0, 0);
     fmt_s(fmt, suffix);
     return fmt_end(fmt);
 }
 
 static void os_file_copy(char *src_path, char *dst_path) {
-    File *src = os_open(src_path, Open_Read);
-    File *dst = os_open(dst_path, Open_CreateExe);
+    File *src = os_open(src_path, FileMode_Read);
+    File *dst = os_open(dst_path, FileMode_CreateExe);
     u8 buffer[4 * 1024];
     for (;;) {
         u64 bytes_read = 0;
@@ -54,7 +54,7 @@ static void *hot_load(Hot *hot, char *path, char *symbol) {
     assert(lib != hot->lib);
 
     // Read elf file info
-    File *file = os_open(unique_path, Open_Read);
+    File *file = os_open(unique_path, FileMode_Read);
     Elf *elf = elf_load(hot->mem, file);
     os_close(file);
 
@@ -81,7 +81,7 @@ static void *hot_load(Hot *hot, char *path, char *symbol) {
             u32 size_old = sect_old->size;
             u32 size_new = sect_new->size;
             u32 size_min = MIN(size_old, size_new);
-            std_memcpy(addr_new, addr_old, size_min);
+            mem_copy(addr_new, addr_old, size_min);
         }
     }
 

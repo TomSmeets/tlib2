@@ -64,10 +64,10 @@ static Module_Link *module_get_link(TLib *lib, Module *mod, Module *dep) {
 
 // Read entire file into memory
 static Buffer os_read_file(Memory *mem, char *path) {
-    File_Info info = {};
+    FileInfo info = {};
     assert(os_stat(path, &info));
 
-    File *fd = os_open(path, Open_Read);
+    File *fd = os_open(path, FileMode_Read);
     u8 *file_data = mem_array(mem, u8, info.size);
     u64 bytes_read = 0;
     assert(os_read(fd, file_data, info.size, &bytes_read));
@@ -89,7 +89,7 @@ static char *fs_base(char *path) {
 
 static char *buf_to_str(Memory *mem, Buffer buf) {
     char *str = mem_array(mem, char, buf.size + 1);
-    std_memcpy((u8 *)str, buf.data, buf.size);
+    mem_copy((u8 *)str, buf.data, buf.size);
     str[buf.size] = 0;
     return str;
 }

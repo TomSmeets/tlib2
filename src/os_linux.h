@@ -5,9 +5,9 @@
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 // The main function, to exit call os_exit()
 // - This function is called in an infinite loop
@@ -58,7 +58,7 @@ static File *os_stderr(void) {
 static bool os_read(File *file, void *data, size_t size, size_t *used) {
     i64 ret = linux_read(linux_fd(file), data, size);
     if (ret < 0) return 0;
-    *used = ret;
+    if (used) *used = ret;
     return 1;
 }
 
@@ -68,19 +68,19 @@ static bool os_read(File *file, void *data, size_t size, size_t *used) {
 static bool os_write(File *file, void *data, size_t size, size_t *used) {
     i64 ret = linux_write(linux_fd(file), data, size);
     if (ret < 0) return 0;
-    *used = ret;
+    if (used) *used = ret;
     return 1;
 }
 
 // Open a file for reading or writing
 // - Returns 0 on failure
-static File *os_open(char *path, File_Mode mode) {
+static File *os_open(char *path, FileMode mode) {
     assert(path);
     i32 ret = -1;
-    if (mode == Open_Read) ret = linux_open(path, O_RDONLY, 0);
-    if (mode == Open_Write) ret = linux_open(path, O_RDWR, 0);
-    if (mode == Open_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
-    if (mode == Open_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
+    if (mode == FileMode_Read) ret = linux_open(path, O_RDONLY, 0);
+    if (mode == FileMode_Write) ret = linux_open(path, O_RDWR, 0);
+    if (mode == FileMode_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
+    if (mode == FileMode_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
     return linux_file(ret);
 }
 
@@ -115,8 +115,8 @@ static bool os_stat(char *path, FileInfo *info) {
 
         info->type = FileType_Other;
         u32 file_type = sb.st_mode & S_IFMT;
-        if(file_type == S_IFREG) info->type = FileType_File;
-        if(file_type == S_IFDIR) info->type = FileType_Directory;
+        if (file_type == S_IFREG) info->type = FileType_File;
+        if (file_type == S_IFDIR) info->type = FileType_Directory;
     }
     return true;
 }
@@ -152,9 +152,8 @@ static bool os_list(char *path, os_list_cb *callback, void *user) {
         }
 
         // End of stream
-        if(len == 0) break;
+        if (len == 0) break;
 
-        
         // Read entires
         void *start = buffer;
         void *end = buffer + len;
@@ -233,7 +232,6 @@ static i32 os_system(char *command) {
     return system(command);
 }
 
-
 // Execute a system command, returns the exit code
 static Process *os_exec(char **argv) {
     i32 pid = fork();
@@ -245,7 +243,7 @@ static Process *os_exec(char **argv) {
     }
 
     // pid == -1 -> failed
-    if(pid < 0) return 0;
+    if (pid < 0) return 0;
 
     // pid > 0 -> parent process, pid is child PID
     return linux_file(pid);

@@ -38,10 +38,10 @@ static Chunk_Class chunk_class(size_t size) {
     if (bits >= CHUNK_CLASS_MAX) os_fail("Invlaid size");
 
     size_t chunk_size = (size_t)1 << bits;
-    Chunk_Freelist **list = &chunk_cache[ bits - CHUNK_CLASS_MIN];
+    Chunk_Freelist **list = &chunk_cache[bits - CHUNK_CLASS_MIN];
     return (Chunk_Class){
         .size = (size_t)1 << bits,
-        .cache = &chunk_cache[ bits - CHUNK_CLASS_MIN],
+        .cache = &chunk_cache[bits - CHUNK_CLASS_MIN],
     };
 }
 

@@ -4,76 +4,40 @@
 #include "chunk.h"
 #include "type.h"
 
-typedef struct Memory Memory;
-
-// Create a new memory allocator
-static Memory *mem_new(void);
-
-// Free this memory allocator and all it's allocations
-static void mem_free(Memory *mem);
-
-// Basic memory allocation methods
-static void *mem_alloc_uninit(Memory *mem, u32 size);
-static void *mem_alloc_zero(Memory *mem, u32 size);
-
-// Allocate a zero-initialised type
-#define mem_struct(MEM, TYPE) ((TYPE *)mem_alloc_zero((MEM), sizeof(TYPE)))
-
-// Allocate an un-initialised array
-#define mem_array(MEM, TYPE, N) ((TYPE *)mem_alloc_uninit((MEM), sizeof(TYPE) * (N)))
-
 // =====================================
 // Implementation
 // =====================================
 typedef struct Memory_Chunk Memory_Chunk;
 struct Memory_Chunk {
-    u32 size;
+    size_t size;
     Memory_Chunk *next;
 };
 
 // A stack allocator for variable size allocations.
 // Each allocation should be smaller than the chunk size.
-struct Memory {
+typedef struct {
     // List of allocated chunks
     Memory_Chunk *chunk;
 
     // Current chunk usage
     void *mem_start;
     void *mem_end;
-};
+} Memory;
 
-// Create a new memory allocator
-static Memory *mem_new(void) {
-    Memory mem = {};
-    Memory *mem_ptr = mem_struct(&mem, Memory);
-    *mem_ptr = mem;
-    return mem_ptr;
-}
-
-// Free this memory allocator and all it's allocations
-static void mem_free(Memory *mem) {
-    Memory_Chunk *chunk = mem->chunk;
-    while (chunk) {
-        Memory_Chunk *next = chunk->next;
-        chunk_free(chunk, chunk->size);
-        chunk = next;
-    }
-}
-
-// Align a u32 integer to a power of two
-static u32 u32_align_up(u32 value, u32 align) {
-    u32 mask = align - 1;
+// Align an integer to a power of two
+static size_t size_align_up(size_t value, size_t align) {
+    size_t mask = align - 1;
     return (value + mask) & ~mask;
 }
 
 // Align a pointer to a power of two
-static void *ptr_align_up(void *ptr, u32 align) {
-    u32 mask = align - 1;
-    return (void *)(((uptr)ptr + mask) & ~mask);
+static void *ptr_align_up(void *ptr, size_t align) {
+    size_t mask = align - 1;
+    return (void *)(((intptr_t)ptr + mask) & ~mask);
 }
 
 // Allocate 'size' bytes of uninitialized memory
-static void *mem_alloc_uninit(Memory *mem, u32 size) {
+static void *mem_alloc_uninit(Memory *mem, size_t size) {
     // Primitives should be aligned to their own size.
     //   int8 -> no alignment needed
     //   int32 -> 4 byte alignment
@@ -91,7 +55,7 @@ static void *mem_alloc_uninit(Memory *mem, u32 size) {
     if (mem->mem_start + size > mem->mem_end) {
         // The allocation odes not fit in the current chunk.
         // We need to allocat a new chunk.
-        u32 header_size = u32_align_up(sizeof(Memory_Chunk), align);
+        size_t header_size = size_align_up(sizeof(Memory_Chunk), align);
         Buffer buf = chunk_alloc(header_size + size);
 
         Memory_Chunk *chunk = buf.data;
@@ -102,11 +66,11 @@ static void *mem_alloc_uninit(Memory *mem, u32 size) {
         // Set new memory region
         mem->mem_start = buf.data + header_size;
         mem->mem_end = buf.data + buf.size;
-        assert((uptr)mem->mem_start % align == 0);
+        assert((intptr_t)mem->mem_start % align == 0);
         assert(mem->mem_end - mem->mem_start >= size);
     }
 
-    // Allocate the memory from the current
+    // Allocate the memory from the current chunk
     void *alloc_start = mem->mem_start;
     mem->mem_start += size;
     assert(mem->mem_start <= mem->mem_end);
@@ -114,14 +78,38 @@ static void *mem_alloc_uninit(Memory *mem, u32 size) {
 }
 
 // Allocate exactly 'size' bytes of zero initialized memory
-static void *mem_alloc_zero(Memory *mem, u32 size) {
+static void *mem_alloc_zero(Memory *mem, size_t size) {
     void *ptr = mem_alloc_uninit(mem, size);
-    std_memzero(ptr, size);
+    mem_zero(ptr, size);
     return ptr;
 }
 
-static void *mem_clone(Memory *mem, void *data, u32 size) {
+static void *mem_clone(Memory *mem, void *data, size_t size) {
     void *new_data = mem_alloc_uninit(mem, size);
-    std_memcpy(new_data, data, size);
+    mem_copy(new_data, data, size);
     return new_data;
+}
+
+// Allocate a zero-initialised type
+#define mem_struct(MEM, TYPE) ((TYPE *)mem_alloc_zero((MEM), sizeof(TYPE)))
+
+// Allocate an un-initialised array
+#define mem_array(MEM, TYPE, N) ((TYPE *)mem_alloc_uninit((MEM), sizeof(TYPE) * (N)))
+
+// Create a new memory allocator
+static Memory *mem_new(void) {
+    Memory mem = {};
+    Memory *mem_ptr = mem_struct(&mem, Memory);
+    *mem_ptr = mem;
+    return mem_ptr;
+}
+
+// Free this memory allocator and all it's allocations
+static void mem_free(Memory *mem) {
+    Memory_Chunk *chunk = mem->chunk;
+    while (chunk) {
+        Memory_Chunk *next = chunk->next;
+        chunk_free(chunk, chunk->size);
+        chunk = next;
+    }
 }

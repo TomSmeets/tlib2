@@ -64,7 +64,6 @@ static bool os_close(File *file);
 // - Files can be > 4GB
 static bool os_seek(File *file, size_t pos);
 
-
 typedef enum {
     FileType_None,
     FileType_File,
@@ -79,7 +78,7 @@ typedef struct {
     FileType type;
 } FileInfo;
 
-// Returns info in File_Info struct
+// Returns info in FileInfo struct
 // Returns false when the file does not exist
 static bool os_stat(char *path, FileInfo *info);
 
