@@ -55,6 +55,7 @@ static void cmd_run(Cli *cli) {
 
     char *output_path = "out/hot.so";
     if (!cli_command(cli, "run", "Run with hot reloading")) return;
+
     char *input_path = cli_value(cli, "FILE", "Main source file");
     if (!input_path) cli_cmdhelp(cli);
 
@@ -65,32 +66,21 @@ static void cmd_run(Cli *cli) {
         os_watch_add(watch, "src");
         os_watch_add(watch, "app");
 
-        u32 argc = 0;
-        char *argv[64];
-        argv[argc++] = "clang";
-        argv[argc++] = "-o";
-        argv[argc++] = output_path;
-        argv[argc++] = "-shared";
-        argv[argc++] = "-fPIC";
-        argv[argc++] = input_path;
-        argv[argc] = 0;
-
-        Fmt *f = fmt_new(mem);
-        fmt_s(f, "clang");
-        fmt_ss(f, " -o ", output_path, "");
-        fmt_s(f, " -Isrc");
-        fmt_s(f, " -shared");
-        fmt_s(f, " -fPIC");
-        fmt_s(f, " ");
-        fmt_ss(f, " ", input_path, "");
-        build_command = fmt_end(f);
-
         child_argc = cli_get_remaining(cli, input_path, array_count(child_argv), (char **)child_argv);
     }
 
     if (os_watch_check(watch) || !init) {
+        u32 argc = 0;
+        char *cmd[64];
+        cmd[argc++] = "clang";
+        cmd[argc++] = "-o";
+        cmd[argc++] = output_path;
+        cmd[argc++] = "-shared";
+        cmd[argc++] = "-fPIC";
+        cmd[argc++] = input_path;
+        cmd[argc] = 0;
         child_main = 0;
-        i32 ret = os_system(build_command);
+        i32 ret = os_wait(os_exec(cmd));
         if (ret == 0) child_main = hot_load(hot, output_path, "os_main");
     }
 

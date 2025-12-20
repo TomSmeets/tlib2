@@ -6,7 +6,7 @@ clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wn
 clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/test     app/test.c
 
 clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/test.exe    app/test.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/build.exe   app/build.c
+# clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/build.exe   app/build.c
 clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/hot.exe     app/hot.c
 
 ./out/test
