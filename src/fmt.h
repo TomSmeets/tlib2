@@ -6,9 +6,16 @@
 #include "type.h"
 
 typedef struct {
+    // Memory used to grow the buffer (Optional)
     Memory *mem;
+
+    // Output file or stream (Optional)
     File *file;
+
+    // Flush on newline, otherwise flush when buffer becomes full
     bool flush_on_newline;
+
+    // Buffer storage
     size_t size;
     size_t used;
     u8 *data;
@@ -131,6 +138,7 @@ static void fmt_ss(Fmt *fmt, char *arg1, char *arg2, char *arg3) {
 static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
     u32 digit_count = 0;
     u8 digit_list[64];
+
     assert(base >= 2 && base <= 16);
     if (pad > array_count(digit_list)) pad = array_count(digit_list);
     do {
@@ -166,29 +174,6 @@ static void fmt_x(Fmt *fmt, u64 value) {
     fmt_u_ex(fmt, value, 16, 0, 0);
 }
 
-static void fmt_sp(Fmt *fmt, char *arg1, void *arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    // fmt_p(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-
-static void fmt_su(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_u(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-static void fmt_si(Fmt *fmt, char *arg1, i64 arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_i(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-
-static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_x(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-
 static void fmt_pad_line(Fmt *fmt, size_t line_len, u8 pad_char) {
     size_t line_start = fmt->used;
     size_t line_end = fmt->used;
@@ -206,6 +191,25 @@ static void fmt_pad_line(Fmt *fmt, size_t line_len, u8 pad_char) {
     }
 }
 
+// Combinations
+static void fmt_su(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
+    fmt_s(fmt, arg1);
+    fmt_u(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+static void fmt_si(Fmt *fmt, char *arg1, i64 arg2, char *arg3) {
+    fmt_s(fmt, arg1);
+    fmt_i(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+
+static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
+    fmt_s(fmt, arg1);
+    fmt_x(fmt, arg2);
+    fmt_s(fmt, arg3);
+}
+
+// Test
 static void test_fmt(void) {
     Memory *mem = mem_new();
     Fmt *fmt = fmt_new(mem);
