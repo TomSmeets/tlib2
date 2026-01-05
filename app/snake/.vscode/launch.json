@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Snake",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/snake",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "preLaunchTask": "build"
+    }
+  ]
+}
