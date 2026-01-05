@@ -17,7 +17,7 @@
 #define OS_WASM 0
 #include "os_windows.h"
 
-// Webassembly
+// WebAssembly
 #elif __wasm__
 #define OS_LINUX 0
 #define OS_WINDOWS 0

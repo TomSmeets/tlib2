@@ -24,7 +24,7 @@ static void *os_alloc(size_t size) {
     return ptr;
 }
 
-// Exit currnet application
+// Exit current application
 // - Does not return
 static void os_exit(i32 status) {
     linux_exit_group(status);
@@ -154,7 +154,7 @@ static bool os_list(char *path, os_list_cb *callback, void *user) {
         // End of stream
         if (len == 0) break;
 
-        // Read entires
+        // Read entries
         void *start = buffer;
         void *end = buffer + len;
         for (struct linux_dirent64 *ent = start; (void *)ent < end; ent = (void *)ent + ent->reclen) {
@@ -220,7 +220,7 @@ static void os_sleep(time_t duration) {
 static u64 os_rand(void) {
     u64 seed = 0;
     i64 ret = linux_getrandom(&seed, sizeof(seed), 0);
-    assert_msg(ret == sizeof(seed), "linux getrandom must suceced");
+    assert_msg(ret == sizeof(seed), "linux getrandom must succeed");
     return seed;
 }
 
@@ -283,7 +283,7 @@ static bool os_watch_add(Watch *watch, char *path) {
 static bool os_watch_check(Watch *watch) {
     i32 fd = linux_fd(watch);
 
-    // Reserve enogh space for a single event
+    // Reserve enough space for a single event
     u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
 
     bool status = 0;

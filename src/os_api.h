@@ -12,7 +12,7 @@ void os_main(u32 argc, char **argv);
 // - returns null on failure
 static void *os_alloc(size_t size);
 
-// Exit currnet application
+// Exit current application
 // - Does not return
 static void os_exit(i32 status) __attribute__((__noreturn__));
 

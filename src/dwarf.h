@@ -60,7 +60,7 @@ static Dwarf_Abbrev_List dwarf_load_abbrev(Dwarf_File *file) {
     // debug_abbrev contains the structure of each DIE
     Parse *parse = parse_new(file->mem, file->sect_abbrev.data, file->sect_abbrev.size);
 
-    // Allocate a big enogh array for abbreviatoon list
+    // Allocate a big enough array for abbreviation list
     u32 abbrev_capacity = 1024 * 4;
     u32 abbrev_count = 0;
     Dwarf_Abbrev *abbrev_list = mem_array(file->mem, Dwarf_Abbrev, abbrev_capacity);

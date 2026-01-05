@@ -28,7 +28,7 @@ static void *os_alloc(size_t size) {
     );
 }
 
-// Exit currnet application
+// Exit current application
 // - Does not return
 static void os_exit(i32 status) {
     ExitProcess(status);

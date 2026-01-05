@@ -54,7 +54,7 @@ static void *mem_alloc_uninit(Memory *mem, size_t size) {
     // Check if the allocation will fit
     if (mem->mem_start + size > mem->mem_end) {
         // The allocation odes not fit in the current chunk.
-        // We need to allocat a new chunk.
+        // We need to allocate a new chunk.
         size_t header_size = size_align_up(sizeof(Memory_Chunk), align);
         Buffer buf = chunk_alloc(header_size + size);
 

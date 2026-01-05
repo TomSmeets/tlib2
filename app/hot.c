@@ -26,7 +26,7 @@ void os_main(u32 argc, char **argv) {
         if (argc < 4) {
             fmt_s(ferr, "Usage: ");
             fmt_s(ferr, argv[0]);
-            fmt_s(ferr, " <COMMAND> <OUPTUT> <ENTRY> [WATCH...] -- [ARG...]\n");
+            fmt_s(ferr, " <COMMAND> <OUTPUT> <ENTRY> [WATCH...] -- [ARG...]\n");
             fmt_s(ferr, "\n");
             fmt_s(ferr, "  <COMMAND>  - The (build) command to execute on a file change.\n");
             fmt_s(ferr, "  <OUTPUT>   - The output executable created by the build command.\n");
@@ -68,7 +68,7 @@ void os_main(u32 argc, char **argv) {
         }
     }
 
-    // Reload applcation when a file was changed
+    // Reload application when a file was changed
     if (os_watch_check(watch) || init) {
         // Forget old entry point
         entry_method = 0;
@@ -83,7 +83,7 @@ void os_main(u32 argc, char **argv) {
     }
 
     if (entry_method) {
-        // Run applcation update method
+        // Run application update method
         entry_method(argc - 1, argv + 1);
     } else {
         // If no application was loaded, poll slowly

@@ -1,0 +1,33 @@
+{
+  "words": [
+    "shoff",
+    "Smeets",
+    "phoff",
+    "Ehdr",
+    "ehsize",
+    "phentsize",
+    "phnum",
+    "shentsize",
+    "shnum",
+    "shstrndx",
+    "syscalls",
+    "Constness",
+    "tlib",
+    "dlbase",
+    "ileb",
+    "addrx",
+    "rnglistx",
+    "clzll",
+    "coarray",
+    "exprloc",
+    "loclistx",
+    "rnglist",
+    "rnglistsptr",
+    "discr",
+    "endianity",
+    "rnglists",
+    "mktmp",
+    "MB_ICONERROR",
+    "DATAA"
+  ]
+}

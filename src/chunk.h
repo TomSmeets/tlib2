@@ -35,7 +35,7 @@ static u32 size_bits(size_t size) {
 static Chunk_Class chunk_class(size_t size) {
     u32 bits = size_bits(size);
     if (bits < CHUNK_CLASS_MIN) bits = CHUNK_CLASS_MIN;
-    if (bits >= CHUNK_CLASS_MAX) os_fail("Invlaid size");
+    if (bits >= CHUNK_CLASS_MAX) os_fail("Invalid size");
 
     size_t chunk_size = (size_t)1 << bits;
     Chunk_Freelist **list = &chunk_cache[bits - CHUNK_CLASS_MIN];

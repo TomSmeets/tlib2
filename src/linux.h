@@ -30,7 +30,7 @@ struct linux_timeval {
     i64 usec;
 };
 
-// We use micro seconds, which should be enogh
+// We use micro seconds, which should be enough
 static u64 time_from_ns(u64 sec, u64 nsec) {
     return sec * 1000 * 1000 + nsec / 1000;
 }
@@ -237,7 +237,7 @@ static i64 linux_seek(i32 fd, i64 offset, u32 whence) {
     return linux_syscall3(0x08, fd, offset, whence);
 }
 
-// ==== Memory alloction (mmap) ====
+// ==== Memory allocation (mmap) ====
 #define PROT_READ 0x1
 #define PROT_WRITE 0x2
 
@@ -280,8 +280,8 @@ static i32 linux_clock_gettime(i32 clock_id, struct linux_timespec *time) {
 }
 
 // vsyscalls version for getting time
-// vsyhscalls are simpler than loading the vdso
-// TODO: The libc version works in userspace using VDSO, maby cool to implement too
+// vsyscalls are simpler than loading the vdso
+// TODO: The libc version works in userspace using VDSO, maybe cool to implement too
 // extern i32 clock_gettime(i32 clock_id, struct linux_timespec *tp);
 static i64 linux_gettimeofday(struct linux_timeval *time, void *tz) {
     return ((i64 (*)(struct linux_timeval *, void *))0xffffffffff600000)(time, tz);

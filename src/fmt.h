@@ -54,7 +54,7 @@ static Fmt *fmt_new(Memory *mem) {
     return fmt;
 }
 
-// Create a fromatter that writes to a buffer
+// Create a formatter that writes to a buffer
 static Fmt fmt_from(u8 *data, size_t size) {
     Fmt fmt = {};
     fmt.size = size;

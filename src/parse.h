@@ -1,5 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
-// parse.h - Recusive decent text parser
+// parse.h - Recursive decent text parser
 #pragma once
 #include "mem.h"
 #include "type.h"
