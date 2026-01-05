@@ -61,14 +61,13 @@ static void snake_init(Snake *snake) {
     snake->grid = mem_array(snake->level_mem, u8, snake->sx * snake->sy);
     for (i32 y = 0; y < snake->sy; ++y) {
         for (i32 x = 0; x < snake->sx; ++x) {
-            if (x == 0 || y == 0 || x == snake->sx-1 || y == snake->sy-1) {
+            if (x == 0 || y == 0 || x == snake->sx - 1 || y == snake->sy - 1) {
                 grid_set(snake, x, y, SnakeCell_Wall);
                 continue;
             }
             grid_set(snake, x, y, SnakeCell_Empty);
         }
     }
-
 
     // Set snake starting position
     v2i pos = {snake->sx / 2, snake->sy / 2};
@@ -99,7 +98,7 @@ static bool snake_move(Snake *snake, v2i dir) {
     head.y--;
 
     SnakeCell head_cell = grid_get(snake, head.x, head.y);
-    if(head_cell == SnakeCell_Food) {
+    if (head_cell == SnakeCell_Food) {
         snake->segment_target += 4;
         snake->score++;
     }
@@ -113,8 +112,8 @@ static bool snake_move(Snake *snake, v2i dir) {
 
     // Update head cell after shrinking
     head_cell = grid_get(snake, head.x, head.y);
-    if(head_cell == SnakeCell_Snake) return false;
-    if(head_cell == SnakeCell_Wall)  return false;
+    if (head_cell == SnakeCell_Snake) return false;
+    if (head_cell == SnakeCell_Wall) return false;
     grid_set(snake, head.x, head.y, SnakeCell_Snake);
     return true;
 }
@@ -130,7 +129,7 @@ void os_main(u32 argc, char **argv) {
         snake_init(snake);
     }
 
-    if(snake->game_over) {
+    if (snake->game_over) {
         snake_init(snake);
     }
 
@@ -139,11 +138,11 @@ void os_main(u32 argc, char **argv) {
     // Grow
     if (now > snake->next_step) {
         snake->next_step += 500 * TIME_MS;
-        bool ok = snake_move(snake, (v2i) { 0, -1 });
+        bool ok = snake_move(snake, (v2i){0, -1});
 
         if (!ok) {
             snake->game_over = true;
-            snake->next_step = now + TIME_SEC*2;
+            snake->next_step = now + TIME_SEC * 2;
         }
     }
 
