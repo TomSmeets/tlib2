@@ -1,5 +1,5 @@
-#include "os.h"
 #include "fmt.h"
+#include "os.h"
 
 typedef enum {
     SnakeCell_Empty,
@@ -36,7 +36,7 @@ static u8 *grid_at(Snake *snake, i32 x, i32 y) {
 
 static void grid_set(Snake *snake, i32 x, i32 y, SnakeCell value) {
     u8 *cell = grid_at(snake, x, y);
-    if(!cell) return;
+    if (!cell) return;
     *cell = value;
 }
 
@@ -60,7 +60,7 @@ static void snake_init(Snake *snake) {
 
 void os_main(u32 argc, char **argv) {
     time_t now = os_time();
-    if(!snake) {
+    if (!snake) {
         fmt_s(fout, "Hello World!\n");
 
         Memory *mem = mem_new();
@@ -93,7 +93,6 @@ void os_main(u32 argc, char **argv) {
 
         snake->next_step = os_time() + TIME_SEC * 1;
     }
-
 
     // Update
 
@@ -130,16 +129,16 @@ void os_main(u32 argc, char **argv) {
     fmt_s(fout, "\n");
     for (i32 y = 0; y < snake->sy; ++y) {
         for (i32 x = 0; x < snake->sx; ++x) {
-            switch(grid_get(snake, x, y)) {
-                case SnakeCell_Empty:
-                    fmt_s(fout, "  ");
-                    break;
-                case SnakeCell_Wall:
-                    fmt_s(fout, "##");
-                    break;
-                default:
-                    fmt_s(fout, " S");
-                    break;
+            switch (grid_get(snake, x, y)) {
+            case SnakeCell_Empty:
+                fmt_s(fout, "  ");
+                break;
+            case SnakeCell_Wall:
+                fmt_s(fout, "##");
+                break;
+            default:
+                fmt_s(fout, " S");
+                break;
             }
         }
         fmt_s(fout, "\n");
