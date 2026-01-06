@@ -1,5 +1,7 @@
 #include "fmt.h"
 #include "os.h"
+#include "pix_api.h"
+#include "vec.h"
 
 typedef enum {
     SnakeCell_Empty,
@@ -8,10 +10,6 @@ typedef enum {
     SnakeCell_Food,
 } SnakeCell;
 
-typedef struct {
-    i32 x;
-    i32 y;
-} v2i;
 
 // Game state
 typedef struct {
@@ -118,6 +116,29 @@ static bool snake_move(Snake *snake, v2i dir) {
     return true;
 }
 
+static void snake_draw_ascii(Snake *snake, Fmt *f) {
+    fmt_su(f, "Score: ", snake->score, "\n");
+    for (i32 y = 0; y < snake->sy; ++y) {
+        for (i32 x = 0; x < snake->sx; ++x) {
+            switch (grid_get(snake, x, y)) {
+            case SnakeCell_Empty:
+                fmt_s(f, "  ");
+                break;
+            case SnakeCell_Wall:
+                fmt_s(f, "##");
+                break;
+            case SnakeCell_Snake:
+                fmt_s(f, " S");
+                break;
+            case SnakeCell_Food:
+                fmt_s(f, " *");
+                break;
+            }
+        }
+        fmt_s(f, "\n");
+    }
+}
+
 void os_main(u32 argc, char **argv) {
     time_t now = os_time();
 
@@ -149,25 +170,6 @@ void os_main(u32 argc, char **argv) {
     // Draw Grid
     fmt_s(fout, "\n");
     fmt_s(fout, "\n");
-    fmt_su(fout, "Score: ", snake->score, "\n");
-    for (i32 y = 0; y < snake->sy; ++y) {
-        for (i32 x = 0; x < snake->sx; ++x) {
-            switch (grid_get(snake, x, y)) {
-            case SnakeCell_Empty:
-                fmt_s(fout, "  ");
-                break;
-            case SnakeCell_Wall:
-                fmt_s(fout, "##");
-                break;
-            case SnakeCell_Snake:
-                fmt_s(fout, " S");
-                break;
-            case SnakeCell_Food:
-                fmt_s(fout, " *");
-                break;
-            }
-        }
-        fmt_s(fout, "\n");
-    }
+    snake_draw_ascii(snake, fout);
     os_sleep(snake->next_step - now);
 }
