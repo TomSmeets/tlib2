@@ -1,6 +1,8 @@
+// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// snake.c - A simple snake game
 #include "fmt.h"
 #include "os.h"
-#include "pix_api.h"
+#include "pix.h"
 #include "vec.h"
 
 typedef enum {
@@ -10,14 +12,21 @@ typedef enum {
     SnakeCell_Food,
 } SnakeCell;
 
-
 // Game state
 typedef struct {
     Memory *mem;
+    Pix *pix;
+
+    // Level
     Memory *level_mem;
     u32 sx, sy;
     u8 *grid;
 
+    v2i snake_dir;
+    bool input_up;
+    bool input_down;
+    bool input_left;
+    bool input_right;
     u32 segment_target;
     u32 segment_count;
     v2i segment[64];
@@ -84,7 +93,7 @@ static void snake_init(Snake *snake) {
     grid_set(snake, pos.x, 4, SnakeCell_Food);
 }
 
-static bool snake_move(Snake *snake, v2i dir) {
+static bool snake_move(Snake *snake) {
     // Grow
     for (i32 i = snake->segment_count; i > 0; --i) {
         snake->segment[i] = snake->segment[i - 1];
@@ -93,7 +102,8 @@ static bool snake_move(Snake *snake, v2i dir) {
 
     // Move
     v2i head = snake->segment[0];
-    head.y--;
+    head.x += snake->snake_dir.x;
+    head.y += snake->snake_dir.y;
 
     SnakeCell head_cell = grid_get(snake, head.x, head.y);
     if (head_cell == SnakeCell_Food) {
@@ -116,27 +126,38 @@ static bool snake_move(Snake *snake, v2i dir) {
     return true;
 }
 
-static void snake_draw_ascii(Snake *snake, Fmt *f) {
-    fmt_su(f, "Score: ", snake->score, "\n");
+static void snake_draw_pix(Snake *snake, Pix *pix) {
+    Memory *tmp = mem_new();
+    u8 *canvas = mem_array(tmp, u8, 3 * snake->sx * snake->sy);
+    u8 *px = canvas;
     for (i32 y = 0; y < snake->sy; ++y) {
         for (i32 x = 0; x < snake->sx; ++x) {
             switch (grid_get(snake, x, y)) {
             case SnakeCell_Empty:
-                fmt_s(f, "  ");
+                *px++ = 0;
+                *px++ = 0;
+                *px++ = 0;
                 break;
             case SnakeCell_Wall:
-                fmt_s(f, "##");
+                *px++ = 255;
+                *px++ = 255;
+                *px++ = 255;
                 break;
             case SnakeCell_Snake:
-                fmt_s(f, " S");
+                *px++ = 0;
+                *px++ = 255;
+                *px++ = 0;
                 break;
             case SnakeCell_Food:
-                fmt_s(f, " *");
+                *px++ = 255;
+                *px++ = 0;
+                *px++ = 0;
                 break;
             }
         }
-        fmt_s(f, "\n");
     }
+    pix_draw(pix, (v2i){snake->sx, snake->sy}, canvas);
+    mem_free(tmp);
 }
 
 void os_main(u32 argc, char **argv) {
@@ -147,7 +168,20 @@ void os_main(u32 argc, char **argv) {
         Memory *mem = mem_new();
         snake = mem_struct(mem, Snake);
         snake->mem = mem;
+        snake->pix = pix_new("Snake", (v2i){800, 600});
         snake_init(snake);
+    }
+
+    while (1) {
+        Input in = pix_input(snake->pix);
+        if (in.type == InputEvent_None) break;
+        if (in.type == InputEvent_Quit) os_exit(0);
+        if (in.type == InputEvent_KeyDown) {
+            if (in.key_down == Key_W) snake->input_up = 1;
+            if (in.key_down == Key_S) snake->input_down = 1;
+            if (in.key_down == Key_A) snake->input_left = 1;
+            if (in.key_down == Key_D) snake->input_right = 1;
+        }
     }
 
     if (snake->game_over) {
@@ -159,17 +193,27 @@ void os_main(u32 argc, char **argv) {
     // Grow
     if (now > snake->next_step) {
         snake->next_step += 500 * TIME_MS;
-        bool ok = snake_move(snake, (v2i){0, -1});
-
-        if (!ok) {
-            snake->game_over = true;
-            snake->next_step = now + TIME_SEC * 2;
+        bool move_x = snake->snake_dir.x == 0;
+        bool move_y = snake->snake_dir.y == 0;
+        if (move_y) {
+            if (snake->input_up) snake->snake_dir = (v2i){0, -1};
+            if (snake->input_down) snake->snake_dir = (v2i){0, 1};
+            snake->input_up = 0;
+            snake->input_down = 0;
         }
+        if (move_x) {
+            if (snake->input_left) snake->snake_dir = (v2i){-1, 0};
+            if (snake->input_right) snake->snake_dir = (v2i){1, 0};
+            snake->input_left = 0;
+            snake->input_right = 0;
+        }
+
+        bool ok = snake_move(snake);
+        if (!ok) snake->game_over = true;
     }
 
     // Draw Grid
-    fmt_s(fout, "\n");
-    fmt_s(fout, "\n");
-    snake_draw_ascii(snake, fout);
-    os_sleep(snake->next_step - now);
+    // snake_draw_ascii(snake, fout);
+    snake_draw_pix(snake, snake->pix);
+    os_sleep(TIME_MS * 10);
 }

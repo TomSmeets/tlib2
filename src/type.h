@@ -73,3 +73,23 @@ static_assert(sizeof(bool) == 1);
 #define U32_MAX 0xffffffff
 
 #define TYPEDEF_STRUCT(NAME) typedef struct NAME NAME
+
+// OS Detection
+// Linux
+#if __unix__
+#define OS_LINUX 1
+#define OS_WINDOWS 0
+#define OS_WASM 0
+
+// Windows
+#elif _WIN32
+#define OS_LINUX 0
+#define OS_WINDOWS 1
+#define OS_WASM 0
+
+// WebAssembly
+#elif __wasm__
+#define OS_LINUX 0
+#define OS_WINDOWS 0
+#define OS_WASM 1
+#endif

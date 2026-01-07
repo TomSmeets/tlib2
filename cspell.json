@@ -28,6 +28,7 @@
     "rnglists",
     "mktmp",
     "MB_ICONERROR",
-    "DATAA"
+    "DATAA",
+    "keysym"
   ]
 }

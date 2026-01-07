@@ -3,23 +3,10 @@
 #pragma once
 #include "os_api.h"
 
-// Linux
-#if __unix__
-#define OS_LINUX 1
-#define OS_WINDOWS 0
-#define OS_WASM 0
+#if OS_LINUX
 #include "os_linux.h"
-
-// Windows
-#elif _WIN32
-#define OS_LINUX 0
-#define OS_WINDOWS 1
-#define OS_WASM 0
+#elif OS_WINDOWS
 #include "os_windows.h"
-
-// WebAssembly
-#elif __wasm__
-#define OS_LINUX 0
-#define OS_WINDOWS 0
-#define OS_WASM 1
+#elif OS_WASM
+// TODO
 #endif
