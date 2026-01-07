@@ -86,11 +86,9 @@ static void snake_init(Snake *snake) {
     grid_set(snake, pos.x, pos.y, SnakeCell_Snake);
 
     // Apply initial cooldown
-    snake->next_step = os_time() + TIME_SEC * 1;
+    snake->next_step = os_time();
     snake->score = 0;
     snake->game_over = 0;
-
-    grid_set(snake, pos.x, 4, SnakeCell_Food);
 }
 
 static bool snake_move(Snake *snake) {
@@ -160,6 +158,37 @@ static void snake_draw_pix(Snake *snake, Pix *pix) {
     mem_free(tmp);
 }
 
+static void snake_place_food(Snake *snake) {
+    u32 empty_count = 0;
+    u32 food_count  = 0;
+    for (i32 y = 0; y < snake->sy; ++y) {
+        for (i32 x = 0; x < snake->sx; ++x) {
+            SnakeCell cell = grid_get(snake, x, y);
+            if(cell == SnakeCell_Empty) empty_count++;
+            if(cell == SnakeCell_Food) food_count++;
+        }
+    }
+
+    // TODO: rand
+    if(food_count < 4 && empty_count > 0) {
+        u32 new_ix = empty_count / 2;
+        for (i32 y = 0; y < snake->sy; ++y) {
+            for (i32 x = 0; x < snake->sx; ++x) {
+                SnakeCell cell = grid_get(snake, x, y);
+                if(cell != SnakeCell_Empty) continue;
+                if(new_ix == 0) {
+                    grid_set(snake, x, y, SnakeCell_Food);
+                    goto end;
+                }
+                new_ix--;
+            }
+        }
+    }
+
+    end:
+    (void)0;
+}
+
 void os_main(u32 argc, char **argv) {
     time_t now = os_time();
 
@@ -188,11 +217,11 @@ void os_main(u32 argc, char **argv) {
         snake_init(snake);
     }
 
-    // Update
-
     // Grow
     if (now > snake->next_step) {
         snake->next_step += 500 * TIME_MS;
+        fmt_su(fout, "Now:  ", now, "\n");
+        fmt_su(fout, "Next: ", snake->next_step, "\n");
         bool move_x = snake->snake_dir.x == 0;
         bool move_y = snake->snake_dir.y == 0;
         if (move_y) {
@@ -208,8 +237,11 @@ void os_main(u32 argc, char **argv) {
             snake->input_right = 0;
         }
 
-        bool ok = snake_move(snake);
-        if (!ok) snake->game_over = true;
+        if (snake->snake_dir.x != 0 || snake->snake_dir.y != 0) {
+            bool ok = snake_move(snake);
+            if (!ok) snake->game_over = true;
+        }
+        snake_place_food(snake);
     }
 
     // Draw Grid

@@ -32,7 +32,7 @@ struct linux_timeval {
 
 // We use micro seconds, which should be enough
 static u64 time_from_ns(u64 sec, u64 nsec) {
-    return sec * 1000 * 1000 + nsec / 1000;
+    return sec * 1000ULL * 1000ULL + nsec / 1000ULL;
 }
 
 static u64 time_from_timespec(struct linux_timespec *t) {
@@ -274,7 +274,7 @@ static int linux_unlink(const char *path) {
 }
 
 // ==== Get Time ====
-#define CLOCK_MONOTONIC 1
+#define CLOCK_REALTIME 0
 static i32 linux_clock_gettime(i32 clock_id, struct linux_timespec *time) {
     return linux_syscall2(0xe4, clock_id, (i64)time);
 }
@@ -336,3 +336,7 @@ static i32 linux_inotify_init(i32 flags) {
 static i32 linux_inotify_add_watch(i32 fd, const char *path, u32 mask) {
     return linux_syscall3(0xfe, fd, (i64)path, mask);
 }
+
+int fork(void);
+int waitpid(int pid, int *status, int options);
+int execvp(const char *file, char *const argv[]);

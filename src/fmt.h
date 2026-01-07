@@ -145,11 +145,13 @@ static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
         u8 digit = value % base;
         u8 chr = digit < 10 ? '0' + digit : 'A' + (digit - 10);
         digit_list[digit_count++] = chr;
+        assert(digit_count <= array_count(digit_list));
         value /= base;
     } while (value > 0);
 
     while (digit_count < pad) {
         digit_list[digit_count++] = pad_char;
+        assert(digit_count <= array_count(digit_list));
     }
 
     for (u32 i = 0; i < digit_count; ++i) {
