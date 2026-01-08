@@ -2,8 +2,8 @@
 // snake.c - A simple snake game
 #include "fmt.h"
 #include "os.h"
-#include "rand.h"
 #include "pix.h"
+#include "rand.h"
 #include "vec.h"
 
 typedef enum {
@@ -179,7 +179,7 @@ static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 d
         f32 s = phase > 0.5 ? 1 : -1;
 
         s = s * 0.25 * va * vd;
-        samples[i].left  = s;
+        samples[i].left = s;
         samples[i].right = s;
         phase = f_fract(phase + dt * freq);
     }
@@ -191,22 +191,22 @@ static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 d
 
 static void snake_place_food(Snake *snake) {
     u32 empty_count = 0;
-    u32 food_count  = 0;
+    u32 food_count = 0;
     for (i32 y = 0; y < snake->sy; ++y) {
         for (i32 x = 0; x < snake->sx; ++x) {
             SnakeCell cell = grid_get(snake, x, y);
-            if(cell == SnakeCell_Empty) empty_count++;
-            if(cell == SnakeCell_Food) food_count++;
+            if (cell == SnakeCell_Empty) empty_count++;
+            if (cell == SnakeCell_Food) food_count++;
         }
     }
 
-    if(food_count < 4 && empty_count > 0) {
+    if (food_count < 4 && empty_count > 0) {
         u32 new_ix = rand_u32(&snake->rand, 0, empty_count);
         for (i32 y = 0; y < snake->sy; ++y) {
             for (i32 x = 0; x < snake->sx; ++x) {
                 SnakeCell cell = grid_get(snake, x, y);
-                if(cell != SnakeCell_Empty) continue;
-                if(new_ix == 0) {
+                if (cell != SnakeCell_Empty) continue;
+                if (new_ix == 0) {
                     grid_set(snake, x, y, SnakeCell_Food);
                     snake_play_sound(snake->pix, 220.0f, 0.1f, 0, 0.1);
                     goto end;
@@ -216,7 +216,7 @@ static void snake_place_food(Snake *snake) {
         }
     }
 
-    end:
+end:
     (void)0;
 }
 
@@ -255,7 +255,7 @@ void os_main(u32 argc, char **argv) {
     fmt_si(fout, "NEXT: ", snake->next_step, "\n");
     if (now > snake->next_step) {
         snake->next_step += 200 * TIME_MS;
-        if(now > snake->next_step) {
+        if (now > snake->next_step) {
             os_exit(1);
         }
 

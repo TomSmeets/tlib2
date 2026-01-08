@@ -139,8 +139,7 @@ static void _pix_audio_callback(void *user, u8 *stream, int len) {
     Pix_Audio_Sample *output_buffer = (Pix_Audio_Sample *)stream;
 
     u32 consumed_count = output_count;
-    if (consumed_count > pix->audio_count)
-        consumed_count = pix->audio_count;
+    if (consumed_count > pix->audio_count) consumed_count = pix->audio_count;
 
     // Copy queued audio samples
     for (u32 i = 0; i < consumed_count; ++i) {
@@ -171,7 +170,7 @@ static void _pix_audio_callback(void *user, u8 *stream, int len) {
 
 // Play a sound effect
 static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *samples) {
-    if(!pix->audio_device) {
+    if (!pix->audio_device) {
         // Init audio
         SDL_AudioSpec audio_spec = {
             .freq = 48000,

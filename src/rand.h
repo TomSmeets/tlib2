@@ -1,8 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // rand.h - 32 bit PCG random number generator
 #pragma once
-#include "type.h"
 #include "math.h"
+#include "type.h"
 
 typedef struct {
     u64 state;
