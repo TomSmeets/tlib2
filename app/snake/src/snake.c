@@ -4,169 +4,15 @@
 #include "os.h"
 #include "pix.h"
 #include "rand.h"
+#include "sound.h"
 #include "vec.h"
 
-typedef enum {
-    SnakeCell_Empty,
-    SnakeCell_Wall,
-    SnakeCell_Snake,
-    SnakeCell_Food,
-} SnakeCell;
-
-// Game state
-typedef struct {
-    Memory *mem;
-    Pix *pix;
-
-    // Level
-    Memory *level_mem;
-    u32 sx, sy;
-    u8 *grid;
-
-    v2i snake_dir;
-    bool input_up;
-    bool input_down;
-    bool input_left;
-    bool input_right;
-    u32 segment_target;
-    u32 segment_count;
-    v2i *segment;
-
-    // When to continue
-    time_t next_step;
-
-    u32 score;
-    bool game_over;
-    Rand rand;
-} Snake;
-
-static Snake *snake;
-
-static u8 *grid_at(Snake *snake, i32 x, i32 y) {
-    if (x < 0 || y < 0) return 0;
-    if (x >= snake->sx || y >= snake->sy) return 0;
-    return snake->grid + y * snake->sx + x;
-}
-
-static void grid_set(Snake *snake, i32 x, i32 y, SnakeCell value) {
-    u8 *cell = grid_at(snake, x, y);
-    if (!cell) return;
-    *cell = value;
-}
-
-static SnakeCell grid_get(Snake *snake, i32 x, i32 y) {
-    u8 *cell = grid_at(snake, x, y);
-    if (!cell) return SnakeCell_Wall;
-    return *cell;
-}
-
-// Start a new level
-static void snake_init(Snake *snake) {
-    // Free previous level
-    if (snake->level_mem) mem_free(snake->level_mem);
-    snake->level_mem = mem_new();
-    snake->sx = 30;
-    snake->sy = 20;
-    snake->grid = mem_array(snake->level_mem, u8, snake->sx * snake->sy);
-    for (i32 y = 0; y < snake->sy; ++y) {
-        for (i32 x = 0; x < snake->sx; ++x) {
-            if (x == 0 || y == 0 || x == snake->sx - 1 || y == snake->sy - 1) {
-                grid_set(snake, x, y, SnakeCell_Wall);
-                continue;
-            }
-            grid_set(snake, x, y, SnakeCell_Empty);
-        }
-    }
-
-    // Set snake starting position
-    v2i pos = {snake->sx / 2, snake->sy / 2};
-    snake->segment_target = 4;
-
-    // Add first segment
-    snake->segment_count = 1;
-    snake->segment = mem_array(snake->level_mem, v2i, snake->sx * snake->sy + 1);
-    snake->segment[0] = pos;
-    grid_set(snake, pos.x, pos.y, SnakeCell_Snake);
-
-    // Apply initial cooldown
-    snake->next_step = os_time();
-    snake->score = 0;
-    snake->game_over = 0;
-}
-
-static bool snake_move(Snake *snake) {
-    // Grow
-    for (i32 i = snake->segment_count; i > 0; --i) {
-        snake->segment[i] = snake->segment[i - 1];
-    }
-    snake->segment_count++;
-
-    // Move
-    v2i head = snake->segment[0];
-    head.x += snake->snake_dir.x;
-    head.y += snake->snake_dir.y;
-
-    SnakeCell head_cell = grid_get(snake, head.x, head.y);
-    if (head_cell == SnakeCell_Food) {
-        snake->segment_target += 4;
-        snake->score++;
-    }
-    snake->segment[0] = head;
-
-    // Shrink
-    if (snake->segment_count > snake->segment_target) {
-        v2i last = snake->segment[--snake->segment_count];
-        grid_set(snake, last.x, last.y, SnakeCell_Empty);
-    }
-
-    // Update head cell after shrinking
-    head_cell = grid_get(snake, head.x, head.y);
-    if (head_cell == SnakeCell_Snake) return false;
-    if (head_cell == SnakeCell_Wall) return false;
-    grid_set(snake, head.x, head.y, SnakeCell_Snake);
-    return true;
-}
-
-static void snake_draw_pix(Snake *snake, Pix *pix) {
-    Memory *tmp = mem_new();
-    u8 *canvas = mem_array(tmp, u8, 3 * snake->sx * snake->sy);
-    u8 *px = canvas;
-    for (i32 y = 0; y < snake->sy; ++y) {
-        for (i32 x = 0; x < snake->sx; ++x) {
-            switch (grid_get(snake, x, y)) {
-            case SnakeCell_Empty:
-                *px++ = 0;
-                *px++ = 0;
-                *px++ = 0;
-                break;
-            case SnakeCell_Wall:
-                *px++ = 255;
-                *px++ = 255;
-                *px++ = 255;
-                break;
-            case SnakeCell_Snake:
-                *px++ = 0;
-                *px++ = 255;
-                *px++ = 0;
-                break;
-            case SnakeCell_Food:
-                *px++ = 255;
-                *px++ = 0;
-                *px++ = 0;
-                break;
-            }
-        }
-    }
-    pix_draw(pix, (v2i){snake->sx, snake->sy}, canvas);
-    mem_free(tmp);
-}
-
 static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
-    Memory *mem = mem_new();
+    Memory *tmp = mem_new();
 
     // Construct sample array
     u32 sample_count = duration * PIX_AUDIO_RATE;
-    Pix_Audio_Sample *samples = mem_array(mem, Pix_Audio_Sample, sample_count);
+    Pix_Audio_Sample *samples = mem_array(tmp, Pix_Audio_Sample, sample_count);
 
     f32 dt = 1.0f / PIX_AUDIO_RATE;
     f32 phase = 0;
@@ -186,43 +32,201 @@ static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 d
     pix_play(pix, sample_count, samples);
 
     // Memory is not needed anymore
-    mem_free(mem);
+    mem_free(tmp);
 }
 
-static void snake_place_food(Snake *snake) {
+typedef enum {
+    SnakeCell_Empty,
+    SnakeCell_Wall,
+    SnakeCell_Snake,
+    SnakeCell_Food,
+} SnakeCell;
+
+typedef struct {
+    Memory *mem;
+
+    // Grid
+    u32 sx, sy;
+    u8 *grid;
+
+    // Snake
+    v2i snake_dir;
+    v2i next_dir;
+    v2i next_next_dir;
+    u32 segment_target;
+    u32 segment_count;
+    v2i *segment;
+
+    u32 score;
+    bool game_over;
+    Rand rand;
+
+    u32 food_timer;
+    u32 snake_timer;
+} Level;
+
+// Game state
+typedef struct {
+    Memory *mem;
+    Rand rand;
+    Pix *pix;
+    Level *level;
+
+    // Input handling
+    bool input_up;
+    bool input_down;
+    bool input_left;
+    bool input_right;
+} Snake;
+
+static u8 *grid_at(Level *level, i32 x, i32 y) {
+    if (x < 0 || y < 0) return 0;
+    if (x >= level->sx || y >= level->sy) return 0;
+    return level->grid + y * level->sx + x;
+}
+
+static void grid_set(Level *level, i32 x, i32 y, SnakeCell value) {
+    u8 *cell = grid_at(level, x, y);
+    if (!cell) return;
+    *cell = value;
+}
+
+static SnakeCell grid_get(Level *level, i32 x, i32 y) {
+    u8 *cell = grid_at(level, x, y);
+    if (!cell) return SnakeCell_Wall;
+    return *cell;
+}
+
+static SnakeCell snake_move(Level *level) {
+    // Grow
+    for (i32 i = level->segment_count; i > 0; --i) {
+        level->segment[i] = level->segment[i - 1];
+    }
+    level->segment_count++;
+
+    // Move
+    v2i head = level->segment[0];
+    head.x += level->snake_dir.x;
+    head.y += level->snake_dir.y;
+
+    SnakeCell head_cell = grid_get(level, head.x, head.y);
+    if (head_cell == SnakeCell_Food) {
+        level->segment_target += 4;
+        level->score++;
+    }
+    level->segment[0] = head;
+
+    // Shrink
+    if (level->segment_count > level->segment_target) {
+        v2i last = level->segment[--level->segment_count];
+        grid_set(level, last.x, last.y, SnakeCell_Empty);
+    }
+
+    // Update head cell after shrinking
+    head_cell = grid_get(level, head.x, head.y);
+
+    // Collision
+    if (head_cell == SnakeCell_Snake) return head_cell;
+    if (head_cell == SnakeCell_Wall) return head_cell;
+
+    // OK
+    grid_set(level, head.x, head.y, SnakeCell_Snake);
+    return head_cell;
+}
+
+static bool snake_place_food(Level *level) {
     u32 empty_count = 0;
     u32 food_count = 0;
-    for (i32 y = 0; y < snake->sy; ++y) {
-        for (i32 x = 0; x < snake->sx; ++x) {
-            SnakeCell cell = grid_get(snake, x, y);
-            if (cell == SnakeCell_Empty) empty_count++;
-            if (cell == SnakeCell_Food) food_count++;
-        }
+    for (u32 i = 0; i < level->sx * level->sy; ++i) {
+        SnakeCell cell = level->grid[i];
+        if (cell == SnakeCell_Empty) empty_count++;
+        if (cell == SnakeCell_Food) food_count++;
     }
 
     if (food_count < 4 && empty_count > 0) {
-        u32 new_ix = rand_u32(&snake->rand, 0, empty_count);
-        for (i32 y = 0; y < snake->sy; ++y) {
-            for (i32 x = 0; x < snake->sx; ++x) {
-                SnakeCell cell = grid_get(snake, x, y);
+        if (++level->food_timer == 6) {
+            level->food_timer = 0;
+            u32 new_ix = rand_u32(&level->rand, 0, empty_count);
+            for (u32 i = 0; i < level->sx * level->sy; ++i) {
+                SnakeCell cell = level->grid[i];
                 if (cell != SnakeCell_Empty) continue;
-                if (new_ix == 0) {
-                    grid_set(snake, x, y, SnakeCell_Food);
-                    snake_play_sound(snake->pix, 220.0f, 0.1f, 0, 0.1);
-                    goto end;
-                }
-                new_ix--;
+                if (new_ix-- != 0) continue;
+                level->grid[i] = SnakeCell_Food;
+                return true;
             }
         }
     }
 
-end:
-    (void)0;
+    return false;
+}
+
+static Level *snake_level_new(Rand *rng) {
+    Memory *mem = mem_new();
+    Level *level = mem_struct(mem, Level);
+    level->mem = mem;
+    level->sx = 40;
+    level->sy = 30;
+    level->grid = mem_array_zero(level->mem, u8, level->sx * level->sy);
+    level->rand = rand_fork(rng);
+
+    // Draw border around level
+    for (u32 i = 0; i < level->sx * level->sy; ++i) {
+        u32 x = i % level->sx;
+        u32 y = i / level->sx;
+        if (x == 0 || y == 0 || x == level->sx - 1 || y == level->sy - 1) {
+            grid_set(level, x, y, SnakeCell_Wall);
+        }
+    }
+
+    // Set snake starting position and size
+    v2i pos = {level->sx / 2, level->sy / 2};
+    level->segment_target = 4;
+
+    // Add first segment
+    level->segment_count = 1;
+    level->segment = mem_array(mem, v2i, level->sx * level->sy + 1);
+    level->segment[0] = pos;
+    grid_set(level, pos.x, pos.y, SnakeCell_Snake);
+    return level;
+}
+
+static void snake_draw(Snake *snake) {
+    Level *level = snake->level;
+    Memory *tmp = mem_new();
+    u8 *canvas = mem_array(tmp, u8, 3 * level->sx * level->sy);
+    u8 *px = canvas;
+
+    for (u32 i = 0; i < level->sy * level->sx; ++i) {
+        u32 x = i % level->sx;
+        u32 y = i / level->sx;
+
+        SnakeCell cell = grid_get(level, x, y);
+        if (cell == SnakeCell_Wall) {
+            *px++ = 255;
+            *px++ = 255;
+            *px++ = 255;
+        } else if (cell == SnakeCell_Snake) {
+            *px++ = 0;
+            *px++ = 255;
+            *px++ = 0;
+        } else if (cell == SnakeCell_Food) {
+            *px++ = 255;
+            *px++ = 0;
+            *px++ = 0;
+        } else {
+            *px++ = 0;
+            *px++ = 0;
+            *px++ = 0;
+        }
+    }
+    pix_draw(snake->pix, (v2i){level->sx, level->sy}, canvas);
+    mem_free(tmp);
 }
 
 void os_main(u32 argc, char **argv) {
-    time_t now = os_time();
+    static Snake *snake;
 
+    time_t now = os_time();
     if (!snake) {
         fmt_s(fout, "Hello World!\n");
         Memory *mem = mem_new();
@@ -230,61 +234,58 @@ void os_main(u32 argc, char **argv) {
         snake->mem = mem;
         snake->pix = pix_new("Snake", (v2i){800, 600});
         snake->rand = rand_new(os_rand());
-        snake_init(snake);
+        snake->level = snake_level_new(&snake->rand);
     }
 
+    if (snake->level->game_over) {
+        mem_free(snake->level->mem);
+        snake->level = snake_level_new(&snake->rand);
+        snake_play_sound(snake->pix, 110.0, 0.5, 0, 0.5);
+    }
+
+    Level *level = snake->level;
+    bool can_move_x = level->snake_dir.x == 0;
+    bool can_move_y = level->snake_dir.y == 0;
+
+    // Gather input
     while (1) {
         Input in = pix_input(snake->pix);
         if (in.type == InputEvent_None) break;
         if (in.type == InputEvent_Quit) os_exit(0);
         if (in.type == InputEvent_KeyDown) {
-            snake_play_sound(snake->pix, 440.0, 0.1, 0, 0.1);
-            if (in.key_down == Key_W) snake->input_up = 1;
-            if (in.key_down == Key_S) snake->input_down = 1;
-            if (in.key_down == Key_A) snake->input_left = 1;
-            if (in.key_down == Key_D) snake->input_right = 1;
+            v2i dir = {};
+            if (in.key_down == Key_W) dir.y = -1;
+            if (in.key_down == Key_S) dir.y = +1;
+            if (in.key_down == Key_A) dir.x = -1;
+            if (in.key_down == Key_D) dir.x = +1;
+
+            if ((can_move_x && dir.x) || (can_move_y && dir.y)) {
+                level->next_dir = dir;
+            } else if (level->next_dir.x || level->next_dir.y) {
+                level->next_next_dir = dir;
+            }
         }
     }
 
-    if (snake->game_over) {
-        snake_init(snake);
+    if (level->next_dir.x || level->next_dir.y) {
+        level->snake_dir = level->next_dir;
+        level->next_dir = level->next_next_dir;
+        level->next_next_dir = (v2i){0, 0};
     }
 
-    // Grow
-    fmt_si(fout, "NOW: ", now, "\n");
-    fmt_si(fout, "NEXT: ", snake->next_step, "\n");
-    if (now > snake->next_step) {
-        snake->next_step += 200 * TIME_MS;
-        if (now > snake->next_step) {
-            os_exit(1);
+    if (level->snake_dir.x || level->snake_dir.y) {
+        SnakeCell cell = snake_move(level);
+        if (cell == SnakeCell_Snake || cell == SnakeCell_Wall) level->game_over = true;
+        if (cell == SnakeCell_Food) {
+            snake_play_sound(snake->pix, OCT_3 * NOTE_B, 0.1f, 0.0, 0.1);
         }
-
-        bool move_x = snake->snake_dir.x == 0;
-        bool move_y = snake->snake_dir.y == 0;
-        if (move_y) {
-            if (snake->input_up) snake->snake_dir = (v2i){0, -1};
-            if (snake->input_down) snake->snake_dir = (v2i){0, 1};
-            snake->input_up = 0;
-            snake->input_down = 0;
-        }
-        if (move_x) {
-            if (snake->input_left) snake->snake_dir = (v2i){-1, 0};
-            if (snake->input_right) snake->snake_dir = (v2i){1, 0};
-            snake->input_left = 0;
-            snake->input_right = 0;
-        }
-
-        if (snake->snake_dir.x != 0 || snake->snake_dir.y != 0) {
-            bool ok = snake_move(snake);
-            if (!ok) snake->game_over = true;
-        }
-        snake_place_food(snake);
     }
 
-    // Draw Grid
-    // snake_draw_ascii(snake, fout);
-    snake_draw_pix(snake, snake->pix);
+    if (snake_place_food(snake->level)) {
+        snake_play_sound(snake->pix, OCT_3 * NOTE_A, 0.1f, 0.0, 0.1);
+    }
+    snake_draw(snake);
 
-    time_t diff = now + (TIME_SEC / 200) - os_time();
+    time_t diff = now + (TIME_SEC / 4) - os_time();
     os_sleep(diff);
 }

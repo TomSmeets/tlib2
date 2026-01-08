@@ -96,6 +96,9 @@ static void *mem_clone(Memory *mem, void *data, size_t size) {
 // Allocate an un-initialised array
 #define mem_array(MEM, TYPE, N) ((TYPE *)mem_alloc_uninit((MEM), sizeof(TYPE) * (N)))
 
+// Allocate an initialised array
+#define mem_array_zero(MEM, TYPE, N) ((TYPE *)mem_alloc_zero((MEM), sizeof(TYPE) * (N)))
+
 // Create a new memory allocator
 static Memory *mem_new(void) {
     Memory mem = {};
