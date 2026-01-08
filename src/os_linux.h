@@ -209,7 +209,7 @@ static time_t os_time(void) {
 static void os_sleep(time_t duration) {
     if (duration < 0) duration = 0;
     struct linux_timespec time = time_to_timespec(duration);
-    assert(linux_nanosleep(&time, 0) == 0);
+    linux_nanosleep(&time, 0);
 }
 
 // ==== Random ====

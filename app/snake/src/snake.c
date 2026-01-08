@@ -2,6 +2,7 @@
 // snake.c - A simple snake game
 #include "fmt.h"
 #include "os.h"
+#include "rand.h"
 #include "pix.h"
 #include "vec.h"
 
@@ -36,6 +37,7 @@ typedef struct {
 
     u32 score;
     bool game_over;
+    Rand rand;
 } Snake;
 
 static Snake *snake;
@@ -169,9 +171,8 @@ static void snake_place_food(Snake *snake) {
         }
     }
 
-    // TODO: rand
-    if(food_count < 4 && empty_count > 0) {
-        u32 new_ix = empty_count / 2;
+    if(food_count < 20 && empty_count > 0) {
+        u32 new_ix = rand_u32(&snake->rand, 0, empty_count);
         for (i32 y = 0; y < snake->sy; ++y) {
             for (i32 x = 0; x < snake->sx; ++x) {
                 SnakeCell cell = grid_get(snake, x, y);
@@ -198,6 +199,7 @@ void os_main(u32 argc, char **argv) {
         snake = mem_struct(mem, Snake);
         snake->mem = mem;
         snake->pix = pix_new("Snake", (v2i){800, 600});
+        snake->rand = rand_new(os_rand());
         snake_init(snake);
     }
 
@@ -219,9 +221,13 @@ void os_main(u32 argc, char **argv) {
 
     // Grow
     if (now > snake->next_step) {
-        snake->next_step += 500 * TIME_MS;
-        fmt_su(fout, "Now:  ", now, "\n");
-        fmt_su(fout, "Next: ", snake->next_step, "\n");
+        snake->next_step += 50 * TIME_MS;
+        if(now > snake->next_step) {
+            fmt_si(fout, "NOW: ", now, "\n");
+            fmt_si(fout, "NOW: ", snake->next_step, "\n");
+            os_exit(1);
+        }
+
         bool move_x = snake->snake_dir.x == 0;
         bool move_y = snake->snake_dir.y == 0;
         if (move_y) {
@@ -247,5 +253,9 @@ void os_main(u32 argc, char **argv) {
     // Draw Grid
     // snake_draw_ascii(snake, fout);
     snake_draw_pix(snake, snake->pix);
-    os_sleep(TIME_MS * 10);
+
+    os_sleep(TIME_SEC / 200);
+    time_t new_time = os_time();
+    time_t diff = new_time - now;
+    fmt_si(fout, "Diff: ", new_time - now, "\n");
 }
