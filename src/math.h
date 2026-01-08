@@ -15,3 +15,7 @@ static i32 f_round(f32 x) {
 static i32 f_trunc(f32 x) {
     return (i32)x;
 }
+
+static f32 f_fract(f32 x) {
+    return x - f_floor(x);
+}

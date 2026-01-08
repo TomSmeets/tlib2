@@ -40,6 +40,7 @@ static Pix *pix_new(char *title, v2i window_size) {
 // Destroy window and cleanup renderer
 static void pix_free(Pix *pix) {
     if (pix->texture) SDL_DestroyTexture(pix->texture);
+    if (pix->audio_device) SDL_CloseAudioDevice(pix->audio_device);
     SDL_DestroyRenderer(pix->renderer);
     SDL_DestroyWindow(pix->window);
     SDL_Quit();
@@ -130,9 +131,78 @@ static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
     SDL_RenderPresent(pix->renderer);
 }
 
+static void _pix_audio_callback(void *user, u8 *stream, int len) {
+    Pix *pix = user;
+
+    // Number of samples (one sample is 16 bit)
+    u32 output_count = len / sizeof(Pix_Audio_Sample);
+    Pix_Audio_Sample *output_buffer = (Pix_Audio_Sample *)stream;
+
+    u32 consumed_count = output_count;
+    if (consumed_count > pix->audio_count)
+        consumed_count = pix->audio_count;
+
+    // Copy queued audio samples
+    for (u32 i = 0; i < consumed_count; ++i) {
+        output_buffer[i] = pix->audio_buffer[i];
+    }
+
+    // Clear remaining output samples
+    for (u32 i = consumed_count; i < output_count; ++i) {
+        output_buffer[i] = (Pix_Audio_Sample){};
+    }
+
+    // Update internal audio queue
+    if (consumed_count == 0) {
+        // Nothing consumed, so nothing to move
+    } else if (consumed_count == pix->audio_count) {
+        // Everything is consumed, so no need to move
+        pix->audio_count = 0;
+    } else {
+        // Some samples are consumed,
+        // remove them and move the remaining samples to the start
+        uint32_t remaining_count = pix->audio_count - consumed_count;
+        for (uint32_t i = 0; i < remaining_count; ++i) {
+            pix->audio_buffer[i] = pix->audio_buffer[i + consumed_count];
+        }
+        pix->audio_count = remaining_count;
+    }
+}
+
 // Play a sound effect
-// - sample rate is 48000 Hz
-// - 2 channels
-// - each sample is two 16 bit integers (left, right)
-static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *audio) {
+static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *samples) {
+    if(!pix->audio_device) {
+        // Init audio
+        SDL_AudioSpec audio_spec = {
+            .freq = 48000,
+            .format = AUDIO_F32,
+            .channels = 2,
+            .callback = _pix_audio_callback,
+            .userdata = pix,
+        };
+        pix->audio_device = SDL_OpenAudioDevice(NULL, 0, &audio_spec, NULL, 0);
+
+        // Start playing audio (pause set to 0 means play)
+        SDL_PauseAudioDevice(pix->audio_device, 0);
+    }
+
+    SDL_LockAudioDevice(pix->audio_device);
+
+    // Limit sample count
+    if (sample_count > array_count(pix->audio_buffer)) {
+        sample_count = array_count(pix->audio_buffer);
+    }
+
+    // Reserve space for more samples if needed
+    while (pix->audio_count < sample_count) {
+        pix->audio_buffer[pix->audio_count++] = (Pix_Audio_Sample){0, 0};
+    }
+
+    // Add samples to output stream
+    for (u32 i = 0; i < sample_count; ++i) {
+        pix->audio_buffer[i].left += samples[i].left;
+        pix->audio_buffer[i].right += samples[i].right;
+    }
+
+    SDL_UnlockAudioDevice(pix->audio_device);
 }

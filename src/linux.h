@@ -4,9 +4,9 @@
 #include "type.h"
 
 // Basic Assumptions
-static_assert(sizeof(long) == sizeof(i64));
-static_assert(sizeof(int) == sizeof(i32));
-static_assert(sizeof(void *) == sizeof(u64));
+assert_static(sizeof(long) == sizeof(i64));
+assert_static(sizeof(int) == sizeof(i32));
+assert_static(sizeof(void *) == sizeof(u64));
 
 // Linux file descriptor to generic "handle" conversion
 static void *linux_file(i32 fd) {

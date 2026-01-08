@@ -3,6 +3,8 @@
 #pragma once
 #include "input.h"
 
+#define PIX_AUDIO_RATE 48000
+
 typedef struct Pix Pix;
 
 // Create a new Pix renderer with a given title and window size
@@ -21,10 +23,13 @@ static Input pix_input(Pix *pix);
 static void pix_draw(Pix *pix, v2i size, u8 *rgb);
 
 typedef struct {
-    i16 left;
-    i16 right;
+    f32 left;
+    f32 right;
 } Pix_Audio_Sample;
+assert_static(sizeof(Pix_Audio_Sample) == 2 * sizeof(f32));
 
 // Play a sound effect
 // - sample rate is 48000 Hz
-static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *audio);
+// - 2 channels
+// - each sample is two 16 bit integers (left, right)
+static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *samples);

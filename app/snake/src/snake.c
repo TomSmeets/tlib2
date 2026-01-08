@@ -30,7 +30,7 @@ typedef struct {
     bool input_right;
     u32 segment_target;
     u32 segment_count;
-    v2i segment[64];
+    v2i *segment;
 
     // When to continue
     time_t next_step;
@@ -84,6 +84,7 @@ static void snake_init(Snake *snake) {
 
     // Add first segment
     snake->segment_count = 1;
+    snake->segment = mem_array(snake->level_mem, v2i, snake->sx * snake->sy + 1);
     snake->segment[0] = pos;
     grid_set(snake, pos.x, pos.y, SnakeCell_Snake);
 
@@ -160,6 +161,34 @@ static void snake_draw_pix(Snake *snake, Pix *pix) {
     mem_free(tmp);
 }
 
+static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
+    Memory *mem = mem_new();
+
+    // Construct sample array
+    u32 sample_count = duration * PIX_AUDIO_RATE;
+    Pix_Audio_Sample *samples = mem_array(mem, Pix_Audio_Sample, sample_count);
+
+    f32 dt = 1.0f / PIX_AUDIO_RATE;
+    f32 phase = 0;
+    for (u32 i = 0; i < sample_count; ++i) {
+        f32 ta = i * dt;
+        f32 td = (sample_count - i - 1) * dt;
+        f32 va = attack > ta ? ta / attack : 1;
+        f32 vd = decay > td ? td / decay : 1;
+
+        f32 s = phase > 0.5 ? 1 : -1;
+
+        s = s * 0.25 * va * vd;
+        samples[i].left  = s;
+        samples[i].right = s;
+        phase = f_fract(phase + dt * freq);
+    }
+    pix_play(pix, sample_count, samples);
+
+    // Memory is not needed anymore
+    mem_free(mem);
+}
+
 static void snake_place_food(Snake *snake) {
     u32 empty_count = 0;
     u32 food_count  = 0;
@@ -171,7 +200,7 @@ static void snake_place_food(Snake *snake) {
         }
     }
 
-    if(food_count < 20 && empty_count > 0) {
+    if(food_count < 4 && empty_count > 0) {
         u32 new_ix = rand_u32(&snake->rand, 0, empty_count);
         for (i32 y = 0; y < snake->sy; ++y) {
             for (i32 x = 0; x < snake->sx; ++x) {
@@ -179,6 +208,7 @@ static void snake_place_food(Snake *snake) {
                 if(cell != SnakeCell_Empty) continue;
                 if(new_ix == 0) {
                     grid_set(snake, x, y, SnakeCell_Food);
+                    snake_play_sound(snake->pix, 220.0f, 0.1f, 0, 0.1);
                     goto end;
                 }
                 new_ix--;
@@ -208,6 +238,7 @@ void os_main(u32 argc, char **argv) {
         if (in.type == InputEvent_None) break;
         if (in.type == InputEvent_Quit) os_exit(0);
         if (in.type == InputEvent_KeyDown) {
+            snake_play_sound(snake->pix, 440.0, 0.1, 0, 0.1);
             if (in.key_down == Key_W) snake->input_up = 1;
             if (in.key_down == Key_S) snake->input_down = 1;
             if (in.key_down == Key_A) snake->input_left = 1;
@@ -220,11 +251,11 @@ void os_main(u32 argc, char **argv) {
     }
 
     // Grow
+    fmt_si(fout, "NOW: ", now, "\n");
+    fmt_si(fout, "NEXT: ", snake->next_step, "\n");
     if (now > snake->next_step) {
-        snake->next_step += 50 * TIME_MS;
+        snake->next_step += 200 * TIME_MS;
         if(now > snake->next_step) {
-            fmt_si(fout, "NOW: ", now, "\n");
-            fmt_si(fout, "NOW: ", snake->next_step, "\n");
             os_exit(1);
         }
 
@@ -254,8 +285,6 @@ void os_main(u32 argc, char **argv) {
     // snake_draw_ascii(snake, fout);
     snake_draw_pix(snake, snake->pix);
 
-    os_sleep(TIME_SEC / 200);
-    time_t new_time = os_time();
-    time_t diff = new_time - now;
-    fmt_si(fout, "Diff: ", new_time - now, "\n");
+    time_t diff = now + (TIME_SEC / 200) - os_time();
+    os_sleep(diff);
 }
