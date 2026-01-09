@@ -243,7 +243,7 @@ void os_main(u32 argc, char **argv) {
     }
 
     if (snake->level->game_over) {
-        if(snake->level->score > snake->high_score) {
+        if (snake->level->score > snake->high_score) {
             snake->high_score = snake->level->score;
             snake_play_sound(snake->pix, 440.0, 0.5, 0, 0.5);
         } else {
@@ -283,7 +283,7 @@ void os_main(u32 argc, char **argv) {
         bool key_down = in.type == InputEvent_KeyDown;
         bool key_up = in.type == InputEvent_KeyUp;
         if (key_down || key_up) {
-            if (in.key_down == Key_Shift) snake->input_sprint  = key_down;
+            if (in.key_down == Key_Shift) snake->input_sprint = key_down;
             if (in.key_down == Key_Space) snake->input_sprint2 = key_down;
         }
     }
