@@ -13,7 +13,7 @@
 #define OCT_6 (4.0f)
 #define OCT_7 (8.0f)
 #define OCT_8 (16.0f)
-#define OCT_9 (16.0f)
+#define OCT_9 (32.0f)
 
 // Note
 #define NOTE_C 261.62556530059860
