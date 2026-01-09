@@ -77,6 +77,11 @@ typedef struct {
     bool input_down;
     bool input_left;
     bool input_right;
+
+    bool input_sprint;
+    bool input_sprint2;
+
+    u32 high_score;
 } Snake;
 
 static u8 *grid_at(Level *level, i32 x, i32 y) {
@@ -238,9 +243,18 @@ void os_main(u32 argc, char **argv) {
     }
 
     if (snake->level->game_over) {
+        if(snake->level->score > snake->high_score) {
+            snake->high_score = snake->level->score;
+            snake_play_sound(snake->pix, 440.0, 0.5, 0, 0.5);
+        } else {
+            snake_play_sound(snake->pix, 110.0, 0.5, 0, 0.5);
+        }
+        fmt_s(fout, "\n");
+        fmt_s(fout, "---- Game Over ----\n");
+        fmt_su(fout, "Score:     ", snake->level->score, "\n");
+        fmt_su(fout, "Highscore: ", snake->high_score, "\n");
         mem_free(snake->level->mem);
         snake->level = snake_level_new(&snake->rand);
-        snake_play_sound(snake->pix, 110.0, 0.5, 0, 0.5);
     }
 
     Level *level = snake->level;
@@ -265,6 +279,13 @@ void os_main(u32 argc, char **argv) {
                 level->next_next_dir = dir;
             }
         }
+
+        bool key_down = in.type == InputEvent_KeyDown;
+        bool key_up = in.type == InputEvent_KeyUp;
+        if (key_down || key_up) {
+            if (in.key_down == Key_Shift) snake->input_sprint  = key_down;
+            if (in.key_down == Key_Space) snake->input_sprint2 = key_down;
+        }
     }
 
     if (level->next_dir.x || level->next_dir.y) {
@@ -286,6 +307,7 @@ void os_main(u32 argc, char **argv) {
     }
     snake_draw(snake);
 
-    time_t diff = now + (TIME_SEC / 4) - os_time();
+    time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
+    time_t diff = now + delay - os_time();
     os_sleep(diff);
 }
