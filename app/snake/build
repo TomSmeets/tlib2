@@ -1,3 +1,34 @@
 #!/bin/bash
 set -euo pipefail
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Ilib -Isrc -lSDL2 -o snake src/snake.c
+
+FLAGS="-Wall -Werror \
+       -Wno-unused-function \
+       -Wno-unused-variable \
+       -Wno-unused-but-set-variable \
+       -std=c23 \
+       -Ilib -Isrc \
+       -lSDL2 \
+       "
+
+DEBUG="-g -O0"
+RELEASE="-g0 -O2  -Xlinker --strip-all"
+
+WINDOWS="-target x86_64-unknown-windows-gnu"
+
+WASM="-target wasm32 \
+      --no-standard-libraries \
+      -Wl,--no-entry \
+      -Wl,--export-all \
+      -fno-builtin \
+      -msimd128 \
+      "
+
+set -x
+clang $FLAGS $DEBUG -o snake_clang.elf src/snake.c
+gcc   $FLAGS $DEBUG -o snake_gcc.elf   src/snake.c
+
+clang $FLAGS $DEBUG $WINDOWS -o snake_clang.exe src/snake.c
+gcc   $FLAGS $DEBUG $WINDOWS -o snake_gcc.exe   src/snake.c
+
+clang $FLAGS $DEBUG $WASM -o snake_clang.wasm src/snake.c
+gcc   $FLAGS $DEBUG $WASM -o snake_gcc.wasm   src/snake.c
