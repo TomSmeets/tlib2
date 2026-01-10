@@ -1,6 +1,6 @@
 #pragma once
-#include "type.h"
 #include "os.h"
+#include "type.h"
 #if 0
 #include <SDL2/SDL.h>
 #else

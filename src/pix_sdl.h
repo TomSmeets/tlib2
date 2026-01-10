@@ -1,7 +1,7 @@
 #pragma once
 #include "mem.h"
-#include "sdl2.h"
 #include "pix_api.h"
+#include "sdl2.h"
 
 struct Pix {
     Memory *mem;
