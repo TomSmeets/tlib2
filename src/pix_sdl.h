@@ -1,10 +1,11 @@
 #pragma once
 #include "mem.h"
+#include "sdl2.h"
 #include "pix_api.h"
-#include <SDL2/SDL.h>
 
 struct Pix {
     Memory *mem;
+    SDL2 sdl;
 
     // Window
     v2i window_size;
@@ -17,33 +18,34 @@ struct Pix {
 
     // Audio
     int audio_device;
-    uint32_t audio_count;
+    u32 audio_count;
     Pix_Audio_Sample audio_buffer[48000 * 5];
 };
 
 // Create a new Pix renderer with a given title and window size
 static Pix *pix_new(char *title, v2i window_size) {
-    SDL_InitSubSystem(SDL_INIT_EVENTS);
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
-    SDL_InitSubSystem(SDL_INIT_VIDEO);
-    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-
     Memory *mem = mem_new();
     Pix *pix = mem_struct(mem, Pix);
     pix->mem = mem;
+    sdl2_load(&pix->sdl);
+
+    pix->sdl.SDL_InitSubSystem(SDL_INIT_EVENTS);
+    pix->sdl.SDL_InitSubSystem(SDL_INIT_AUDIO);
+    pix->sdl.SDL_InitSubSystem(SDL_INIT_VIDEO);
+    pix->sdl.SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     pix->window_size = window_size;
-    pix->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size.x, window_size.y, 0);
-    pix->renderer = SDL_CreateRenderer(pix->window, -1, SDL_RENDERER_ACCELERATED);
+    pix->window = pix->sdl.SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size.x, window_size.y, 0);
+    pix->renderer = pix->sdl.SDL_CreateRenderer(pix->window, -1, SDL_RENDERER_ACCELERATED);
     return pix;
 }
 
 // Destroy window and cleanup renderer
 static void pix_free(Pix *pix) {
-    if (pix->texture) SDL_DestroyTexture(pix->texture);
-    if (pix->audio_device) SDL_CloseAudioDevice(pix->audio_device);
-    SDL_DestroyRenderer(pix->renderer);
-    SDL_DestroyWindow(pix->window);
-    SDL_Quit();
+    if (pix->texture) pix->sdl.SDL_DestroyTexture(pix->texture);
+    if (pix->audio_device) pix->sdl.SDL_CloseAudioDevice(pix->audio_device);
+    pix->sdl.SDL_DestroyRenderer(pix->renderer);
+    pix->sdl.SDL_DestroyWindow(pix->window);
+    pix->sdl.SDL_Quit();
     mem_free(pix->mem);
 }
 
@@ -57,8 +59,8 @@ static Key sdl_mouse_to_key(u32 button) {
 }
 
 static Key sdl_key_to_key(u32 key) {
-    if (key >= SDLK_a && key <= SDLK_z) return key - 'a' + Key_A;
-    if (key >= SDLK_0 && key <= SDLK_9) return key - '0' + Key_0;
+    if (key >= SDLK_a && key <= SDLK_z) return key - SDLK_a + Key_A;
+    if (key >= SDLK_0 && key <= SDLK_9) return key - SDLK_0 + Key_0;
     if (key == SDLK_SPACE) return Key_Space;
     if (key == SDLK_ESCAPE) return Key_Escape;
     if (key == SDLK_LCTRL || key == SDLK_RCTRL) return Key_Control;
@@ -77,7 +79,7 @@ static Key sdl_key_to_key(u32 key) {
 static Input pix_input(Pix *pix) {
     Input input;
     SDL_Event event;
-    while (SDL_PollEvent(&event)) {
+    while (pix->sdl.SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             input.type = InputEvent_Quit;
             return input;
@@ -119,16 +121,16 @@ static Input pix_input(Pix *pix) {
 static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
     // Recreate texture if it is resized
     if (!pix->texture || pix->texture_size.x != size.x || pix->texture_size.y != size.y) {
-        if (pix->texture) SDL_DestroyTexture(pix->texture);
+        if (pix->texture) pix->sdl.SDL_DestroyTexture(pix->texture);
         pix->texture_size = size;
-        pix->texture = SDL_CreateTexture(pix->renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, size.x, size.y);
-        SDL_SetTextureScaleMode(pix->texture, SDL_ScaleModeNearest);
+        pix->texture = pix->sdl.SDL_CreateTexture(pix->renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, size.x, size.y);
+        pix->sdl.SDL_SetTextureScaleMode(pix->texture, SDL_ScaleModeNearest);
     }
 
     // Render texture
-    SDL_UpdateTexture(pix->texture, NULL, rgb, size.x * 3);
-    SDL_RenderCopy(pix->renderer, pix->texture, NULL, NULL);
-    SDL_RenderPresent(pix->renderer);
+    pix->sdl.SDL_UpdateTexture(pix->texture, 0, rgb, size.x * 3);
+    pix->sdl.SDL_RenderCopy(pix->renderer, pix->texture, 0, 0);
+    pix->sdl.SDL_RenderPresent(pix->renderer);
 }
 
 static void _pix_audio_callback(void *user, u8 *stream, int len) {
@@ -160,8 +162,8 @@ static void _pix_audio_callback(void *user, u8 *stream, int len) {
     } else {
         // Some samples are consumed,
         // remove them and move the remaining samples to the start
-        uint32_t remaining_count = pix->audio_count - consumed_count;
-        for (uint32_t i = 0; i < remaining_count; ++i) {
+        u32 remaining_count = pix->audio_count - consumed_count;
+        for (u32 i = 0; i < remaining_count; ++i) {
             pix->audio_buffer[i] = pix->audio_buffer[i + consumed_count];
         }
         pix->audio_count = remaining_count;
@@ -179,13 +181,13 @@ static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *samples) {
             .callback = _pix_audio_callback,
             .userdata = pix,
         };
-        pix->audio_device = SDL_OpenAudioDevice(NULL, 0, &audio_spec, NULL, 0);
+        pix->audio_device = pix->sdl.SDL_OpenAudioDevice(0, 0, &audio_spec, 0, 0);
 
         // Start playing audio (pause set to 0 means play)
-        SDL_PauseAudioDevice(pix->audio_device, 0);
+        pix->sdl.SDL_PauseAudioDevice(pix->audio_device, 0);
     }
 
-    SDL_LockAudioDevice(pix->audio_device);
+    pix->sdl.SDL_LockAudioDevice(pix->audio_device);
 
     // Limit sample count
     if (sample_count > array_count(pix->audio_buffer)) {
@@ -203,5 +205,5 @@ static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *samples) {
         pix->audio_buffer[i].right += samples[i].right;
     }
 
-    SDL_UnlockAudioDevice(pix->audio_device);
+    pix->sdl.SDL_UnlockAudioDevice(pix->audio_device);
 }

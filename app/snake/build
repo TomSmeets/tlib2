@@ -7,7 +7,6 @@ FLAGS="-Wall -Werror \
        -Wno-unused-but-set-variable \
        -std=c23 \
        -Ilib -Isrc \
-       -lSDL2 \
        "
 
 DEBUG="-g -O0"
@@ -28,7 +27,4 @@ clang $FLAGS $DEBUG -o snake_clang.elf src/snake.c
 gcc   $FLAGS $DEBUG -o snake_gcc.elf   src/snake.c
 
 clang $FLAGS $DEBUG $WINDOWS -o snake_clang.exe src/snake.c
-gcc   $FLAGS $DEBUG $WINDOWS -o snake_gcc.exe   src/snake.c
-
 clang $FLAGS $DEBUG $WASM -o snake_clang.wasm src/snake.c
-gcc   $FLAGS $DEBUG $WASM -o snake_gcc.wasm   src/snake.c
