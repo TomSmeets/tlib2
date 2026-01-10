@@ -444,7 +444,9 @@ typedef struct {
     int (*SDL_UpdateTexture)(SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch);
 
     // Audio
-    SDL_AudioDeviceID (*SDL_OpenAudioDevice)( const char *device, int iscapture, const SDL_AudioSpec *desired, SDL_AudioSpec *obtained, int allowed_changes );
+    SDL_AudioDeviceID (*SDL_OpenAudioDevice)(
+        const char *device, int iscapture, const SDL_AudioSpec *desired, SDL_AudioSpec *obtained, int allowed_changes
+    );
     void (*SDL_PauseAudioDevice)(SDL_AudioDeviceID dev, int pause_on);
     void (*SDL_LockAudioDevice)(SDL_AudioDeviceID dev);
     void (*SDL_UnlockAudioDevice)(SDL_AudioDeviceID dev);

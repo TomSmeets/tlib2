@@ -607,7 +607,9 @@ typedef struct {
     bool (*SDL_GL_SwapWindow)(SDL_Window *window);
 
     // Audio
-    SDL_AudioStream *(*SDL_OpenAudioDeviceStream)( SDL_AudioDeviceID devid, const SDL_AudioSpec *spec, SDL_AudioStreamCallback callback, void *userdata );
+    SDL_AudioStream *(*SDL_OpenAudioDeviceStream)(
+        SDL_AudioDeviceID devid, const SDL_AudioSpec *spec, SDL_AudioStreamCallback callback, void *userdata
+    );
     SDL_AudioDeviceID (*SDL_GetAudioStreamDevice)(SDL_AudioStream *stream);
     bool (*SDL_ResumeAudioDevice)(SDL_AudioDeviceID devid);
     int (*SDL_GetAudioStreamQueued)(SDL_AudioStream *stream);

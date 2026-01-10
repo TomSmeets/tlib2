@@ -237,8 +237,8 @@ static time_t os_time(void) {
         offset = unix_time - (time_t)(count / freq);
     }
 
-   time_t time = (time_t)(count / freq) + offset;
-   return time;
+    time_t time = (time_t)(count / freq) + offset;
+    return time;
 }
 
 static void os_sleep(time_t duration) {
