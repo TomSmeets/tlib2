@@ -16,7 +16,6 @@ typedef struct SDL_Texture SDL_Texture;
 #define SDL_INIT_EVENTS 0x00004000u
 #define SDL_INIT_SENSOR 0x00008000u
 #define SDL_INIT_NOPARACHUTE 0x00100000u
-
 #define SDL_WINDOWPOS_CENTERED 0x2FFF0000u
 
 typedef enum {
@@ -425,46 +424,56 @@ typedef enum {
 #endif
 
 typedef struct {
+    // Setup
     int (*SDL_InitSubSystem)(u32 flags);
+    int (*SDL_PollEvent)(SDL_Event *event);
+    void (*SDL_Quit)(void);
+
+    // Window
     SDL_Window *(*SDL_CreateWindow)(const char *title, int x, int y, int w, int h, u32 flags);
+    void (*SDL_DestroyWindow)(SDL_Window *window);
+
+    // Render
     SDL_Renderer *(*SDL_CreateRenderer)(SDL_Window *window, int index, u32 flags);
     SDL_Texture *(*SDL_CreateTexture)(SDL_Renderer *renderer, u32 format, int access, int w, int h);
+    void (*SDL_DestroyRenderer)(SDL_Renderer *renderer);
+    void (*SDL_DestroyTexture)(SDL_Texture *texture);
     int (*SDL_RenderCopy)(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *srcrect, const SDL_Rect *dstrect);
-    int (*SDL_UpdateTexture)(SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch);
     void (*SDL_RenderPresent)(SDL_Renderer *renderer);
-    SDL_AudioDeviceID (*SDL_OpenAudioDevice)(
-        const char *device, int iscapture, const SDL_AudioSpec *desired, SDL_AudioSpec *obtained, int allowed_changes
-    );
+    int (*SDL_SetTextureScaleMode)(SDL_Texture *texture, SDL_ScaleMode scaleMode);
+    int (*SDL_UpdateTexture)(SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch);
+
+    // Audio
+    SDL_AudioDeviceID (*SDL_OpenAudioDevice)( const char *device, int iscapture, const SDL_AudioSpec *desired, SDL_AudioSpec *obtained, int allowed_changes );
     void (*SDL_PauseAudioDevice)(SDL_AudioDeviceID dev, int pause_on);
     void (*SDL_LockAudioDevice)(SDL_AudioDeviceID dev);
     void (*SDL_UnlockAudioDevice)(SDL_AudioDeviceID dev);
-    void (*SDL_DestroyTexture)(SDL_Texture *texture);
     void (*SDL_CloseAudioDevice)(SDL_AudioDeviceID dev);
-    void (*SDL_DestroyRenderer)(SDL_Renderer *renderer);
-    void (*SDL_DestroyWindow)(SDL_Window *window);
-    void (*SDL_Quit)(void);
-    int (*SDL_PollEvent)(SDL_Event *event);
-    int (*SDL_SetTextureScaleMode)(SDL_Texture *texture, SDL_ScaleMode scaleMode);
 } SDL2;
 
 static void sdl2_load(SDL2 *sdl) {
+#if OS_LINUX
     Library *handle = os_dlopen("libSDL2.so");
-    sdl->SDL_InitSubSystem = os_dlsym(handle, "SDL_InitSubSystem");
-    sdl->SDL_CreateWindow = os_dlsym(handle, "SDL_CreateWindow");
+#elif OS_WINDOWS
+    Library *handle = os_dlopen("SDL2.dll");
+#endif
+    assert(handle);
+    sdl->SDL_CloseAudioDevice = os_dlsym(handle, "SDL_CloseAudioDevice");
     sdl->SDL_CreateRenderer = os_dlsym(handle, "SDL_CreateRenderer");
     sdl->SDL_CreateTexture = os_dlsym(handle, "SDL_CreateTexture");
-    sdl->SDL_RenderCopy = os_dlsym(handle, "SDL_RenderCopy");
-    sdl->SDL_UpdateTexture = os_dlsym(handle, "SDL_UpdateTexture");
-    sdl->SDL_RenderPresent = os_dlsym(handle, "SDL_RenderPresent");
+    sdl->SDL_CreateWindow = os_dlsym(handle, "SDL_CreateWindow");
+    sdl->SDL_DestroyRenderer = os_dlsym(handle, "SDL_DestroyRenderer");
+    sdl->SDL_DestroyTexture = os_dlsym(handle, "SDL_DestroyTexture");
+    sdl->SDL_DestroyWindow = os_dlsym(handle, "SDL_DestroyWindow");
+    sdl->SDL_InitSubSystem = os_dlsym(handle, "SDL_InitSubSystem");
+    sdl->SDL_LockAudioDevice = os_dlsym(handle, "SDL_LockAudioDevice");
     sdl->SDL_OpenAudioDevice = os_dlsym(handle, "SDL_OpenAudioDevice");
     sdl->SDL_PauseAudioDevice = os_dlsym(handle, "SDL_PauseAudioDevice");
-    sdl->SDL_LockAudioDevice = os_dlsym(handle, "SDL_LockAudioDevice");
-    sdl->SDL_UnlockAudioDevice = os_dlsym(handle, "SDL_UnlockAudioDevice");
-    sdl->SDL_DestroyTexture = os_dlsym(handle, "SDL_DestroyTexture");
-    sdl->SDL_CloseAudioDevice = os_dlsym(handle, "SDL_CloseAudioDevice");
-    sdl->SDL_DestroyRenderer = os_dlsym(handle, "SDL_DestroyRenderer");
-    sdl->SDL_DestroyWindow = os_dlsym(handle, "SDL_DestroyWindow");
-    sdl->SDL_Quit = os_dlsym(handle, "SDL_Quit");
     sdl->SDL_PollEvent = os_dlsym(handle, "SDL_PollEvent");
+    sdl->SDL_Quit = os_dlsym(handle, "SDL_Quit");
+    sdl->SDL_RenderCopy = os_dlsym(handle, "SDL_RenderCopy");
+    sdl->SDL_RenderPresent = os_dlsym(handle, "SDL_RenderPresent");
     sdl->SDL_SetTextureScaleMode = os_dlsym(handle, "SDL_SetTextureScaleMode");
+    sdl->SDL_UnlockAudioDevice = os_dlsym(handle, "SDL_UnlockAudioDevice");
+    sdl->SDL_UpdateTexture = os_dlsym(handle, "SDL_UpdateTexture");
 }

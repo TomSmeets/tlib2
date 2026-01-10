@@ -22,9 +22,13 @@ WASM="-target wasm32 \
       -msimd128 \
       "
 
-set -x
-clang $FLAGS $DEBUG -o snake_clang.elf src/snake.c
-gcc   $FLAGS $DEBUG -o snake_gcc.elf   src/snake.c
+LINUX=""
 
-clang $FLAGS $DEBUG $WINDOWS -o snake_clang.exe src/snake.c
-clang $FLAGS $DEBUG $WASM -o snake_clang.wasm src/snake.c
+mkdir -p out
+set -x
+clang $FLAGS $DEBUG $LINUX   -o out/snake src/snake.c
+clang $FLAGS $DEBUG $WINDOWS -o out/snake.exe src/snake.c
+# clang $FLAGS $DEBUG $WASM    -o out/snake.wasm src/snake.c
+
+# gcc   $FLAGS $DEBUG -o out/snake_gcc src/snake.c
+

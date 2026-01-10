@@ -4,7 +4,9 @@
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
+#pragma push_macro("TIME_MS")
 #include <windows.h>
+#pragma pop_macro("TIME_MS")
 
 // The main function, to exit call os_exit()
 // - This function is called in an infinite loop
@@ -235,14 +237,15 @@ static time_t os_time(void) {
         offset = unix_time - (time_t)(count / freq);
     }
 
-    return (time_t)(count / freq) + offset;
+   time_t time = (time_t)(count / freq) + offset;
+   return time;
 }
 
-static void os_sleep(time_t us) {
-    if (us < 0) us = 0;
+static void os_sleep(time_t duration) {
+    if (duration < 0) duration = 0;
 
     // Sleep in ms
-    Sleep((u64)us / 1000);
+    Sleep((u64)duration / 1000);
 }
 
 // ==== Random ====
