@@ -28,7 +28,7 @@ mkdir -p out
 set -x
 clang $FLAGS $DEBUG $LINUX   -o out/snake src/snake.c
 clang $FLAGS $DEBUG $WINDOWS -o out/snake.exe src/snake.c
-# clang $FLAGS $DEBUG $WASM    -o out/snake.wasm src/snake.c
+clang $FLAGS $DEBUG $WASM    -o out/snake.wasm src/snake.c
 
 # gcc   $FLAGS $DEBUG -o out/snake_gcc src/snake.c
 
