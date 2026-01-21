@@ -8,5 +8,5 @@
 #elif OS_WINDOWS
 #include "os_windows.h"
 #elif OS_WASM
-// TODO
+#include "os_wasm.h"
 #endif

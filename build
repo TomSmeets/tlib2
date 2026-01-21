@@ -1,13 +1,51 @@
 #!/bin/bash
 set -euo pipefail
+
+FLAGS="-Wall -Werror \
+       -Wno-unused-function \
+       -Wno-unused-variable \
+       -Wno-unused-but-set-variable \
+       -std=c23 \
+       "
+
+DEBUG="-g -O0"
+RELEASE="-g0 -O2 -Xlinker --strip-all"
+
+WINDOWS="-target x86_64-unknown-windows-gnu"
+
+WASM="-target wasm32 \
+      --no-standard-libraries \
+      -Wl,--no-entry \
+      -Wl,--export-all \
+      -fno-builtin \
+      -msimd128 \
+      "
+
+LINUX=""
 mkdir -p out
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/hot      app/hot.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/build    app/build.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Isrc -o out/test     app/test.c
 
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/test.exe    app/test.c
-# clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/build.exe   app/build.c
-clang -g -O0 -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -target x86_64-unknown-windows-gnu -Isrc -o out/hot.exe     app/hot.c
+# Generate compile commands for some platform
+cat > compile_commands.json <<EOF
+[
+  {
+    "directory":"$PWD",
+    "command":"clang $FLAGS $DEBUG $LINUX -Icore -Igfx -Ielf -o main main.c",
+    "file":"main.c"
+  }
+]
+EOF
 
-./out/test
-./out/build "$@"
+# Run clang-format
+clang-format -i */*.h */*.c
+
+# Build everything
+clang $FLAGS $DEBUG $LINUX   -o out/tmp.elf    -Icore app/tmp.c
+clang $FLAGS $RELEASE $WASM  -o out/tmp.wasm   -Icore app/tmp.c
+
+clang $FLAGS $DEBUG $LINUX   -o out/snake      -Icore -Igfx snake/snake.c
+clang $FLAGS $DEBUG $WINDOWS -o out/snake.exe  -Icore -Igfx snake/snake.c
+# clang $FLAGS $DEBUG $WASM    -o out/snake.wasm -Icore -Igfx snake/snake.c
+
+clang $FLAGS $DEBUG $LINUX   -o out/test       -Icore       app/test.c
+clang $FLAGS $DEBUG $LINUX   -o out/hot        -Icore -Ielf app/hot.c
+clang $FLAGS $DEBUG $LINUX   -o out/build      -Icore -Ielf app/build.c

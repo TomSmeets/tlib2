@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// math.h - Math functions
 #pragma once
 #include "type.h"
 

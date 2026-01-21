@@ -77,6 +77,7 @@ static void cmd_run(Cli *cli) {
         cmd[argc++] = output_path;
         cmd[argc++] = "-shared";
         cmd[argc++] = "-fPIC";
+        cmd[argc++] = "-Isrc";
         cmd[argc++] = input_path;
         cmd[argc] = 0;
         child_main = 0;

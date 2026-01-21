@@ -1,50 +1,58 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
-// os_wasm.h - WASM OS abstraction
+// os_linux.h - Linux syscalls
 #pragma once
+#include "linux.h"
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
 
-#define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
+// The main function, to exit call os_exit()
+// - This function is called in an infinite loop
+// - not defined as static to support hot reloading
+int main(i32 argc, char **argv) {
+    for (;;) os_main(argc, argv);
+}
 
-// Call directly from js
-void os_main(u32 argc, char **argv);
-
+// Allocate a new chunk of memory
+// - returns null on failure
 static void *os_alloc(size_t size) {
-    size_t page_size = 65536;
-    size_t pages = (size + page_size - 1) / page_size;
-    size_t addr = __builtin_wasm_memory_grow(0, pages) * page_size;
-    return (void *)addr;
+    void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (!ptr || ptr == MAP_FAILED) return 0;
+    return ptr;
 }
 
+// Exit current application
+// - Does not return
 static void os_exit(i32 status) {
-    // Not possible (?)
+    linux_exit_group(status);
+    __builtin_trap();
 }
 
-WASM_IMPORT(wasm_fail) void wasm_fail(char *message, u32 len);
+// Exit with an error message (error dialog)
+// - Does not return
 static void os_fail(char *message) {
-    wasm_fail(message, str_len(message));
+    linux_write(2, message, str_len(message));
+    os_exit(1);
 }
 
 // ==================================
 //      File and Stream handling
 // ==================================
 static File *os_stdin(void) {
-    return (File*)1;
+    return linux_file(0);
 }
 
 static File *os_stdout(void) {
-    return (File*)2;
+    return linux_file(1);
 }
 
 static File *os_stderr(void) {
-    return (File*)3;
+    return linux_file(2);
 }
 
 // Write data from file or stream
 // - Returns actual number of bytes read in 'used' on success
 // - Returns false on failure
-WASM_IMPORT(wasm_read) void wasm_read(i32 fd, size_t size);
 static bool os_read(File *file, void *data, size_t size, size_t *used) {
     i64 ret = linux_read(linux_fd(file), data, size);
     if (ret < 0) return 0;

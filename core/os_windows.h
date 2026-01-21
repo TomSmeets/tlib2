@@ -34,6 +34,7 @@ static void *os_alloc(size_t size) {
 // - Does not return
 static void os_exit(i32 status) {
     ExitProcess(status);
+    __builtin_trap();
 }
 
 // Exit with an error message (error dialog)
