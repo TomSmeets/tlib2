@@ -5,22 +5,57 @@ var tlib = {
     memory: null,
 
     // Symbols defined in c exported to js
-    imports: {},
+    import: {},
 
     // Symbols defined in js exported to c
-    exports: {},
+    export: {},
 };
 
-tlib.imports.os_main();
+tlib.main = () => {
+    function loop() {
+        try {
+            tlib.import.os_main(0, 0)
+            let timeout = Number(tlib.next_sleep) / 1000
+            window.setTimeout(loop, timeout)
+        } catch(error) {
+            // Exit called
+            if(!tlib.exit) {
+                console.log("FAIL: ", error);
+                alert(error)
+            }
+        }
+    }
+
+    fetch('index.wasm')
+        .then(re => re.arrayBuffer())
+        .then(data => WebAssembly.instantiate(data, { env: tlib.export }))
+        .then(ret => {
+            tlib.memory = ret.instance.exports.memory;
+            tlib.import = ret.instance.exports;
+            loop()
+        });
+}
 
 tlib.export.wasm_exit = () => {
     tlib.exit = true
 }
 
+tlib.export.wasm_fail = (data, len) => {
+    // data is a pointer in wasm memory
+    var bytes = new Uint8Array(tlib.memory.buffer, data, len)
+
+    // Convert utf8 bytes array to a js string
+    var string = new TextDecoder('utf8').decode(bytes)
+
+    // Show alert dialog
+    alert(string);
+    console.log(string);
+}
+
 // Write utf8 text to the console
 tlib.export.wasm_write = (fd, data, len) => {
     // data is a pointer in wasm memory
-    var bytes = new Uint8Array(ctx.memory.buffer, data, len)
+    var bytes = new Uint8Array(tlib.memory.buffer, data, len)
 
     // Convert utf8 bytes array to a js string
     var string = new TextDecoder('utf8').decode(bytes)
