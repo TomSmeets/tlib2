@@ -14,7 +14,7 @@ static void *os_alloc(size_t size) {
     return (void *)addr;
 }
 
-WASM_IMPORT(wasm_write) void wasm_exit(void);
+WASM_IMPORT(wasm_exit) void wasm_exit(void);
 static void os_exit(i32 status) {
     wasm_exit();
     __builtin_trap();
