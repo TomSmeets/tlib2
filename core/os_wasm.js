@@ -11,7 +11,7 @@ var tlib = {
     export: {},
 };
 
-tlib.main = () => {
+tlib.main = (path) => {
     function loop() {
         try {
             tlib.import.os_main(0, 0)
@@ -26,14 +26,11 @@ tlib.main = () => {
         }
     }
 
-    fetch('index.wasm')
-        .then(re => re.arrayBuffer())
-        .then(data => WebAssembly.instantiate(data, { env: tlib.export }))
-        .then(ret => {
-            tlib.memory = ret.instance.exports.memory;
-            tlib.import = ret.instance.exports;
-            loop()
-        });
+    WebAssembly.instantiateStreaming(fetch(path), { env: tlib.export }).then(ret => {
+        tlib.memory = ret.instance.exports.memory;
+        tlib.import = ret.instance.exports;
+        loop()
+    });
 }
 
 tlib.export.wasm_exit = () => {

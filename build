@@ -39,13 +39,19 @@ EOF
 clang-format -i */*.h */*.c
 
 # Build everything
-clang $FLAGS $DEBUG $LINUX   -o out/tmp.elf    -Icore app/tmp.c
-clang $FLAGS $RELEASE $WASM  -o out/tmp.wasm   -Icore app/tmp.c
+mkdir -p out/tmp
+clang $FLAGS $DEBUG $LINUX   -o out/tmp/tmp.elf  -Icore app/tmp.c
+clang $FLAGS $DEBUG $WINDOWS -o out/tmp/tmp.exe  -Icore app/tmp.c
+clang $FLAGS $DEBUG $WASM    -o out/tmp/tmp.wasm -Icore app/tmp.c
+cat app/tmp.html    > out/tmp/tmp.html
+cat core/os_wasm.js > out/tmp/tmp.js
 
-clang $FLAGS $DEBUG $LINUX   -o out/snake      -Icore -Igfx snake/snake.c
-clang $FLAGS $DEBUG $WINDOWS -o out/snake.exe  -Icore -Igfx snake/snake.c
-# clang $FLAGS $DEBUG $WASM    -o out/snake.wasm -Icore -Igfx snake/snake.c
+mkdir -p out/snake
+clang $FLAGS $DEBUG $LINUX   -o out/snake/snake      -Icore -Igfx snake/snake.c
+clang $FLAGS $DEBUG $WINDOWS -o out/snake/snake.exe  -Icore -Igfx snake/snake.c
+# clang $FLAGS $DEBUG $WASM    -o out/snake/snake.wasm -Icore -Igfx snake/snake.c
 
 clang $FLAGS $DEBUG $LINUX   -o out/test       -Icore       app/test.c
 clang $FLAGS $DEBUG $LINUX   -o out/hot        -Icore -Ielf app/hot.c
 clang $FLAGS $DEBUG $LINUX   -o out/build      -Icore -Ielf app/build.c
+
