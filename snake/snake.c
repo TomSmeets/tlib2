@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // snake.c - A simple snake game
 #include "fmt.h"
 #include "os.h"
@@ -21,7 +21,6 @@ static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 d
         f32 td = (sample_count - i - 1) * dt;
         f32 va = attack > ta ? ta / attack : 1;
         f32 vd = decay > td ? td / decay : 1;
-
         f32 s = phase > 0.5 ? 1 : -1;
 
         s = s * 0.25 * va * vd;
