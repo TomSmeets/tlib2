@@ -35,8 +35,10 @@ cat > compile_commands.json <<EOF
 ]
 EOF
 
+set -x
+
 # Run clang-format
-clang-format -i */*.h */*.c
+# clang-format -i */*.h */*.c
 
 # Build everything
 mkdir -p out/tmp
@@ -49,7 +51,9 @@ cat core/os_wasm.js > out/tmp/tmp.js
 mkdir -p out/snake
 clang $FLAGS $DEBUG $LINUX   -o out/snake/snake      -Icore -Igfx snake/snake.c
 clang $FLAGS $DEBUG $WINDOWS -o out/snake/snake.exe  -Icore -Igfx snake/snake.c
-# clang $FLAGS $DEBUG $WASM    -o out/snake/snake.wasm -Icore -Igfx snake/snake.c
+clang $FLAGS $DEBUG $WASM    -o out/snake/snake.wasm -Icore -Igfx snake/snake.c
+cat snake/snake.html   > out/snake/snake.html
+cat core/os_wasm.js gfx/pix_wasm.js > out/snake/snake.js
 
 clang $FLAGS $DEBUG $LINUX   -o out/test       -Icore       app/test.c
 clang $FLAGS $DEBUG $LINUX   -o out/hot        -Icore -Ielf app/hot.c

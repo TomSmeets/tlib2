@@ -128,7 +128,7 @@ static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
     }
 
     // Render texture
-    pix->sdl.SDL_UpdateTexture(pix->texture, 0, rgb, size.x * 3);
+    pix->sdl.SDL_UpdateTexture(pix->texture, 0, rgb, size.x * 4);
     pix->sdl.SDL_RenderCopy(pix->renderer, pix->texture, 0, 0);
     pix->sdl.SDL_RenderPresent(pix->renderer);
 }

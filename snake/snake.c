@@ -197,7 +197,7 @@ static Level *snake_level_new(Rand *rng) {
 static void snake_draw(Snake *snake) {
     Level *level = snake->level;
     Memory *tmp = mem_new();
-    u8 *canvas = mem_array(tmp, u8, 3 * level->sx * level->sy);
+    u8 *canvas = mem_array(tmp, u8, 4 * level->sx * level->sy);
     u8 *px = canvas;
 
     for (u32 i = 0; i < level->sy * level->sx; ++i) {
@@ -209,18 +209,22 @@ static void snake_draw(Snake *snake) {
             *px++ = 255;
             *px++ = 255;
             *px++ = 255;
+            *px++ = 255;
         } else if (cell == SnakeCell_Snake) {
             *px++ = 0;
             *px++ = 255;
             *px++ = 0;
+            *px++ = 255;
         } else if (cell == SnakeCell_Food) {
             *px++ = 255;
             *px++ = 0;
             *px++ = 0;
+            *px++ = 255;
         } else {
             *px++ = 0;
             *px++ = 0;
             *px++ = 0;
+            *px++ = 255;
         }
     }
     pix_draw(snake->pix, (v2i){level->sx, level->sy}, canvas);
@@ -300,7 +304,6 @@ void os_main(u32 argc, char **argv) {
             snake_play_sound(snake->pix, OCT_3 * NOTE_B, 0.1f, 0.0, 0.1);
         }
     }
-
     if (snake_place_food(snake->level)) {
         snake_play_sound(snake->pix, OCT_3 * NOTE_A, 0.1f, 0.0, 0.1);
     }
