@@ -87,7 +87,7 @@ void pix_wasm_key_down(Pix *pix, u32 key, bool down) {
     Input *ev = pix->events + pix->event_write;
     pix->event_write = next_write;
 
-    if(down) {
+    if (down) {
         ev->type = InputEvent_KeyDown;
         ev->key_down = key_from_char(key);
     } else {
