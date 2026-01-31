@@ -11,7 +11,7 @@ var tlib = {
     export: {},
 };
 
-tlib.main = (path) => {
+tlib.main = (data) => {
     function loop() {
         try {
             tlib.import.os_main(0, 0)
@@ -26,7 +26,7 @@ tlib.main = (path) => {
         }
     }
 
-    WebAssembly.instantiateStreaming(fetch(path), { env: tlib.export }).then(ret => {
+    WebAssembly.instantiate(data, { env: tlib.export }).then(ret => {
         tlib.memory = ret.instance.exports.memory;
         tlib.import = ret.instance.exports;
         loop()
