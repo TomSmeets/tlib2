@@ -5,7 +5,9 @@
 #include "base64.h"
 
 void os_main(u32 argc, char **argv) {
+    fmt_s(fout, "Running tests...\n");
     test_fmt();
     base64_test();
+    fmt_s(fout, "Success!\n");
     os_exit(0);
 }
