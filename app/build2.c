@@ -36,7 +36,7 @@ typedef enum {
     Mode_Release,
 } Mode;
 
-static void clang_compile(Platform platform, Mode mode, char **include, char *input, char *output) {
+static Command clang_compile_command(Platform platform, Mode mode, char **include, char *input, char *output) {
     Command cmd = {};
     cmd_arg(&cmd, "clang");
 
@@ -80,10 +80,13 @@ static void clang_compile(Platform platform, Mode mode, char **include, char *in
         cmd_arg2(&cmd, "-I", include[i]);
     }
     cmd_arg(&cmd, input);
+    return cmd;
+}
 
+static void clang_compile(Platform platform, Mode mode, char **include, char *input, char *output) {
+    Command cmd = clang_compile_command(platform, mode, include, input, output);
     fmt_cmd(fout, &cmd);
     fmt_s(fout, "\n");
-
     i32 ret = os_wait(os_exec(cmd.argv));
     if(ret != 0) os_exit(ret);
 }
@@ -224,6 +227,39 @@ static void build_test(Arg *arg) {
     os_exit(os_system("out/test.elf"));
 }
 
+static void generate_lsp(Arg *arg) {
+    char *include[] = {"core", "gfx", 0};
+    bool windows = arg_match(arg, "windows", "Generate for cross compiling to Windows");
+    bool wasm = arg_match(arg, "wasm", "Generate for cross compiling to WASM");
+    arg_help_opt(arg);
+
+    Platform platform = Platform_Linux;
+    if (windows) platform = Platform_Windows;
+    if (wasm) platform = Platform_WASM;
+    Command cmd = clang_compile_command(platform, Mode_Debug, include, "main.c", "out/main.elf");
+
+    char cwd[1024];
+    assert(linux_getcwd(cwd, sizeof(cwd)) > 0);
+
+    File *fd = os_open("compile_commands.json", FileMode_Create);
+    u8 buffer[1024];
+    Fmt fmt = { .file = fd, .data = buffer, .size = sizeof(buffer) };
+    fmt_s(&fmt, "[");
+    fmt_s(&fmt, "{");
+    fmt_ss(&fmt, "\"directory\":\"", cwd, "\",");
+    fmt_s(&fmt, "\"command\":\"");
+    for(u32 i = 0; i < cmd.argc; ++i) {
+        fmt_s(&fmt, cmd.argv[i]);
+        fmt_s(&fmt, " ");
+    }
+    fmt_s(&fmt, "\",");
+    fmt_s(&fmt, "\"file\":\"main.c\"");
+    fmt_s(&fmt, "}");
+    fmt_s(&fmt, "]");
+    fmt_end(&fmt);
+    os_close(fd);
+}
+
 void os_main(u32 argc, char **argv) {
     Arg arg = {argc, argv, 1};
 
@@ -240,6 +276,12 @@ void os_main(u32 argc, char **argv) {
 
     if (arg_match(&arg, "snake", "Build Snake")) {
         build_snake(&arg);
+        os_exit(0);
+        return;
+    }
+
+    if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompile")) {
+        generate_lsp(&arg);
         os_exit(0);
         return;
     }
