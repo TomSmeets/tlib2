@@ -202,6 +202,7 @@ static void build_snake(Arg *arg) {
     bool run     = arg_match(arg, "run",     "Run snake directly with hot reload");
     arg_help_opt(arg);
 
+    os_system("mkdir -p out/snake");
     Mode mode = Mode_Debug;
     if (release) mode = Mode_Release;
 
@@ -219,6 +220,33 @@ static void build_snake(Arg *arg) {
     char *wasm_path = "out/snake/snake.wasm";
     char *html_path = "snake/snake.html";
     generate_html("out/snake/snake.html", css_path, js_path, wasm_path, html_path);
+
+    // Cleanup
+    if(release) os_remove("out/snake/snake.wasm");
+}
+static void build_tmp(Arg *arg) {
+    bool quick   = arg_match(arg, "quick",   "Skip other platforms");
+    bool release = arg_match(arg, "release", "Build in release mode");
+    bool run     = arg_match(arg, "run",     "Run tmp directly with hot reload");
+    arg_help_opt(arg);
+
+    os_system("mkdir -p out/tmp");
+    Mode mode = Mode_Debug;
+    if (release) mode = Mode_Release;
+
+    char *include[] = {"core", 0};
+    clang_compile(Platform_Linux, mode, include, "app/tmp.c", "out/tmp/tmp.elf");
+
+    if (run) os_exit(os_system("out/tmp/tmp.elf"));
+    if (quick) return;
+    clang_compile(Platform_Windows, mode, include, "app/tmp.c", "out/tmp/tmp.exe");
+    clang_compile(Platform_WASM,    mode, include, "app/tmp.c", "out/tmp/tmp.wasm");
+
+    // Generate html page
+    char *js_path[] = {"core/os_wasm.js", "app/tmp.js", 0};
+    char *wasm_path = "out/tmp/tmp.wasm";
+    char *html_path = "app/tmp.html";
+    generate_html("out/tmp/tmp.html", 0, js_path, wasm_path, html_path);
 }
 
 static void build_test(Arg *arg) {
@@ -276,6 +304,12 @@ void os_main(u32 argc, char **argv) {
 
     if (arg_match(&arg, "snake", "Build Snake")) {
         build_snake(&arg);
+        os_exit(0);
+        return;
+    }
+
+    if (arg_match(&arg, "tmp", "Build TMP")) {
+        build_tmp(&arg);
         os_exit(0);
         return;
     }
