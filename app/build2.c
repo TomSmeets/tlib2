@@ -1,81 +1,7 @@
 #include "fmt.h"
 #include "base64.h"
 
-typedef enum {
-    Action_Build,
-    Action_Format,
-    Action_Test,
-    Action_Count,
-} Action;
-
-static char *action_str[] = {
-    "build",
-    "format",
-    "test",
-};
-
-typedef enum {
-    Platform_Cross,
-    Platform_Linux,
-    Platform_Windows,
-    Platform_WASM,
-    Platform_Count,
-} Platform;
-
-static char *platform_str[] = {
-    "cross",
-    "linux",
-    "windows",
-    "wasm",
-};
-
-typedef enum {
-    Mode_Debug,
-    Mode_Release,
-    Mode_Count,
-} Mode;
-
-static char *mode_str[] = {
-    "debug",
-    "release",
-};
-
-typedef enum {
-    App_All,
-    App_Snake,
-    App_Count,
-} App;
-
-typedef struct {
-    Action action;
-    Platform platform;
-    Mode mode;
-} Args;
-
-static bool args_parse(Args *args, char *arg) {
-    for (Action i = 0; i < Action_Count; ++i) {
-        if (str_eq(arg, action_str[i])) {
-            args->action = i;
-            return 1;
-        }
-    }
-
-    for (Platform i = 0; i < Platform_Count; ++i) {
-        if (str_eq(arg, platform_str[i])) {
-            args->platform = i;
-            return 1;
-        }
-    }
-
-    for (Mode i = 0; i < Mode_Count; ++i) {
-        if (str_eq(arg, mode_str[i])) {
-            args->mode = i;
-            return 1;
-        }
-    }
-    return 0;
-}
-
+// ============== CMD =========================
 typedef struct {
     u32 argc;
     char *argv[256];
@@ -97,6 +23,18 @@ static void fmt_cmd(Fmt *fmt, Command *cmd) {
         fmt_s(fmt, cmd->argv[i]);
     }
 }
+
+// ========= Clang =================
+typedef enum {
+    Platform_Windows,
+    Platform_Linux,
+    Platform_WASM,
+} Platform;
+
+typedef enum {
+    Mode_Debug,
+    Mode_Release,
+} Mode;
 
 static void clang_compile(Platform platform, Mode mode, char **include, char *input, char *output) {
     Command cmd = {};
@@ -150,11 +88,6 @@ static void clang_compile(Platform platform, Mode mode, char **include, char *in
     if(ret != 0) os_exit(ret);
 }
 
-
-static bool os_write_str(File *file, char *data) {
-    return os_write(file, data, str_len(data), 0);
-}
-
 // Read entire file into memory
 static Buffer os_read_file(Memory *mem, char *path) {
     FileInfo info = {};
@@ -177,6 +110,7 @@ static void fmt_file_contents(Fmt *fmt, char *input_path) {
 }
 
 
+// Generate self contained html page continaing wasm module
 static void generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
     u8 buffer[1024*4];
     Fmt f = fmt_from(buffer, sizeof(buffer));
@@ -210,9 +144,69 @@ static void generate_html(char *output_path, char *css_path, char **js_path_list
     os_close(f.file);
 }
 
-static void build_snake(Mode mode) {
-    char *include[] = {"core", "gfx",0};
-    clang_compile(Platform_Linux,   mode, include, "snake/snake.c", "out/snake/snake.elf");
+typedef struct {
+    u32 argc;
+    char **argv;
+    u32 i;
+
+    u32 opt_count;
+    char *opts[64][2];
+} Arg;
+
+
+static Arg arg_new(u32 argc, char **argv) {
+    return (Arg) { argc, argv, 1 };
+}
+
+static bool arg_match(Arg *arg, char *name, char *info) {
+    arg->opts[arg->opt_count][0] = name;
+    arg->opts[arg->opt_count][1] = info;
+    arg->opt_count++;
+
+    if (arg->i >= arg->argc) return false;
+    if (!str_eq(arg->argv[arg->i], name)) return false;
+    arg->i++;
+    arg->opt_count = 0;
+    return true;
+}
+
+static void arg_help(Arg* arg, Fmt *fmt) {
+    fmt_s(fmt, "Usage: ");
+    for (u32 i = 0; i < arg->i; ++i) {
+        fmt_s(fmt, arg->argv[i]);
+        fmt_s(fmt, " ");
+    }
+    fmt_s(fmt, "[ACTION]");
+    fmt_s(fmt, "\n");
+    fmt_s(fmt, "\n");
+
+    fmt_s(fmt, "Supported actions: \n");
+    for (u32 i = 0; i < arg->opt_count; ++i) {
+        fmt_ss(fmt, "    ", arg->opts[i][0], ": ");
+        fmt_ss(fmt, "", arg->opts[i][1], "\n");
+    }
+}
+
+static void arg_help_opt(Arg *arg) {
+    if (arg->i >= arg->argc) return;
+    arg_help(arg, fout);
+    os_exit(1);
+}
+
+static void build_snake(Arg *arg) {
+    bool quick   = arg_match(arg, "quick",   "Skip other platforms");
+    bool release = arg_match(arg, "release", "Build in release mode");
+    bool run     = arg_match(arg, "run",     "Run snake directly with hot reload");
+    arg_help_opt(arg);
+
+    Mode mode = Mode_Debug;
+    if (release) mode = Mode_Release;
+
+    char *include[] = {"core", "gfx", 0};
+    clang_compile(Platform_Linux, mode, include, "snake/snake.c", "out/snake/snake.elf");
+
+    if (run) os_exit(os_system("out/snake/snake.elf"));
+    if (quick) return;
     clang_compile(Platform_Windows, mode, include, "snake/snake.c", "out/snake/snake.exe");
     clang_compile(Platform_WASM,    mode, include, "snake/snake.c", "out/snake/snake.wasm");
 
@@ -224,37 +218,32 @@ static void build_snake(Mode mode) {
     generate_html("out/snake/snake.html", css_path, js_path, wasm_path, html_path);
 }
 
+static void build_test(Arg *arg) {
+    char *include[] = {"core", 0};
+    clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test.elf");
+    os_exit(os_system("out/test.elf"));
+}
+
 void os_main(u32 argc, char **argv) {
-    Args args = {
-        .action = Action_Build,
-        .platform = Platform_Linux,
-        .mode = Mode_Debug,
-    };
+    Arg arg = {argc, argv, 1};
 
-    bool fail = 0;
-    for (u32 i = 1; i < argc; ++i) {
-        char *arg = argv[i];
-        if (args_parse(&args, arg)) continue;
-        fmt_ss(fout, " Unkown argument: ", arg, "\n");
-        fail = 1;
-    }
-
-    if (fail) os_exit(1);
-
-    fmt_s(fout, "Command:\n");
-    fmt_ss(fout, "  Action:   ", action_str[args.action], "\n");
-    fmt_ss(fout, "  Mode:     ", mode_str[args.mode], "\n");
-    fmt_ss(fout, "  Platform: ", platform_str[args.platform], "\n");
-
-    if (args.action == Action_Format) {
+    if (arg_match(&arg, "format", "Format all code")) {
         os_exit(os_system("clang-format -i --verbose */*.h */*.c"));
         return;
     }
 
-    // Memory *mem = mem_new();
-    if (args.action == Action_Build) {
-        build_snake(args.mode);
-        // os_exit(clang_compile(args.platform, args.mode, "snake/snake.c", "out/snake/snake"));
+    if (arg_match(&arg, "test", "Run Automated Tests")) {
+        build_test(&arg);
+        os_exit(0);
+        return;
     }
-    os_exit(0);
+
+    if (arg_match(&arg, "snake", "Build Snake")) {
+        build_snake(&arg);
+        os_exit(0);
+        return;
+    }
+
+    arg_help(&arg, fout);
+    os_exit(1);
 }
