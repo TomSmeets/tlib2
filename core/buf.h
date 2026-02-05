@@ -64,7 +64,7 @@ typedef struct {
     void **items;
     size_t count;
 } List;
-#define LIST(T, ...) ((T*[]){__VA_ARGS__, 0})
+#define LIST(T, ...) ((T *[]){__VA_ARGS__, 0})
 
 static Buffer buf_from(void *data, size_t size) {
     return (Buffer){data, size};

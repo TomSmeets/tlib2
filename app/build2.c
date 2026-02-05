@@ -1,5 +1,5 @@
-#include "fmt.h"
 #include "base64.h"
+#include "fmt.h"
 
 // ============== CMD =========================
 typedef struct {
@@ -76,7 +76,7 @@ static Command clang_compile_command(Platform platform, Mode mode, char **includ
     }
 
     cmd_arg2(&cmd, "-o", output);
-    for(u32 i = 0; include[i]; ++i) {
+    for (u32 i = 0; include[i]; ++i) {
         cmd_arg2(&cmd, "-I", include[i]);
     }
     cmd_arg(&cmd, input);
@@ -88,7 +88,7 @@ static void clang_compile(Platform platform, Mode mode, char **include, char *in
     fmt_cmd(fout, &cmd);
     fmt_s(fout, "\n");
     i32 ret = os_wait(os_exec(cmd.argv));
-    if(ret != 0) os_exit(ret);
+    if (ret != 0) os_exit(ret);
 }
 
 // Read entire file into memory
@@ -112,23 +112,22 @@ static void fmt_file_contents(Fmt *fmt, char *input_path) {
     mem_free(mem);
 }
 
-
 // Generate self contained html page continaing wasm module
 static void generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
-    u8 buffer[1024*4];
+    u8 buffer[1024 * 4];
     Fmt f = fmt_from(buffer, sizeof(buffer));
     f.file = os_open(output_path, FileMode_Create);
 
     fmt_s(&f, "<!DOCTYPE html>\n");
     fmt_s(&f, "<head>\n");
-    if(css_path) {
+    if (css_path) {
         fmt_s(&f, "<style>\n");
         fmt_file_contents(&f, css_path);
         fmt_s(&f, "</style>\n");
     }
 
     fmt_s(&f, "<script>\n");
-    for(u32 i = 0; js_path_list[i]; ++i) {
+    for (u32 i = 0; js_path_list[i]; ++i) {
         fmt_file_contents(&f, js_path_list[i]);
     }
     fmt_s(&f, "tlib.main(Uint8Array.fromBase64(\"");
@@ -156,9 +155,8 @@ typedef struct {
     char *opts[64][2];
 } Arg;
 
-
 static Arg arg_new(u32 argc, char **argv) {
-    return (Arg) { argc, argv, 1 };
+    return (Arg){argc, argv, 1};
 }
 
 static bool arg_match(Arg *arg, char *name, char *info) {
@@ -173,7 +171,7 @@ static bool arg_match(Arg *arg, char *name, char *info) {
     return true;
 }
 
-static void arg_help(Arg* arg, Fmt *fmt) {
+static void arg_help(Arg *arg, Fmt *fmt) {
     fmt_s(fmt, "Usage: ");
     for (u32 i = 0; i < arg->i; ++i) {
         fmt_s(fmt, arg->argv[i]);
@@ -197,9 +195,9 @@ static void arg_help_opt(Arg *arg) {
 }
 
 static void build_snake(Arg *arg) {
-    bool quick   = arg_match(arg, "quick",   "Skip other platforms");
+    bool quick = arg_match(arg, "quick", "Skip other platforms");
     bool release = arg_match(arg, "release", "Build in release mode");
-    bool run     = arg_match(arg, "run",     "Run snake directly with hot reload");
+    bool run = arg_match(arg, "run", "Run snake directly with hot reload");
     arg_help_opt(arg);
 
     os_system("mkdir -p out/snake");
@@ -212,7 +210,7 @@ static void build_snake(Arg *arg) {
     if (run) os_exit(os_system("out/snake/snake.elf"));
     if (quick) return;
     clang_compile(Platform_Windows, mode, include, "snake/snake.c", "out/snake/snake.exe");
-    clang_compile(Platform_WASM,    mode, include, "snake/snake.c", "out/snake/snake.wasm");
+    clang_compile(Platform_WASM, mode, include, "snake/snake.c", "out/snake/snake.wasm");
 
     // Generate html page
     char *js_path[] = {"core/os_wasm.js", "gfx/pix_wasm.js", 0};
@@ -222,12 +220,12 @@ static void build_snake(Arg *arg) {
     generate_html("out/snake/snake.html", css_path, js_path, wasm_path, html_path);
 
     // Cleanup
-    if(release) os_remove("out/snake/snake.wasm");
+    if (release) os_remove("out/snake/snake.wasm");
 }
 static void build_tmp(Arg *arg) {
-    bool quick   = arg_match(arg, "quick",   "Skip other platforms");
+    bool quick = arg_match(arg, "quick", "Skip other platforms");
     bool release = arg_match(arg, "release", "Build in release mode");
-    bool run     = arg_match(arg, "run",     "Run tmp directly with hot reload");
+    bool run = arg_match(arg, "run", "Run tmp directly with hot reload");
     arg_help_opt(arg);
 
     os_system("mkdir -p out/tmp");
@@ -240,7 +238,7 @@ static void build_tmp(Arg *arg) {
     if (run) os_exit(os_system("out/tmp/tmp.elf"));
     if (quick) return;
     clang_compile(Platform_Windows, mode, include, "app/tmp.c", "out/tmp/tmp.exe");
-    clang_compile(Platform_WASM,    mode, include, "app/tmp.c", "out/tmp/tmp.wasm");
+    clang_compile(Platform_WASM, mode, include, "app/tmp.c", "out/tmp/tmp.wasm");
 
     // Generate html page
     char *js_path[] = {"core/os_wasm.js", "app/tmp.js", 0};
@@ -271,12 +269,12 @@ static void generate_lsp(Arg *arg) {
 
     File *fd = os_open("compile_commands.json", FileMode_Create);
     u8 buffer[1024];
-    Fmt fmt = { .file = fd, .data = buffer, .size = sizeof(buffer) };
+    Fmt fmt = {.file = fd, .data = buffer, .size = sizeof(buffer)};
     fmt_s(&fmt, "[");
     fmt_s(&fmt, "{");
     fmt_ss(&fmt, "\"directory\":\"", cwd, "\",");
     fmt_s(&fmt, "\"command\":\"");
-    for(u32 i = 0; i < cmd.argc; ++i) {
+    for (u32 i = 0; i < cmd.argc; ++i) {
         fmt_s(&fmt, cmd.argv[i]);
         fmt_s(&fmt, " ");
     }
