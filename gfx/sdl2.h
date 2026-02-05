@@ -27,6 +27,7 @@ typedef enum {
 
 typedef enum {
     SDL_PIXELFORMAT_RGB24 = 0x17101803,
+    SDL_PIXELFORMAT_RGBA32 = 0x16762004,
 } SDL_PixelFormatEnum;
 
 typedef enum {

@@ -123,7 +123,7 @@ static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
     if (!pix->texture || pix->texture_size.x != size.x || pix->texture_size.y != size.y) {
         if (pix->texture) pix->sdl.SDL_DestroyTexture(pix->texture);
         pix->texture_size = size;
-        pix->texture = pix->sdl.SDL_CreateTexture(pix->renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, size.x, size.y);
+        pix->texture = pix->sdl.SDL_CreateTexture(pix->renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, size.x, size.y);
         pix->sdl.SDL_SetTextureScaleMode(pix->texture, SDL_ScaleModeNearest);
     }
 
