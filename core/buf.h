@@ -58,6 +58,12 @@ typedef struct {
     size_t size;
 } Buffer;
 
+#define BUFFER(T, ...) ((Buffer){(T[]){__VA_ARGS__}, sizeof((T[]){__VA_ARGS__})})
+
+static Buffer buf_from(void *data, size_t size) {
+    return (Buffer){data, size};
+}
+
 // Check if buffer starts with the same data
 static bool buf_starts_with(Buffer buf, Buffer start) {
     if (buf.size < start.size) return false;

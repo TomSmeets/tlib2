@@ -106,16 +106,15 @@ static void fmt_c(Fmt *fmt, u8 c) {
     if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
 }
 
-static void fmt_buf(Fmt *fmt, void *data, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-        fmt_c(fmt, ((u8 *)data)[i]);
+static void fmt_buf(Fmt *fmt, Buffer data) {
+    for (size_t i = 0; i < data.size; ++i) {
+        fmt_c(fmt, ((u8 *)data.data)[i]);
     }
 }
 
 static void fmt_s(Fmt *fmt, char *str) {
     if (!str) return;
-    size_t len = str_len(str);
-    fmt_buf(fmt, str, len);
+    fmt_buf(fmt, str_buf(str));
 }
 
 static char *fmt_end(Fmt *fmt) {

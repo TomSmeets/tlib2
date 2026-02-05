@@ -1,4 +1,5 @@
 #include "fmt.h"
+#include "base64.h"
 
 typedef enum {
     Action_Build,
@@ -154,28 +155,6 @@ static bool os_write_str(File *file, char *data) {
     return os_write(file, data, str_len(data), 0);
 }
 
-static void fmt_file_contents(Fmt *fmt, char *input_path) {
-    File *input = os_open(input_path, FileMode_Read);
-    size_t used = 0;
-    u8 buffer[4*1024];
-    for(;;) {
-        assert(os_read(input, buffer, sizeof(buffer), &used));
-        if(used == 0) break;
-        fmt_buf(fmt, buffer, used);
-    }
-    os_close(input);
-}
-
-static void fmt_base64(Fmt *fmt, u8 *data, size_t size) {
-    // TODO: Fix
-    fmt_s(fmt, "new Uint8Array([");
-    for(u32 i = 0; i < size; ++i) {
-        fmt_u(fmt, data[i]);
-        fmt_s(fmt, ", ");
-    }
-    fmt_s(fmt, "])");
-}
-
 // Read entire file into memory
 static Buffer os_read_file(Memory *mem, char *path) {
     FileInfo info = {};
@@ -189,6 +168,14 @@ static Buffer os_read_file(Memory *mem, char *path) {
     assert(os_close(fd));
     return (Buffer){file_data, info.size};
 }
+
+static void fmt_file_contents(Fmt *fmt, char *input_path) {
+    Memory *mem = mem_new();
+    Buffer data = os_read_file(mem, input_path);
+    fmt_buf(fmt, data);
+    mem_free(mem);
+}
+
 
 static void generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
     u8 buffer[1024*4];
@@ -207,12 +194,12 @@ static void generate_html(char *output_path, char *css_path, char **js_path_list
     for(u32 i = 0; js_path_list[i]; ++i) {
         fmt_file_contents(&f, js_path_list[i]);
     }
-    fmt_s(&f, "tlib.main(");
+    fmt_s(&f, "tlib.main(Uint8Array.fromBase64(\"");
     Memory *mem = mem_new();
     Buffer buf = os_read_file(mem, wasm_path);
-    fmt_base64(&f, buf.data, buf.size);
+    fmt_buf(&f, base64_encode(mem, os_read_file(mem, wasm_path)));
     mem_free(mem);
-    fmt_s(&f, ");\n");
+    fmt_s(&f, "\"));\n");
     fmt_s(&f, "</script>\n");
 
     fmt_s(&f, "</head>\n");
