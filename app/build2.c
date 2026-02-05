@@ -1,30 +1,8 @@
+#include "arg.h"
 #include "base64.h"
+#include "command.h"
 #include "fmt.h"
 
-// ============== CMD =========================
-typedef struct {
-    u32 argc;
-    char *argv[256];
-} Command;
-
-static void cmd_arg(Command *cmd, char *arg) {
-    cmd->argv[cmd->argc++] = arg;
-    cmd->argv[cmd->argc] = 0;
-}
-
-static void cmd_arg2(Command *cmd, char *arg1, char *arg2) {
-    cmd_arg(cmd, arg1);
-    cmd_arg(cmd, arg2);
-}
-
-static void fmt_cmd(Fmt *fmt, Command *cmd) {
-    for (u32 i = 0; i < cmd->argc; ++i) {
-        if (i > 0) fmt_s(fout, " ");
-        fmt_s(fmt, cmd->argv[i]);
-    }
-}
-
-// ========= Clang =================
 typedef enum {
     Platform_Windows,
     Platform_Linux,
@@ -144,54 +122,6 @@ static void generate_html(char *output_path, char *css_path, char **js_path_list
     fmt_s(&f, "</body>\n");
     fmt_end(&f);
     os_close(f.file);
-}
-
-typedef struct {
-    u32 argc;
-    char **argv;
-    u32 i;
-
-    u32 opt_count;
-    char *opts[64][2];
-} Arg;
-
-static Arg arg_new(u32 argc, char **argv) {
-    return (Arg){argc, argv, 1};
-}
-
-static bool arg_match(Arg *arg, char *name, char *info) {
-    arg->opts[arg->opt_count][0] = name;
-    arg->opts[arg->opt_count][1] = info;
-    arg->opt_count++;
-
-    if (arg->i >= arg->argc) return false;
-    if (!str_eq(arg->argv[arg->i], name)) return false;
-    arg->i++;
-    arg->opt_count = 0;
-    return true;
-}
-
-static void arg_help(Arg *arg, Fmt *fmt) {
-    fmt_s(fmt, "Usage: ");
-    for (u32 i = 0; i < arg->i; ++i) {
-        fmt_s(fmt, arg->argv[i]);
-        fmt_s(fmt, " ");
-    }
-    fmt_s(fmt, "[ACTION]");
-    fmt_s(fmt, "\n");
-    fmt_s(fmt, "\n");
-
-    fmt_s(fmt, "Supported actions: \n");
-    for (u32 i = 0; i < arg->opt_count; ++i) {
-        fmt_ss(fmt, "    ", arg->opts[i][0], ": ");
-        fmt_ss(fmt, "", arg->opts[i][1], "\n");
-    }
-}
-
-static void arg_help_opt(Arg *arg) {
-    if (arg->i >= arg->argc) return;
-    arg_help(arg, fout);
-    os_exit(1);
 }
 
 static void build_snake(Arg *arg) {
