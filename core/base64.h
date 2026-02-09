@@ -117,7 +117,7 @@ static Buffer base64_decode(Memory *mem, Buffer input) {
     return (Buffer){output_data, output_count};
 }
 
-// Testing
+// ==== Testing ====
 static bool base64_test_encode(Buffer input, char *expect) {
     bool ok = true;
     Memory *mem = mem_new();

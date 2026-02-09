@@ -211,7 +211,7 @@ static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
 }
 
 // Test
-static void test_fmt(void) {
+static void fmt_test(void) {
     Memory *mem = mem_new();
     Fmt *fmt = fmt_new(mem);
     fmt_s(fmt, "Hello");

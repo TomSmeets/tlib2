@@ -178,9 +178,16 @@ static void build_tmp(Arg *arg) {
 }
 
 static void build_test(Arg *arg) {
+    bool gdb = arg_match(arg, "gdb", "Start with gdb");
+    arg_help_opt(arg);
+
     char *include[] = {"core", 0};
     clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test.elf");
-    os_exit(os_system("out/test.elf"));
+    if (gdb) {
+        os_exit(os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test.elf"));
+    } else {
+        os_exit(os_system("out/test.elf"));
+    }
 }
 
 static void generate_lsp(Arg *arg) {
@@ -242,7 +249,7 @@ void os_main(u32 argc, char **argv) {
         return;
     }
 
-    if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompile")) {
+    if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompletion")) {
         generate_lsp(&arg);
         os_exit(0);
         return;

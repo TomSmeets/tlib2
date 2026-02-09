@@ -2,41 +2,7 @@
 #include "type.h"
 #include "os.h"
 #include "mem.h"
-
-// Bits
-typedef struct {
-    size_t size;
-    size_t ix;
-    u8 *data;
-} Bits;
-
-static u32 bits_read(Bits *bits, u32 count) {
-    assert(count <= sizeof(u32));
-    assert(bits->ix + count <= bits->size);
-    u32 out = 0;
-    for(u32 i = 0; i < count; ++i) {
-        size_t byte_ix = bits->ix / 8;
-        size_t bit_ix  = bits->ix % 8;
-        out |= ((bits->data[byte_ix] << bit_ix) & 1) >> i;
-        bits->ix++;
-    }
-    return out;
-}
-
-// Discard bits until a aligned to a byte boundary
-static void bits_align_to_byte_boundary(Bits *bits) {
-    bits->ix = (bits->ix + 7) & ~7;
-}
-
-static u32 bits_read_byte(Bits *bits, u32 count) {
-    // Algin until next byte
-    bits->ix = (bits->ix + 7) & ~7;
-
-    // Read bytes
-    u32 out = 0;
-    for(u32 i = 0; i < count; ++i) {
-    }
-}
+#include "bits.h"
 
 typedef struct {
     size_t used;
