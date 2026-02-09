@@ -1,8 +1,8 @@
 #pragma once
-#include "type.h"
-#include "os.h"
-#include "mem.h"
 #include "bits.h"
+#include "mem.h"
+#include "os.h"
+#include "type.h"
 
 typedef struct {
     size_t used;
@@ -26,7 +26,7 @@ static void inflate_block(Inflate *inf, Bits *bits) {
     u32 b_final = bits_read(bits, 1);
     Deflate_Block b_type = bits_read(bits, 2);
 
-    if(b_type == Deflate_BlockStored) {
+    if (b_type == Deflate_BlockStored) {
         bits_align_to_byte_boundary(bits);
         u32 len = bits_read(bits, 16);
         u32 len_inv = bits_read(bits, 16);
@@ -37,7 +37,6 @@ static void inflate_block(Inflate *inf, Bits *bits) {
         }
     }
 }
-
 
 // LZ77
 static LZ77 *lz_init(Memory *mem, size_t capacity) {
