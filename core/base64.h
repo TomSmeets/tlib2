@@ -37,9 +37,9 @@ static Buffer base64_encode(Memory *mem, Buffer input) {
     // Converts: 3 * 8 bit -> 4 * 6 bit
     //
     // Every 3 bytes are converted to 4 characters
-    // Round up, the rest is padded wiht '='
+    // Round up, the rest is padded with'='
     //
-    //          <-----  Cunk  ------>
+    //          <-----  Chunk  ------>
     //
     // in:    |---a---|---b---|---c---|
     // out:   |--X--|--Y--|--Z--|--W--|
@@ -88,8 +88,6 @@ static Buffer base64_encode(Memory *mem, Buffer input) {
 // Decode base64 data
 // Trailing '=' are optional
 // Returns zero terminated data
-// NOTE: i prefer writing to a buffer first, this makes code more flexible and simpler
-// NOTE: Don't write to a fmt first
 static Buffer base64_decode(Memory *mem, Buffer input) {
     size_t input_count = input.size;
     u8 *input_data = input.data;
@@ -117,13 +115,6 @@ static Buffer base64_decode(Memory *mem, Buffer input) {
         if (j < output_count) output_data[j++] = chunk_value >> (8 * 0);
     }
     return (Buffer){output_data, output_count};
-}
-
-static bool buf_is_printable(Buffer buf) {
-    for (size_t i = 0; i < buf.size; ++i) {
-        if (((u8 *)buf.data)[i] >= 128) return 0;
-    }
-    return 1;
 }
 
 // Testing
