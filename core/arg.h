@@ -36,7 +36,7 @@ static bool arg_match(Arg *arg, char *name, char *info) {
         arg->opt_count++;
     }
 
-    // Chekc if there exists an argument to match
+    // Check if there exists an argument to match
     if (arg->arg_ix >= arg->arg_count) return false;
 
     // Check if argument matches
@@ -73,4 +73,13 @@ static void arg_help_opt(Arg *arg) {
     if (arg->arg_ix >= arg->arg_count) return;
     arg_help(arg, fout);
     os_exit(1);
+}
+
+static void arg_test(void) {
+    char *argv[] = { "main", "test", "xyz" };
+    Arg arg = arg_new(array_count(argv), argv);
+    assert(arg_match(&arg, "hello", "Show Hello Message") == false);
+    assert(arg_match(&arg, "world", "Something with the world") == false);
+    assert(arg_match(&arg, "test", "Testing") == true);
+    assert(arg_match(&arg, "xyz", "Testing") == true);
 }
