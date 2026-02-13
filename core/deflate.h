@@ -38,28 +38,60 @@ static void inflate_block(Inflate *inf, Bits *bits) {
     }
 }
 
-// LZ77
-static LZ77 *lz_init(Memory *mem, size_t capacity) {
-    LZ77 *lz = mem_struct(mem, LZ77);
-    lz->capacity = capacity;
-    lz->buffer = mem_array(mem, u8, capacity);
-    return lz;
-}
+typedef struct {
+    bool is_last;
+    Deflate_Block type;
+    u16 size;
+    void *data;
+} Deflate_Block0;
 
-static void lz77_decode_repeat(LZ77 *lz, size_t offset, size_t len) {
-    assert(lz->used + len <= lz->capacity);
-    assert(offset < lz->capacity);
-    u8 *rx = lz->buffer + lz->used - offset;
-    for (size_t i = 0; i < len; ++i) {
-        lz->buffer[lz->used++] = *rx++;
+static void deflate_write_block(Bits *bits, Deflate_Block0 *block) {
+    bits_write(bits, 1, block->is_last);
+    bits_write(bits, 2, block->type);
+
+    if (block->type == Deflate_BlockStored) {
+        bits_byte_align(bits);
+        bits_write(bits, 16, block->size);
+        bits_write(bits, 16, ~block->size);
+        bits_write_bytes(bits, block->size, block->data);
     }
 }
 
-static void lz77_decode_data(LZ77 *lz, size_t len, u8 *data) {
-    assert(lz->used + len <= lz->capacity);
-    for (size_t i = 0; i < len; ++i) {
-        lz->buffer[lz->used++] = *data++;
+static Deflate_Block0 *deflate_read_block(Bits *bits, Memory *mem) {
+    Deflate_Block0 *block = mem_struct(mem, Deflate_Block0);
+    block->is_last = bits_read(bits, 1);
+    block->type = bits_read(bits, 2);
+    assert(block->type < 3);
+
+    if (block->type == Deflate_BlockStored) {
+        bits_byte_align(bits);
+        u16 size = bits_read(bits, 16);
+        u16 size_check = bits_read(bits, 16);
+        assert(size == ~size_check);
+
+        u8 *data = mem_array(mem, u8, size);
+        bits_read_bytes(bits, size, data);
+        block->size = size;
+        block->data = data;
     }
+
+    return block;
 }
 
 // Huffman coding
+
+static void deflate_test(void) {
+    // https://www.youtube.com/watch?v=SJPvNi4HrWQ
+    u8 buffer[1024];
+    Bits bits = bits_from(sizeof(buffer), buffer);
+
+    // Block Type 0
+    bits_write(&bits, 1, 1);
+    bits_write(&bits, 2, 0);
+    bits_byte_align(&bits);
+    char data[] = "Hello World!";
+    u16 len = sizeof(data) - 1;
+    bits_write(&bits, 1, len);
+    bits_write(&bits, 1, ~len);
+    bits_restart(&bits);
+}
