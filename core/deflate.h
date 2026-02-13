@@ -27,7 +27,7 @@ static void inflate_block(Inflate *inf, Bits *bits) {
     Deflate_Block b_type = bits_read(bits, 2);
 
     if (b_type == Deflate_BlockStored) {
-        bits_align_to_byte_boundary(bits);
+        bits_byte_align(bits);
         u32 len = bits_read(bits, 16);
         u32 len_inv = bits_read(bits, 16);
         assert(len == (~len_inv & 0xffff));
@@ -54,6 +54,8 @@ static void deflate_write_block(Bits *bits, Deflate_Block0 *block) {
         bits_write(bits, 16, block->size);
         bits_write(bits, 16, ~block->size);
         bits_write_bytes(bits, block->size, block->data);
+    } else if (block->type == Deflate_BlockFixed) {
+    } else if (block->type == Deflate_BlockDynamic) {
     }
 }
 
@@ -73,8 +75,9 @@ static Deflate_Block0 *deflate_read_block(Bits *bits, Memory *mem) {
         bits_read_bytes(bits, size, data);
         block->size = size;
         block->data = data;
+    } else if (block->type == Deflate_BlockFixed) {
+    } else if (block->type == Deflate_BlockDynamic) {
     }
-
     return block;
 }
 
