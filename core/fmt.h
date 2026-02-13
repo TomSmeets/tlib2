@@ -142,7 +142,7 @@ static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
     if (pad > array_count(digit_list)) pad = array_count(digit_list);
     do {
         u8 digit = value % base;
-        u8 chr = digit < 10 ? '0' + digit : 'A' + (digit - 10);
+        u8 chr = digit < 10 ? '0' + digit : 'a' + (digit - 10);
         digit_list[digit_count++] = chr;
         assert(digit_count <= array_count(digit_list));
         value /= base;
@@ -208,6 +208,40 @@ static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
     fmt_s(fmt, arg1);
     fmt_x(fmt, arg2);
     fmt_s(fmt, arg3);
+}
+
+static bool chr_is_printable(u32 c) {
+    return c >= 0x20 && c <= 0x7e;
+}
+
+static void fmt_hexdump(Fmt *fmt, Buffer data) {
+    u32 pad = 0;
+    while (data.size >> pad * 4) pad += 4;
+    u32 width = 16;
+    size_t addr = 0;
+    for (size_t addr = 0; addr < data.size; addr += width) {
+        fmt_u_ex(fmt, addr, 16, ' ', pad);
+        fmt_s(fmt, " | ");
+        for (u32 off = 0; off < width; ++off) {
+            if (addr + off >= data.size) {
+                fmt_s(fmt, "   ");
+                continue;
+            }
+            fmt_u_ex(fmt, ((u8 *)data.data)[addr + off], 16, '0', 2);
+            fmt_s(fmt, " ");
+        }
+        fmt_s(fmt, "| ");
+        for (u32 off = 0; off < width; ++off) {
+            if (addr + off >= data.size) {
+                fmt_s(fmt, " ");
+                continue;
+            }
+            u8 c = ((u8 *)data.data)[addr + off];
+            if (!chr_is_printable(c)) c = '.';
+            fmt_c(fmt, c);
+        }
+        fmt_s(fmt, "|\n");
+    }
 }
 
 // Test
