@@ -1,10 +1,10 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // test.c - Run all unit tests
+#include "arg.h"
 #include "base64.h"
 #include "bits.h"
 #include "fmt.h"
 #include "os.h"
-#include "arg.h"
 
 void os_main(u32 argc, char **argv) {
     fmt_s(fout, "Running tests...\n");

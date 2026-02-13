@@ -76,7 +76,7 @@ static void arg_help_opt(Arg *arg) {
 }
 
 static void arg_test(void) {
-    char *argv[] = { "main", "test", "xyz" };
+    char *argv[] = {"main", "test", "xyz"};
     Arg arg = arg_new(array_count(argv), argv);
     assert(arg_match(&arg, "hello", "Show Hello Message") == false);
     assert(arg_match(&arg, "world", "Something with the world") == false);
