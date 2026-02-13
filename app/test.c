@@ -5,6 +5,7 @@
 #include "bits.h"
 #include "fmt.h"
 #include "os.h"
+#include "gzip.h"
 
 void os_main(u32 argc, char **argv) {
     fmt_s(fout, "Running tests...\n");
@@ -12,6 +13,7 @@ void os_main(u32 argc, char **argv) {
     base64_test();
     bits_test();
     arg_test();
+    gzip_test();
     fmt_s(fout, "Success!\n");
     os_exit(0);
 }
