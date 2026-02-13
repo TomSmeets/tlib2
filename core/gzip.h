@@ -1,12 +1,10 @@
 #pragma once
-#include "mem.h"
-#include "fmt.h"
 #include "base64.h"
+#include "fmt.h"
+#include "mem.h"
 
 static void gzip_extract(Memory *mem, Buffer data) {
 }
-
-
 
 static void gzip_test(void) {
     Memory *mem = mem_new();

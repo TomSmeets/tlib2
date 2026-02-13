@@ -4,8 +4,8 @@
 #include "base64.h"
 #include "bits.h"
 #include "fmt.h"
-#include "os.h"
 #include "gzip.h"
+#include "os.h"
 
 void os_main(u32 argc, char **argv) {
     fmt_s(fout, "Running tests...\n");
