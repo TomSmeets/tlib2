@@ -105,7 +105,7 @@ static u8 stream_read_u8(Stream *stream) {
 // Write a single bit from the stream
 static void stream_write_bit(Stream *stream, bool bit) {
     // New bit
-    if(stream->bit_ix == 0) stream_write_u8(stream, 0);
+    if (stream->bit_ix == 0) stream_write_u8(stream, 0);
     assert(stream->cursor > 0);
 
     u8 *byte = &stream->buffer[stream->cursor - 1];
@@ -283,6 +283,6 @@ static void stream_test(void) {
     assert(stream_read_bits(stream, 7) == 0b00101010);
     assert(stream_eof(stream));
     assert(stream->cursor == 4);
-    assert(stream->size   == 4);
+    assert(stream->size == 4);
     assert(stream->bit_ix == 4);
 }
