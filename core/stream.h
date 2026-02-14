@@ -17,7 +17,6 @@ typedef struct {
     // Read/Write cursor
     size_t cursor;
 
-    // Cursor bit offset
     size_t bit_ix;
 
     // Optional memory for buffer reallocation
@@ -49,6 +48,14 @@ static size_t stream_cursor(Stream *stream) {
 static void stream_seek(Stream *stream, size_t index) {
     // Cursor can be anywhere, even outside the current file
     stream->cursor = index;
+    stream->bit_ix = 0;
+}
+
+// Clear data and go to start
+static void stream_reset(Stream *stream) {
+    stream->cursor = 0;
+    stream->bit_ix = 0;
+    stream->size = 0;
 }
 
 // Return if the stream has reached the end
@@ -82,15 +89,6 @@ static bool stream_reserve(Stream *stream, size_t reserve) {
     return true;
 }
 
-// Align up to a byte
-static void stream_align(Stream *stream) {
-    assert(stream->bit_ix < 8);
-    if (stream->bit_ix) {
-        stream->bit_ix = 0;
-        stream->size++;
-    }
-}
-
 // Write an aligned byte from the stream
 static void stream_write_u8(Stream *stream, u8 data) {
     if (!stream_reserve(stream, 1)) return;
@@ -104,36 +102,38 @@ static u8 stream_read_u8(Stream *stream) {
     return stream->buffer[stream->cursor++];
 }
 
-#if 0
-static void stream_next_bit(Stream *stream) {
-    stream->bit_ix++;
-    if (stream->bit_ix == 8) {
-        stream->bit_ix = 0;
-        stream->cursor++;
-    }
-}
-
-
-// Read a single bit from the stream
-static bool stream_read_bit(Stream *stream) {
-    if (stream_eof(stream)) return 0;
-    u8 byte = stream->buffer[stream->cursor];
-    u8 bit = (byte >> stream->bit_ix) & 1;
-    stream_next_bit(stream);
-    return bit;
-}
-
-// Read a single bit from the stream
+// Write a single bit from the stream
 static void stream_write_bit(Stream *stream, bool bit) {
-    if (stream->size >= stream->capacity) return;
-    u8 *byte = &stream->buffer[stream->size];
+    // New bit
+    if(stream->bit_ix == 0) stream_write_u8(stream, 0);
+    assert(stream->cursor > 0);
+
+    u8 *byte = &stream->buffer[stream->cursor - 1];
 
     // Remove original bit
     *byte &= ~(1 << stream->bit_ix);
 
     // Write bit
     *byte |= bit << stream->bit_ix;
-    stream_next_bit(stream);
+
+    // Advance to next bit
+    stream->bit_ix++;
+    stream->bit_ix %= 8;
+}
+
+// Read a single bit from the stream
+static bool stream_read_bit(Stream *stream) {
+    // New bit
+    if (stream->bit_ix == 0) stream_read_u8(stream);
+    assert(stream->cursor > 0);
+
+    u8 byte = stream->buffer[stream->cursor - 1];
+    u8 bit = (byte >> stream->bit_ix) & 1;
+
+    // Advance to next bit
+    stream->bit_ix++;
+    stream->bit_ix %= 8;
+    return bit;
 }
 
 // Read a number of bits
@@ -150,6 +150,27 @@ static void stream_write_bits(Stream *stream, u32 count, u32 bits) {
     for (u32 i = 0; i < count; ++i) {
         stream_write_bit(stream, (bits >> i) & 1);
     }
+}
+
+#if 0
+// Align up to a byte
+static void stream_align(Stream *stream) {
+    assert(stream->bit_ix < 8);
+    if (stream->bit_ix) {
+        stream->bit_ix = 0;
+        stream->size++;
+    }
+}
+
+
+
+// Read a single bit from the stream
+static bool stream_read_bit(Stream *stream) {
+    if (stream_eof(stream)) return 0;
+    u8 byte = stream->buffer[stream->cursor];
+    u8 bit = (byte >> stream->bit_ix) & 1;
+    stream_next_bit(stream);
+    return bit;
 }
 
 #endif
@@ -203,4 +224,65 @@ static void stream_test(void) {
     assert(stream_read_u8(stream) == 0x34);
     assert(stream_read_u8(stream) == 0x12);
     assert(stream_eof(stream));
+
+    stream_reset(stream);
+    assert(stream_eof(stream));
+    assert(stream->cursor == 0);
+    assert(stream->bit_ix == 0);
+
+    stream_write_bit(stream, 1);
+    assert(stream->cursor == 1);
+    assert(stream->bit_ix == 1);
+
+    stream_write_bit(stream, 0);
+    stream_write_bit(stream, 1);
+    stream_write_bit(stream, 1);
+    stream_write_bit(stream, 0);
+    stream_write_bit(stream, 0);
+    stream_write_bit(stream, 0);
+    stream_write_bit(stream, 1);
+    assert(stream->cursor == 1);
+    assert(stream->bit_ix == 0);
+
+    // Extra
+    stream_write_bit(stream, 1);
+    stream_write_bit(stream, 1);
+
+    stream_seek(stream, 0);
+    assert(stream_read_u8(stream) == 0b10001101);
+    assert(stream_read_u8(stream) == 0b00000011);
+    assert(stream_eof(stream));
+
+    stream_seek(stream, 0);
+    assert(stream_read_bit(stream) == 1);
+    assert(stream_read_bit(stream) == 0);
+    assert(stream_read_bit(stream) == 1);
+    assert(stream_read_bit(stream) == 1);
+    assert(stream_read_bit(stream) == 0);
+    assert(stream_read_bit(stream) == 0);
+    assert(stream_read_bit(stream) == 0);
+    assert(stream_read_bit(stream) == 1);
+    assert(stream_read_bit(stream) == 1);
+    assert(stream_read_bit(stream) == 1);
+    assert(stream_eof(stream));
+    stream_seek(stream, 0);
+
+    assert(stream_read_bits(stream, 10) == 0b1110001101);
+    assert(stream_eof(stream));
+
+    // Write bits
+    stream_reset(stream);
+    stream_write_bits(stream, 7, 0b11111111);
+    stream_write_bits(stream, 7, 0b10000000);
+    stream_write_bits(stream, 7, 0b11111111);
+    stream_write_bits(stream, 7, 0b10101010);
+    stream_seek(stream, 0);
+    assert(stream_read_bits(stream, 7) == 0b01111111);
+    assert(stream_read_bits(stream, 7) == 0b00000000);
+    assert(stream_read_bits(stream, 7) == 0b01111111);
+    assert(stream_read_bits(stream, 7) == 0b00101010);
+    assert(stream_eof(stream));
+    assert(stream->cursor == 4);
+    assert(stream->size   == 4);
+    assert(stream->bit_ix == 4);
 }
