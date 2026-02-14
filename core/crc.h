@@ -1,7 +1,11 @@
 #pragma once
+#include "buf.h"
+#include "os.h"
+#include "str.h"
 #include "type.h"
 
-static u32 crc_compute(u8 *buf, size_t len) {
+// Compute crc32 (for gzip)
+static u32 crc_compute(Buffer buf) {
     u32 poly = 0xedb88320;
     u32 xor = 0xffffffff;
 
@@ -22,8 +26,13 @@ static u32 crc_compute(u8 *buf, size_t len) {
     // Compute crc
     u32 crc = 0;
     u32 c = crc ^ xor;
-    for (u32 n = 0; n < len; n++) {
-        c = table[(c ^ buf[n]) & 0xff] ^ (c >> 8);
+    for (size_t i = 0; i < buf.size; i++) {
+        c = table[(c ^ ((u8 *)buf.data)[i]) & 0xff] ^ (c >> 8);
     }
     return c ^ xor;
+}
+
+static void crc_test(void) {
+    assert(crc_compute(str_buf("Hello World!")) == 0x1c291ca3);
+    assert(crc_compute(str_buf("1234")) == 0x9be3e0a3);
 }
