@@ -17,7 +17,6 @@ static void bits_restart(Bits *bits) {
     bits_seek(bits, 0);
 }
 
-
 // Create a new bit stream reader/writer
 static Bits bits_from(size_t byte_count, void *data) {
     return (Bits){.size = byte_count * 8, .data = data};
@@ -37,7 +36,7 @@ static u32 bits_read(Bits *bits, u32 count) {
     if (bits->index % 8 == 0 && count % 8 == 0) {
         // Aligned
         for (u32 i = 0; i < count / 8; ++i) {
-            out |= bits->data[bits->index / 8 + i] << (i*8);
+            out |= bits->data[bits->index / 8 + i] << (i * 8);
         }
         bits->index += count;
     } else {

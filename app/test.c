@@ -3,11 +3,11 @@
 #include "arg.h"
 #include "base64.h"
 #include "bits.h"
+#include "crc.h"
 #include "fmt.h"
 #include "gzip.h"
 #include "os.h"
 #include "stream.h"
-#include "crc.h"
 
 void os_main(u32 argc, char **argv) {
     fmt_s(fout, "Running tests...\n");

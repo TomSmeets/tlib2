@@ -1,10 +1,9 @@
 #pragma once
 #include "base64.h"
+#include "bits.h"
 #include "fmt.h"
 #include "mem.h"
-#include "bits.h"
 #include "stream.h"
-
 
 static void gzip_extract(Memory *mem, Buffer data) {
     Stream stream = stream_from(data);
@@ -26,10 +25,10 @@ static void gzip_extract(Memory *mem, Buffer data) {
 
     // Seek to end
     stream_seek(&stream, stream.size - 8);
-    u32 crc   = stream_read(&stream, 4);
+    u32 crc = stream_read(&stream, 4);
     u32 isize = stream_read(&stream, 4);
-    fmt_sx(fout, "crc: ",crc, "\n");
-    fmt_sx(fout, "isize: ",isize, "\n");
+    fmt_sx(fout, "crc: ", crc, "\n");
+    fmt_sx(fout, "isize: ", isize, "\n");
 
     // Deflate
     assert(magic1 == 0x1f);

@@ -11,7 +11,7 @@ typedef struct {
     // Backing buffer size
     size_t capacity;
 
-    // Size of valid data 
+    // Size of valid data
     size_t size;
 
     // Read/Write cursor
@@ -152,7 +152,6 @@ static void stream_write_bits(Stream *stream, u32 count, u32 bits) {
     }
 }
 
-
 #endif
 
 static u32 stream_read(Stream *stream, u32 count) {
@@ -191,7 +190,6 @@ static void stream_test(void) {
     assert(stream_read_u8(stream) == 2);
     assert(stream_read_u8(stream) == 3);
     assert(stream_eof(stream));
-
 
     size_t cur = stream_cursor(stream);
     assert(cur == 3);
