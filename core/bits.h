@@ -8,10 +8,15 @@ typedef struct {
     u8 *data;
 } Bits;
 
+static void bits_seek(Bits *bits, size_t offset) {
+    bits->index = offset * 8;
+}
+
 // Reset read/write cursor to start
 static void bits_restart(Bits *bits) {
-    bits->index = 0;
+    bits_seek(bits, 0);
 }
+
 
 // Create a new bit stream reader/writer
 static Bits bits_from(size_t byte_count, void *data) {
@@ -27,12 +32,21 @@ static size_t bits_remaining(Bits *bits) {
 static u32 bits_read(Bits *bits, u32 count) {
     assert(count <= 32);
     assert(bits->index + count <= bits->size);
+
     u32 out = 0;
-    for (u32 i = 0; i < count; ++i) {
-        size_t byte_ix = bits->index / 8;
-        size_t bit_ix = bits->index % 8;
-        out |= ((bits->data[byte_ix] >> bit_ix) & 1) << i;
-        bits->index++;
+    if (bits->index % 8 == 0 && count % 8 == 0) {
+        // Aligned
+        for (u32 i = 0; i < count / 8; ++i) {
+            out |= bits->data[bits->index / 8 + i] << (i*8);
+        }
+        bits->index += count;
+    } else {
+        for (u32 i = 0; i < count; ++i) {
+            size_t byte_ix = bits->index / 8;
+            size_t bit_ix = bits->index % 8;
+            out |= ((bits->data[byte_ix] >> bit_ix) & 1) << i;
+            bits->index++;
+        }
     }
     return out;
 }

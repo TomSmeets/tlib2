@@ -6,6 +6,7 @@
 #include "fmt.h"
 #include "gzip.h"
 #include "os.h"
+#include "stream.h"
 #include "crc.h"
 
 void os_main(u32 argc, char **argv) {
@@ -16,6 +17,7 @@ void os_main(u32 argc, char **argv) {
     arg_test();
     gzip_test();
     crc_test();
+    stream_test();
     fmt_s(fout, "Success!\n");
     os_exit(0);
 }
