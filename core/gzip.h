@@ -5,36 +5,35 @@
 #include "mem.h"
 #include "stream.h"
 
-static void gzip_extract(Memory *mem, Buffer data) {
+static bool gzip_extract(Memory *mem, Buffer data) {
     Stream stream = stream_from(data);
 
-    u8 magic1 = stream_read(&stream, 1);
-    u8 magic2 = stream_read(&stream, 1);
-    u8 cm = stream_read(&stream, 1);
-    u8 flags = stream_read(&stream, 1);
-    u32 mtime = stream_read(&stream, 4);
-    u8 xfl = stream_read(&stream, 1);
-    u8 os = stream_read(&stream, 1);
-    fmt_sx(fout, "magic1: ", magic1, "\n");
-    fmt_sx(fout, "magic2: ", magic2, "\n");
-    fmt_sx(fout, "cm: ", cm, "\n");
-    fmt_sx(fout, "flags: ", flags, "\n");
-    fmt_sx(fout, "mtime: ", mtime, "\n");
-    fmt_sx(fout, "xfl: ", xfl, "\n");
-    fmt_sx(fout, "os: ", os, "\n");
+    u8 magic1 = stream_read_u8(&stream);
+    u8 magic2 = stream_read_u8(&stream);
+    if (magic1 != 0x1f) return 0;
+    if (magic2 != 0x8b) return 0;
+
+    // Compression Method (8 = gzip)
+    u8 method = stream_read_u8(&stream);
+    if (method != 0x8) return 0;
+
+    u8 flags = stream_read_u8(&stream);
+    if (flags != 0) return 0;
+
+    u32 mtime = stream_read_u32(&stream);
+
+    u8 xfl = stream_read_u8(&stream);
+    if (xfl != 0) return 0;
+
+    u8 os = stream_read_u8(&stream);
 
     // Seek to end
     stream_seek(&stream, stream.size - 8);
-    u32 crc = stream_read(&stream, 4);
-    u32 isize = stream_read(&stream, 4);
+    u32 crc = stream_read_u32(&stream);
+    u32 isize = stream_read_u32(&stream);
     fmt_sx(fout, "crc: ", crc, "\n");
     fmt_sx(fout, "isize: ", isize, "\n");
-
-    // Deflate
-    assert(magic1 == 0x1f);
-    assert(magic2 = 0x8b);
-    assert(cm == 8);
-    assert(os == 3);
+    return 1;
 }
 
 static void gzip_test(void) {
@@ -48,5 +47,5 @@ static void gzip_test(void) {
     fmt_hexdump(fout, compressed);
 
     // Do something
-    gzip_extract(mem, compressed);
+    assert(gzip_extract(mem, compressed));
 }

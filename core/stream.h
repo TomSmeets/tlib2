@@ -91,6 +91,7 @@ static bool stream_reserve(Stream *stream, size_t reserve) {
 
 // Write an aligned byte from the stream
 static void stream_write_u8(Stream *stream, u8 data) {
+    stream->bit_ix = 0;
     if (!stream_reserve(stream, 1)) return;
     stream->buffer[stream->cursor++] = data;
     if (stream->size < stream->cursor) stream->size = stream->cursor;
@@ -98,6 +99,7 @@ static void stream_write_u8(Stream *stream, u8 data) {
 
 // Read an aligned byte from the stream
 static u8 stream_read_u8(Stream *stream) {
+    stream->bit_ix = 0;
     if (stream_eof(stream)) return 0;
     return stream->buffer[stream->cursor++];
 }
@@ -175,18 +177,49 @@ static bool stream_read_bit(Stream *stream) {
 
 #endif
 
-static u32 stream_read(Stream *stream, u32 count) {
-    u32 res = 0;
-    for (u32 i = 0; i < count; ++i) {
-        res |= stream_read_u8(stream) << (i * 8);
-    }
-    return res;
+// // Read a number of little endian bytes
+// static u32 stream_read_bytes(Stream *stream, u32 count) {
+//     assert(count <= 4);
+//     u32 res = 0;
+//     for (u32 i = 0; i < count; ++i) {
+//         res |= stream_read_u8(stream) << (i * 8);
+//     }
+//     return res;
+// }
+
+// static void stream_write_bytes(Stream *stream, u32 count, u32 data) {
+//     assert(count <= 4);
+//     for (u32 i = 0; i < count; ++i) {
+//         stream_write_u8(stream, (data >> (i * 8)) & 0xff);
+//     }
+// }
+
+static u16 stream_read_u16(Stream *stream) {
+    u16 out = 0;
+    out |= (u16)stream_read_u8(stream) << (0 * 8);
+    out |= (u16)stream_read_u8(stream) << (1 * 8);
+    return out;
 }
 
-static void stream_write(Stream *stream, u32 count, u32 data) {
-    for (u32 i = 0; i < count; ++i) {
-        stream_write_u8(stream, (data >> (i * 8)) & 0xff);
-    }
+static void stream_write_u16(Stream *stream, u16 data) {
+    stream_write_u8(stream, (data >> (0 * 8)) & 0xff);
+    stream_write_u8(stream, (data >> (1 * 8)) & 0xff);
+}
+
+static u32 stream_read_u32(Stream *stream) {
+    u32 out = 0;
+    out |= (u32)stream_read_u8(stream) << (0 * 8);
+    out |= (u32)stream_read_u8(stream) << (1 * 8);
+    out |= (u32)stream_read_u8(stream) << (2 * 8);
+    out |= (u32)stream_read_u8(stream) << (3 * 8);
+    return out;
+}
+
+static void stream_write_u32(Stream *stream, u32 data) {
+    stream_write_u8(stream, (data >> (0 * 8)) & 0xff);
+    stream_write_u8(stream, (data >> (1 * 8)) & 0xff);
+    stream_write_u8(stream, (data >> (2 * 8)) & 0xff);
+    stream_write_u8(stream, (data >> (3 * 8)) & 0xff);
 }
 
 // Testing
@@ -215,7 +248,7 @@ static void stream_test(void) {
     size_t cur = stream_cursor(stream);
     assert(cur == 3);
 
-    stream_write(stream, 4, 0x12345678);
+    stream_write_u32(stream, 0x12345678);
     assert(stream_cursor(stream) == 7);
 
     stream_seek(stream, cur);
@@ -285,4 +318,55 @@ static void stream_test(void) {
     assert(stream->cursor == 4);
     assert(stream->size == 4);
     assert(stream->bit_ix == 4);
+
+    // Another test
+    stream_reset(stream);
+
+    u32 data[] = {0b11000001111100001111000111001101};
+    Stream bits = stream_from(buf_from(data, sizeof(data)));
+    assert(stream_read_bits(&bits, 1) == 0b1);
+    assert(stream_read_bits(&bits, 1) == 0b0);
+    assert(stream_read_bits(&bits, 2) == 0b11);
+    assert(stream_read_bits(&bits, 2) == 0b00);
+    assert(stream_read_bits(&bits, 3) == 0b111);
+    assert(stream_read_bits(&bits, 3) == 0b000);
+    assert(stream_read_bits(&bits, 4) == 0b1111);
+    assert(stream_read_bits(&bits, 4) == 0b0000);
+    assert(stream_read_bits(&bits, 5) == 0b11111);
+    assert(stream_read_bits(&bits, 5) == 0b00000);
+    assert(stream_read_bits(&bits, 2) == 0b11);
+    assert(bits.bit_ix == 0);
+    assert(bits.cursor == 4);
+
+    stream_seek(&bits, 0);
+    assert(stream_read_bits(&bits, 7) == 0b1001101);
+    assert(stream_read_bits(&bits, 7) == 0b1100011);
+    assert(bits.bit_ix == 6);
+
+    // Should skip the 2 bits
+    assert(stream_read_u8(&bits) == 0b11110000);
+    assert(bits.bit_ix == 0);
+
+    assert(stream_read_bits(&bits, 1) == 1);
+    assert(stream_read_bits(&bits, 1) == 0);
+
+    stream_seek(&bits, 0);
+    assert(stream_read_bits(&bits, 32) == 0b11000001111100001111000111001101);
+    assert(stream_eof(&bits));
+
+    stream_seek(&bits, 0);
+    assert(stream_read_u32(&bits) == 0b11000001111100001111000111001101);
+    assert(stream_eof(&bits));
+
+    stream_reset(&bits);
+    stream_write_bits(&bits, 4, 0b0000);
+    stream_write_bits(&bits, 4, 0b1111);
+    stream_write_bits(&bits, 1, 0b1);
+    stream_write_bits(&bits, 1, 0b0);
+
+    stream_seek(&bits, 0);
+    assert(stream_read_bits(&bits, 4) == 0b0000);
+    assert(stream_read_bits(&bits, 4) == 0b1111);
+    assert(stream_read_bits(&bits, 1) == 0b1);
+    assert(stream_read_bits(&bits, 1) == 0b0);
 }
