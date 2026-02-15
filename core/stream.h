@@ -222,6 +222,12 @@ static void stream_write_u32(Stream *stream, u32 data) {
     stream_write_u8(stream, (data >> (3 * 8)) & 0xff);
 }
 
+static void stream_read_bytes(Stream *stream, size_t count, u8 *data) {
+    for (size_t i = 0; i < count; ++i) {
+        data[i] = stream_read_u8(stream);
+    }
+}
+
 // Testing
 static void stream_test(void) {
     Memory *mem = mem_new();
@@ -370,3 +376,10 @@ static void stream_test(void) {
     assert(stream_read_bits(&bits, 1) == 0b1);
     assert(stream_read_bits(&bits, 1) == 0b0);
 }
+
+// NOTE: make fmt also use stream?
+// static void fmt_int(Stream *fmt, u64 value) {
+//     fmt_s(fmt, "Hello");
+//     fmt_s(fmt, "World");
+//     fmt_eol(fmt);
+// }
