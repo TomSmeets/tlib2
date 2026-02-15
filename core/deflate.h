@@ -1,8 +1,8 @@
 #pragma once
 #include "bits.h"
 #include "mem.h"
-#include "stream.h"
 #include "os.h"
+#include "stream.h"
 #include "type.h"
 
 #if 0
@@ -85,7 +85,7 @@ static Deflate_Block *deflate_read_block(Memory *mem, Stream *stream) {
     assert(block->type < 3);
 
     if (block->type == Deflate_BlockStored) {
-        u16 size       = stream_read_u16(stream);
+        u16 size = stream_read_u16(stream);
         u16 size_check = stream_read_u16(stream);
         assert(size == ((~size_check) & 0xffff));
 
@@ -102,7 +102,6 @@ static Deflate_Block *deflate_read_block(Memory *mem, Stream *stream) {
     }
     return block;
 }
-
 
 static void deflate_read(Memory *mem, Stream *stream) {
     deflate_read_block(mem, stream);
