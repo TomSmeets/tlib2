@@ -75,34 +75,110 @@ typedef enum {
 typedef struct {
     bool is_last;
     Deflate_BlockType type;
-    Buffer data;
 } Deflate_Block;
 
-static Deflate_Block *deflate_read_block(Memory *mem, Stream *stream) {
-    Deflate_Block *block = mem_struct(mem, Deflate_Block);
-    block->is_last = stream_read_bits(stream, 1);
-    block->type = stream_read_bits(stream, 2);
-    assert(block->type < 3);
-
-    if (block->type == Deflate_BlockStored) {
-        u16 size = stream_read_u16(stream);
-        u16 size_check = stream_read_u16(stream);
-        assert(size == ((~size_check) & 0xffff));
-
-        u8 *data = mem_array(mem, u8, size);
-        stream_read_bytes(stream, size, data);
-        block->data.size = size;
-        block->data.data = data;
-    } else if (block->type == Deflate_BlockFixed) {
-        // TODO
-    } else if (block->type == Deflate_BlockDynamic) {
-        // TODO
-    } else {
-        assert(false);
-    }
-    return block;
+static void deflate_read_block(Memory *mem, Stream *input, Stream *output) {
 }
 
-static void deflate_read(Memory *mem, Stream *stream) {
-    deflate_read_block(mem, stream);
+typedef struct PrefixCode PrefixCode;
+
+struct PrefixCode {
+    bool leaf;
+    u32 value;
+    PrefixCode *c0;
+    PrefixCode *c1;
+};
+
+static u32 prefix_read(PrefixCode *tree, Stream *input) {
+    for (;;) {
+        assert(tree);
+        if (tree->leaf) return tree->value;
+        if (stream_read_bit(input) == 0) {
+            tree = tree->c0;
+        } else {
+            tree = tree->c1;
+        }
+    }
+}
+
+static void prefix_add(PrefixCode *tree, u32 value, u32 bits) {
+    // ...
+}
+
+static Buffer deflate_read(Memory *mem, Stream *input) {
+    Stream *output = stream_new(mem);
+    while (1) {
+        bool is_last = stream_read_bits(input, 1);
+        Deflate_BlockType type = stream_read_bits(input, 2);
+        if (type == Deflate_BlockStored) {
+            u16 size = stream_read_u16(input);
+            u16 size_check = stream_read_u16(input);
+            assert(size == ((~size_check) & 0xffff));
+
+            for (size_t i = 0; i < size; ++i) {
+                stream_write_u8(output, stream_read_u8(input));
+            }
+        } else if (type == Deflate_BlockFixed) {
+            // 1. LL Code Literal/Length code
+            // 2. Distance code -> encoded distance
+
+            // Data is encoded as a stream of symbols encoded by a prefix code
+            //   0-255 -> regular byte
+            //     256 -> End of block
+            // 257-285 -> Back references
+
+            // Symbols: 257 until 285
+            u32 length_bits[29] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
+            u32 length_start[29] = { 3 };
+            for (u32 i = 1; i < array_count(length_bits) - 1; ++i) {
+                length_start[i] = length_start[i - 1] + (1 << length_bits[i - 1]);
+            }
+            // note that this replaces the previous symbol '284' with length 31
+            length_start[array_count(length_start) - 1] = 258;
+
+            // Distance values
+            u32 distance_bits[30] = {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
+            u32 distance_start[30] = { 1 };
+            for (u32 i = 1; i < array_count(distance_bits); ++i) {
+                distance_start[i] = distance_start[i - 1] + (1 << distance_bits[i - 1]);
+            }
+
+            // length prefix code bit sizes
+            u32 val = 0;
+            u32 h = 9;
+            u32 length_data[1 << h];
+            for (u32 i = 256; i < 280; ++i) {
+                for(u32 j = 0; j < (1<<(h-7)); ++j) {
+                   length_data[val++] = i;
+                }
+            }
+            for (u32 i = 0; i < 144; ++i) {
+                for(u32 j = 0; j < (1<<(h-8)); ++j) {
+                   length_data[val++] = i;
+                }
+            }
+            for (u32 i = 280; i < 288; ++i) {
+                for(u32 j = 0; j < (1<<(h-8)); ++j) {
+                   length_data[val++] = i;
+                }
+            }
+            for (u32 i = 144; i < 256; ++i) {
+                for(u32 j = 0; j < (1<<(h-9)); ++j) {
+                   length_data[val++] = i;
+                }
+            }
+            assert(val == 288);
+
+            // distance prefix code bit sizes are always 5
+
+            assert(false);
+        } else if (type == Deflate_BlockDynamic) {
+            // TODO
+            assert(false);
+        } else {
+            assert(false);
+        }
+        if (is_last) break;
+    }
+    return (Buffer){output->buffer, output->size};
 }

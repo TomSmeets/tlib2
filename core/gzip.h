@@ -20,16 +20,26 @@ static Buffer gzip_read(Memory *mem, Buffer data) {
     if (method != 0x8) return out;
 
     u8 flags = stream_read_u8(&stream);
-    if (flags != 0) return out;
+    bool ftext = (flags >> 0) & 1;
+    bool fhcrc = (flags >> 1) & 1;
+    bool fextra = (flags >> 2) & 1;
+    bool fname = (flags >> 3) & 1;
+    bool fcomment = (flags >> 4) & 1;
+    if (fextra != 0) return out;
 
     u32 mtime = stream_read_u32(&stream);
-
     u8 xfl = stream_read_u8(&stream);
     if (xfl != 0) return out;
 
     u8 os = stream_read_u8(&stream);
+    while (fname && stream_read_u8(&stream));
+    while (fcomment && stream_read_u8(&stream));
 
-    deflate_read(mem, &stream);
+    if (fhcrc) {
+        u16 crc = stream_read_u16(&stream);
+    }
+
+    out = deflate_read(mem, &stream);
 
     // Seek to end
     stream_seek(&stream, stream.size - 8);
