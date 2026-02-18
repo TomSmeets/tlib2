@@ -2,7 +2,6 @@
 // test.c - Run all unit tests
 #include "arg.h"
 #include "base64.h"
-#include "bits.h"
 #include "crc.h"
 #include "fmt.h"
 #include "gzip.h"
@@ -14,7 +13,6 @@ void os_main(u32 argc, char **argv) {
     fmt_s(fout, "Running tests...\n");
     fmt_test();
     base64_test();
-    bits_test();
     arg_test();
     gzip_test();
     crc_test();

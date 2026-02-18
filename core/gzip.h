@@ -1,6 +1,5 @@
 #pragma once
 #include "base64.h"
-#include "bits.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "mem.h"
