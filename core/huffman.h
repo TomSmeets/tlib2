@@ -3,6 +3,80 @@
 #include "mem.h"
 #include "stream.h"
 
+// Idea:    Codes limited to 15 bit
+// Symbols, also limited to 15 bit
+// start a code with a 1 to indicate bit length
+// so 16 bit is enough
+//
+// data 001100
+//       1
+//      10
+//     100
+//    1001
+//   10011
+//  100110
+// 1001100
+
+typedef struct {
+    // 1|code -> 1|symbol
+    u16 code_to_symbol[1<<16];
+} Code;
+
+static void code_from(Code *t, u32 count, u8 *symbol_len) {
+    // The code is prefixed with a '1' bit
+    // indicating the start of the bit sequence
+    u32 code = 1;
+
+    // Instead of sorting the list of symbols
+    // we iterate the list for each bit size
+    // starting with 0, then find the next highest every iteration
+    u32 check_len = 0;
+    u32 next_len = 0;
+    for (;;) {
+        for (u32 sym = 0; sym < count; ++sym) {
+            u8 len = symbol_len[sym];
+
+            // Symbol already passed
+            if (len < check_len) continue;
+
+            // Symbol is not yet passed
+            if (len > check_len) {
+                // Find next length for next iteration
+                if (len < next_len) next_len = len;
+                continue;
+            }
+
+            // current length
+            if (len == check_len) {
+                // Add one to make 0 represent an invalid symbol
+                t->code_to_symbol[code] = sym + 1;
+
+                // Next code in this bit length
+                code++;
+            }
+        }
+
+        // No next len means we are done
+        if (next_len == check_len) break;
+        code <<= next_len - check_len;
+        check_len = next_len;
+    }
+}
+
+// Returns symbol
+static u16 code_read(Code *t, Stream *s) {
+    u16 code = 1;
+    for (u32 i = 0; i < 15; ++i) {
+        // Append bit
+        code = (code << 1) | stream_read_bit(s);
+
+        // Lookup symbol
+        u16 symbol = t->code_to_symbol[code];
+        if (symbol) return symbol - 1;
+    }
+    return -1;
+}
+
 typedef struct {
     // symbol count
     u32 cap;
@@ -13,6 +87,8 @@ typedef struct {
 
     // Symbol -> code
     u32 *code;
+
+    u16 code_to_symbol[1<<16];
 } Huffman;
 
 static Huffman *huffman_new(Memory *mem, u32 max_count) {
