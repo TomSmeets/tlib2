@@ -147,10 +147,26 @@ static u32 stream_read_bits(Stream *stream, u32 count) {
     return out;
 }
 
+// Read a number of bits
+static u32 stream_read_bits_be(Stream *stream, u32 count) {
+    u32 out = 0;
+    for (u32 i = 0; i < count; ++i) {
+        out |= (u32)stream_read_bit(stream) << (count - i - 1);
+    }
+    return out;
+}
+
 // Write a number of bits
 static void stream_write_bits(Stream *stream, u32 count, u32 bits) {
     for (u32 i = 0; i < count; ++i) {
         stream_write_bit(stream, (bits >> i) & 1);
+    }
+}
+
+// Write a number of bits (big endian)
+static void stream_write_bits_be(Stream *stream, u32 count, u32 bits) {
+    for (u32 i = 0; i < count; ++i) {
+        stream_write_bit(stream, (bits >> (count - i - 1)) & 1);
     }
 }
 

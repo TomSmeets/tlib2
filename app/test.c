@@ -7,6 +7,7 @@
 #include "fmt.h"
 #include "gzip.h"
 #include "os.h"
+#include "huffman.h"
 #include "stream.h"
 
 void os_main(u32 argc, char **argv) {
@@ -18,6 +19,7 @@ void os_main(u32 argc, char **argv) {
     gzip_test();
     crc_test();
     stream_test();
+    huffman_test();
     fmt_s(fout, "Success!\n");
     os_exit(0);
 }
