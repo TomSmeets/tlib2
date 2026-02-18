@@ -1,5 +1,6 @@
 #pragma once
 #include "bits.h"
+#include "huffman.h"
 #include "mem.h"
 #include "os.h"
 #include "stream.h"
@@ -80,31 +81,6 @@ typedef struct {
 static void deflate_read_block(Memory *mem, Stream *input, Stream *output) {
 }
 
-typedef struct PrefixCode PrefixCode;
-
-struct PrefixCode {
-    bool leaf;
-    u32 value;
-    PrefixCode *c0;
-    PrefixCode *c1;
-};
-
-static u32 prefix_read(PrefixCode *tree, Stream *input) {
-    for (;;) {
-        assert(tree);
-        if (tree->leaf) return tree->value;
-        if (stream_read_bit(input) == 0) {
-            tree = tree->c0;
-        } else {
-            tree = tree->c1;
-        }
-    }
-}
-
-static void prefix_add(PrefixCode *tree, u32 value, u32 bits) {
-    // ...
-}
-
 static Buffer deflate_read(Memory *mem, Stream *input) {
     Stream *output = stream_new(mem);
     while (1) {
@@ -144,34 +120,58 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
             }
 
             // length prefix code bit sizes
-            u32 val = 0;
-            u32 h = 9;
-            u32 length_data[1 << h];
-            for (u32 i = 256; i < 280; ++i) {
-                for(u32 j = 0; j < (1<<(h-7)); ++j) {
-                   length_data[val++] = i;
-                }
-            }
-            for (u32 i = 0; i < 144; ++i) {
-                for(u32 j = 0; j < (1<<(h-8)); ++j) {
-                   length_data[val++] = i;
-                }
-            }
-            for (u32 i = 280; i < 288; ++i) {
-                for(u32 j = 0; j < (1<<(h-8)); ++j) {
-                   length_data[val++] = i;
-                }
-            }
-            for (u32 i = 144; i < 256; ++i) {
-                for(u32 j = 0; j < (1<<(h-9)); ++j) {
-                   length_data[val++] = i;
-                }
-            }
-            assert(val == 288);
+            Huffman *h_len = huffman_new(mem, 288);
+            for (u32 i = 0; i < 144; ++i) huffman_add(h_len, 8);
+            for (u32 i = 144; i < 256; ++i)  huffman_add(h_len, 9);
+            for (u32 i = 256; i < 280; ++i)  huffman_add(h_len, 7);
+            for (u32 i = 280; i < 288; ++i)  huffman_add(h_len, 8);
+            huffman_build(h_len);
 
             // distance prefix code bit sizes are always 5
+            Huffman *h_dist = huffman_new(mem, 32);
+            for (u32 i = 0; i < 32; ++i) huffman_add(h_dist, 5);
+            huffman_build(h_dist);
 
-            assert(false);
+            for(u32 s = 0; s < 288; ++s) {
+                fmt_su(fout, "", s, ": ");
+                fmt_u_ex(fout, h_len->code[s], 2, '0', h_len->len[s]);
+                fmt_s(fout, "\n");
+            }
+
+            while(1) {
+                Huffman_Result res = huffman_read(h_len, input);
+                fmt_su(fout, "x: ", res.symbol, " ");
+                if (res.symbol < 256) fmt_c(fout, res.symbol);
+                fmt_s(fout, "\n");
+
+                
+                assert(res.valid);
+                if(res.symbol == 256) break;
+                if(res.symbol < 256) {
+                    stream_write_u8(output, res.symbol);
+                    continue;
+                }
+
+                u32 length_code = res.symbol - 257;
+                u32 length = length_start[length_code] + stream_read_bits(input, length_bits[length_code]);
+                fmt_su(fout, "length: ", length, "\n");
+
+                res = huffman_read(h_dist, input);
+                assert(res.valid);
+                u32 distance_code = res.symbol;
+                u32 distance = distance_start[distance_code] + stream_read_bits(input, distance_bits[distance_code]);
+                fmt_su(fout, "Distance: ",distance, "\n");
+
+                size_t start = output->cursor - distance;
+                for(size_t i = 0; i < length; ++i) {
+                    u8 c = output->buffer[start + i];
+                    fmt_s(fout, "r: ");
+                    if (res.symbol < 256) fmt_c(fout, c);
+                    fmt_s(fout, "\n");
+                    stream_write_u8(output, output->buffer[start + i]);
+                }
+            }
+
         } else if (type == Deflate_BlockDynamic) {
             // TODO
             assert(false);

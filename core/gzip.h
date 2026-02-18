@@ -53,13 +53,17 @@ static Buffer gzip_read(Memory *mem, Buffer data) {
 
 static void gzip_test(void) {
     Memory *mem = mem_new();
+    Buffer t1_target = str_buf("hello hello world hello hello\n");
+    Buffer t1_in = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
+    Buffer t1_out = gzip_read(mem, t1_in);
+    fmt_hexdump(fout, t1_target);
+    fmt_hexdump(fout, t1_out);
+    assert(buf_eq(t1_out, t1_target));
+
     Buffer t0_target = base64_decode(mem, str_buf("GnSwX91w7Z9EqpaZeyPCIQ=="));
     Buffer t0_in = base64_decode(mem, str_buf("H4sICHPOkWkAA2RhdGEAkyrZEH+34O18l1XTZlYrH1IEAFve5PUQAAAA"));
-    // Buffer t0_out = gzip_read(mem, t0_in);
-    // assert(buf_eq(t0_out, t0_target));
-
-    Buffer t1_target = str_buf("hello hello world hello hello");
-    Buffer t1_in = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-    // Buffer t1_out = gzip_read(mem, t1_in);
-    // assert(buf_eq(t1_out, t1_target));
+    Buffer t0_out = gzip_read(mem, t0_in);
+    fmt_hexdump(fout, t0_target);
+    fmt_hexdump(fout, t0_out);
+    assert(buf_eq(t0_out, t0_target));
 }

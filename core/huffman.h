@@ -31,6 +31,16 @@ static void huffman_add(Huffman *huffman, u8 bit_count) {
     huffman->code[sym] = 0;
 }
 
+static u32 u32_bitreverse(u32 len, u32 value) {
+    u32 rev = 0;
+    for(u32 i = 0; i < len; ++i) {
+        rev <<= 1;
+        rev |= value & 1;
+        value >>= 1;
+    }
+    return rev;
+}
+
 static void huffman_build(Huffman *huffman) {
     u32 min = huffman->len[0];
     u32 max = huffman->len[0];
@@ -88,7 +98,7 @@ static Huffman_Result huffman_read(Huffman *h, Stream *input) {
     u32 len  = 0;
     u32 code = 0;
     while (1) {
-        code = (code << 1) | stream_read_bit(input);
+        code = code << 1 | stream_read_bit(input);
         len++;
 
         res = huffman_get_symbol(h, len, code);
