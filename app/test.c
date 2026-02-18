@@ -6,8 +6,8 @@
 #include "crc.h"
 #include "fmt.h"
 #include "gzip.h"
-#include "os.h"
 #include "huffman.h"
+#include "os.h"
 #include "stream.h"
 
 void os_main(u32 argc, char **argv) {

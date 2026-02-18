@@ -1,8 +1,7 @@
 #pragma once
-#include "mem.h"
 #include "fmt.h"
+#include "mem.h"
 #include "stream.h"
-
 
 typedef struct {
     // symbol count
@@ -19,7 +18,7 @@ typedef struct {
 static Huffman *huffman_new(Memory *mem, u32 max_count) {
     Huffman *cc = mem_struct(mem, Huffman);
     cc->cap = max_count;
-    cc->len  = mem_array(mem, u8, max_count);
+    cc->len = mem_array(mem, u8, max_count);
     cc->code = mem_array(mem, u32, max_count);
     return cc;
 }
@@ -33,7 +32,7 @@ static void huffman_add(Huffman *huffman, u8 bit_count) {
 
 static u32 u32_bitreverse(u32 len, u32 value) {
     u32 rev = 0;
-    for(u32 i = 0; i < len; ++i) {
+    for (u32 i = 0; i < len; ++i) {
         rev <<= 1;
         rev |= value & 1;
         value >>= 1;
@@ -44,17 +43,17 @@ static u32 u32_bitreverse(u32 len, u32 value) {
 static void huffman_build(Huffman *huffman) {
     u32 min = huffman->len[0];
     u32 max = huffman->len[0];
-    for(u32 i = 0; i < huffman->count; ++i) {
-        if(huffman->len[i] < min) min = huffman->len[i];
-        if(huffman->len[i] > max) max = huffman->len[i];
+    for (u32 i = 0; i < huffman->count; ++i) {
+        if (huffman->len[i] < min) min = huffman->len[i];
+        if (huffman->len[i] > max) max = huffman->len[i];
     }
     u32 code = 0;
     u32 prev_bits = 0;
-    for(u32 bits = min; bits <= max; ++bits) {
-        for(u32 sym = 0 ; sym < huffman->count; ++sym) {
+    for (u32 bits = min; bits <= max; ++bits) {
+        for (u32 sym = 0; sym < huffman->count; ++sym) {
             u32 sym_bits = huffman->len[sym];
-            if(bits != sym_bits) continue;
-            if(code) code <<= bits - prev_bits;
+            if (bits != sym_bits) continue;
+            if (code) code <<= bits - prev_bits;
             huffman->code[sym] = code;
             code += 1;
             prev_bits = bits;
@@ -85,7 +84,7 @@ static Huffman_Result huffman_get_symbol(Huffman *huffman, u8 len, u32 code) {
 
 static Huffman_Result huffman_get_code(Huffman *huffman, u32 symbol) {
     Huffman_Result res = {};
-    if(symbol >= huffman->count) return res;
+    if (symbol >= huffman->count) return res;
     res.valid = 1;
     res.code = huffman->code[symbol];
     res.len = huffman->len[symbol];
@@ -95,15 +94,15 @@ static Huffman_Result huffman_get_code(Huffman *huffman, u32 symbol) {
 
 static Huffman_Result huffman_read(Huffman *h, Stream *input) {
     Huffman_Result res = {};
-    u32 len  = 0;
+    u32 len = 0;
     u32 code = 0;
     while (1) {
         code = code << 1 | stream_read_bit(input);
         len++;
 
         res = huffman_get_symbol(h, len, code);
-        if(res.valid) return res;
-        if(len == 32) break;
+        if (res.valid) return res;
+        if (len == 32) break;
     }
     return res;
 }
@@ -114,29 +113,29 @@ static void huffman_test(void) {
 
     Memory *mem = mem_new();
     Huffman *h = huffman_new(mem, array_count(len));
-    for(u32 sym = 0; sym < array_count(len); ++sym) {
+    for (u32 sym = 0; sym < array_count(len); ++sym) {
         huffman_add(h, len[sym]);
     }
     huffman_build(h);
-    for(u32 sym = 0; sym < array_count(len); ++sym) {
+    for (u32 sym = 0; sym < array_count(len); ++sym) {
         Huffman_Result res = huffman_get_code(h, sym);
         assert(res.valid);
-        assert(res.code  == code[sym]);
+        assert(res.code == code[sym]);
         assert(res.len == len[sym]);
-        assert(res.symbol  == sym);
+        assert(res.symbol == sym);
     }
-    for(u32 sym = 0; sym < array_count(len); ++sym) {
+    for (u32 sym = 0; sym < array_count(len); ++sym) {
         Huffman_Result res = huffman_get_symbol(h, len[sym], code[sym]);
         assert(res.valid);
-        assert(res.code  == code[sym]);
+        assert(res.code == code[sym]);
         assert(res.len == len[sym]);
-        assert(res.symbol  == sym);
+        assert(res.symbol == sym);
     }
-    for(u32 sym = 0; sym < array_count(len); ++sym) {
+    for (u32 sym = 0; sym < array_count(len); ++sym) {
         Huffman_Result res = huffman_get_symbol(h, len[sym] - 1, code[sym]);
         assert(!res.valid);
     }
-    for(u32 sym = 0 ; sym < h->count; ++sym) {
+    for (u32 sym = 0; sym < h->count; ++sym) {
         fmt_s(fout, "Code: ");
         fmt_u_ex(fout, sym, 10, ' ', 4);
         fmt_s(fout, " ");
@@ -145,7 +144,7 @@ static void huffman_test(void) {
     }
 
     Stream *s = stream_new(mem);
-    for(u32 sym = 0 ; sym < h->count; ++sym) {
+    for (u32 sym = 0; sym < h->count; ++sym) {
         stream_write_bits_be(s, len[sym], code[sym]);
         stream_write_bits_be(s, len[sym], code[sym]);
     }

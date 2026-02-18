@@ -105,7 +105,7 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
 
             // Symbols: 257 until 285
             u32 length_bits[29] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
-            u32 length_start[29] = { 3 };
+            u32 length_start[29] = {3};
             for (u32 i = 1; i < array_count(length_bits) - 1; ++i) {
                 length_start[i] = length_start[i - 1] + (1 << length_bits[i - 1]);
             }
@@ -114,7 +114,7 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
 
             // Distance values
             u32 distance_bits[30] = {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
-            u32 distance_start[30] = { 1 };
+            u32 distance_start[30] = {1};
             for (u32 i = 1; i < array_count(distance_bits); ++i) {
                 distance_start[i] = distance_start[i - 1] + (1 << distance_bits[i - 1]);
             }
@@ -122,9 +122,9 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
             // length prefix code bit sizes
             Huffman *h_len = huffman_new(mem, 288);
             for (u32 i = 0; i < 144; ++i) huffman_add(h_len, 8);
-            for (u32 i = 144; i < 256; ++i)  huffman_add(h_len, 9);
-            for (u32 i = 256; i < 280; ++i)  huffman_add(h_len, 7);
-            for (u32 i = 280; i < 288; ++i)  huffman_add(h_len, 8);
+            for (u32 i = 144; i < 256; ++i) huffman_add(h_len, 9);
+            for (u32 i = 256; i < 280; ++i) huffman_add(h_len, 7);
+            for (u32 i = 280; i < 288; ++i) huffman_add(h_len, 8);
             huffman_build(h_len);
 
             // distance prefix code bit sizes are always 5
@@ -132,22 +132,21 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
             for (u32 i = 0; i < 32; ++i) huffman_add(h_dist, 5);
             huffman_build(h_dist);
 
-            for(u32 s = 0; s < 288; ++s) {
+            for (u32 s = 0; s < 288; ++s) {
                 fmt_su(fout, "", s, ": ");
                 fmt_u_ex(fout, h_len->code[s], 2, '0', h_len->len[s]);
                 fmt_s(fout, "\n");
             }
 
-            while(1) {
+            while (1) {
                 Huffman_Result res = huffman_read(h_len, input);
                 fmt_su(fout, "x: ", res.symbol, " ");
                 if (res.symbol < 256) fmt_c(fout, res.symbol);
                 fmt_s(fout, "\n");
 
-                
                 assert(res.valid);
-                if(res.symbol == 256) break;
-                if(res.symbol < 256) {
+                if (res.symbol == 256) break;
+                if (res.symbol < 256) {
                     stream_write_u8(output, res.symbol);
                     continue;
                 }
@@ -160,10 +159,10 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
                 assert(res.valid);
                 u32 distance_code = res.symbol;
                 u32 distance = distance_start[distance_code] + stream_read_bits(input, distance_bits[distance_code]);
-                fmt_su(fout, "Distance: ",distance, "\n");
+                fmt_su(fout, "Distance: ", distance, "\n");
 
                 size_t start = output->cursor - distance;
-                for(size_t i = 0; i < length; ++i) {
+                for (size_t i = 0; i < length; ++i) {
                     u8 c = output->buffer[start + i];
                     fmt_s(fout, "r: ");
                     if (res.symbol < 256) fmt_c(fout, c);
