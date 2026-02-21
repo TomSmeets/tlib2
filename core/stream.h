@@ -52,7 +52,7 @@ static void stream_seek(Stream *stream, size_t index) {
 }
 
 // Clear data and go to start
-static void stream_reset(Stream *stream) {
+static void stream_clear(Stream *stream) {
     stream->cursor = 0;
     stream->bit_ix = 0;
     stream->size = 0;
@@ -280,7 +280,7 @@ static void stream_test(void) {
     assert(stream_read_u8(stream) == 0x12);
     assert(stream_eof(stream));
 
-    stream_reset(stream);
+    stream_clear(stream);
     assert(stream_eof(stream));
     assert(stream->cursor == 0);
     assert(stream->bit_ix == 0);
@@ -326,7 +326,7 @@ static void stream_test(void) {
     assert(stream_eof(stream));
 
     // Write bits
-    stream_reset(stream);
+    stream_clear(stream);
     stream_write_bits(stream, 7, 0b11111111);
     stream_write_bits(stream, 7, 0b10000000);
     stream_write_bits(stream, 7, 0b11111111);
@@ -342,7 +342,7 @@ static void stream_test(void) {
     assert(stream->bit_ix == 4);
 
     // Another test
-    stream_reset(stream);
+    stream_clear(stream);
 
     u32 data[] = {0b11000001111100001111000111001101};
     Stream bits = stream_from(buf_from(data, sizeof(data)));
@@ -380,7 +380,7 @@ static void stream_test(void) {
     assert(stream_read_u32(&bits) == 0b11000001111100001111000111001101);
     assert(stream_eof(&bits));
 
-    stream_reset(&bits);
+    stream_clear(&bits);
     stream_write_bits(&bits, 4, 0b0000);
     stream_write_bits(&bits, 4, 0b1111);
     stream_write_bits(&bits, 1, 0b1);

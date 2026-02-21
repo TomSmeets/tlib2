@@ -119,57 +119,57 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
             }
 
             // length prefix code bit sizes
-            Huffman *h_len = huffman_new(mem, 288);
-            for (u32 i = 0; i < 144; ++i) huffman_add(h_len, 8);
-            for (u32 i = 144; i < 256; ++i) huffman_add(h_len, 9);
-            for (u32 i = 256; i < 280; ++i) huffman_add(h_len, 7);
-            for (u32 i = 280; i < 288; ++i) huffman_add(h_len, 8);
-            huffman_build(h_len);
+            u8 h_len_bits[288];
+            for (u32 i = 0; i < 144; ++i) h_len_bits[i] = 8;
+            for (u32 i = 144; i < 256; ++i) h_len_bits[i] = 9;
+            for (u32 i = 256; i < 280; ++i) h_len_bits[i] = 7;
+            for (u32 i = 280; i < 288; ++i) h_len_bits[i] = 8;
+            Huffman *h_len = huffman_new(mem, array_count(h_len_bits), h_len_bits);
 
             // distance prefix code bit sizes are always 5
-            Huffman *h_dist = huffman_new(mem, 32);
-            for (u32 i = 0; i < 32; ++i) huffman_add(h_dist, 5);
-            huffman_build(h_dist);
-
-            for (u32 s = 0; s < 288; ++s) {
-                fmt_su(fout, "", s, ": ");
-                fmt_u_ex(fout, h_len->code[s], 2, '0', h_len->len[s]);
-                fmt_s(fout, "\n");
-            }
+            u8 h_dist_bits[32];
+            for (u32 i = 0; i < 32; ++i) h_dist_bits[i] = 5;
+            Huffman *h_dist = huffman_new(mem, array_count(h_dist_bits), h_dist_bits);
 
             while (1) {
-                Huffman_Result res = huffman_read(h_len, input);
-                fmt_su(fout, "x: ", res.symbol, " ");
-                if (res.symbol < 256) fmt_c(fout, res.symbol);
+                u32 symbol = huffman_read(h_len, input);
+
+                // Debug
+                fmt_su(fout, "symbol: ", symbol, " ");
+                if (symbol < 256) fmt_c(fout, symbol);
                 fmt_s(fout, "\n");
 
-                assert(res.valid);
-                if (res.symbol == 256) break;
-                if (res.symbol < 256) {
-                    stream_write_u8(output, res.symbol);
+                // Check valid symbol
+                assert(symbol < 288);
+
+                // End of block
+                if (symbol == 256) break;
+
+                // Normal byte
+                if (symbol < 256) {
+                    stream_write_u8(output, symbol);
                     continue;
                 }
 
-                u32 length_code = res.symbol - 257;
+                // LZ77 Byte
+                u32 length_code = symbol - 257;
                 u32 length = length_start[length_code] + stream_read_bits(input, length_bits[length_code]);
                 fmt_su(fout, "length: ", length, "\n");
 
-                res = huffman_read(h_dist, input);
-                assert(res.valid);
-                u32 distance_code = res.symbol;
+                u32 distance_code = huffman_read(h_dist, input);
+                assert(distance_code < 32);
                 u32 distance = distance_start[distance_code] + stream_read_bits(input, distance_bits[distance_code]);
                 fmt_su(fout, "Distance: ", distance, "\n");
 
-                size_t start = output->cursor - distance;
+                size_t lookback_start = output->cursor - distance;
                 for (size_t i = 0; i < length; ++i) {
-                    u8 c = output->buffer[start + i];
+                    u8 c = output->buffer[lookback_start + i];
                     fmt_s(fout, "r: ");
-                    if (res.symbol < 256) fmt_c(fout, c);
+                    fmt_c(fout, c);
                     fmt_s(fout, "\n");
-                    stream_write_u8(output, output->buffer[start + i]);
+                    stream_write_u8(output, output->buffer[lookback_start + i]);
                 }
             }
-
         } else if (type == Deflate_BlockDynamic) {
             // TODO
             assert(false);
