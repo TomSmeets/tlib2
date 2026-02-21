@@ -19,7 +19,7 @@ static Huffman *huffman_new(Memory *mem, u32 count, u8 *symbol_length) {
     // Count number of symbols per bit length
     for (u32 symbol = 0; symbol < count; ++symbol) {
         u8 len = symbol_length[symbol];
-        if(len == 0) continue;
+        if (len == 0) continue;
         assert(len <= 15);
         tab->counts[len - 1]++;
     }
@@ -108,7 +108,7 @@ static void huffman_test(void) {
     stream_seek(stream, 0);
 
     for (u32 sym = 0; sym < array_count(len); ++sym) {
-        if(!len[sym]) continue;
+        if (!len[sym]) continue;
 
         u32 sym_parse = huffman_read(huf, stream);
         assert(sym_parse != -1);

@@ -5,81 +5,11 @@
 #include "stream.h"
 #include "type.h"
 
-#if 0
-typedef struct {
-    size_t used;
-    size_t capacity;
-    u8 *buffer;
-} Inflate;
-
-static void inflate_byte(Inflate *inf, u8 data) {
-    assert(inf->used < inf->capacity);
-    inf->buffer[inf->used++] = data;
-}
-
-static void inflate_block(Inflate *inf, Bits *bits) {
-    u32 b_final = bits_read(bits, 1);
-    Deflate_Block b_type = bits_read(bits, 2);
-
-    if (b_type == Deflate_BlockStored) {
-        bits_byte_align(bits);
-        u32 len = bits_read(bits, 16);
-        u32 len_inv = bits_read(bits, 16);
-        assert(len == (~len_inv & 0xffff));
-        assert(bits->ix % 8 == 0);
-        for (u32 i = 0; i < len; ++i) {
-            inflate_byte(inf, bits_read(bits, 8));
-        }
-    }
-}
-
-static void deflate_write_block(Bits *bits, Deflate_Block0 *block) {
-    bits_write(bits, 1, block->is_last);
-    bits_write(bits, 2, block->type);
-
-    if (block->type == Deflate_BlockStored) {
-        bits_byte_align(bits);
-        bits_write(bits, 16, block->size);
-        bits_write(bits, 16, ~block->size);
-        bits_write_bytes(bits, block->size, block->data);
-    } else if (block->type == Deflate_BlockFixed) {
-    } else if (block->type == Deflate_BlockDynamic) {
-    }
-}
-
-// Huffman coding
-
-static void deflate_test(void) {
-    // https://www.youtube.com/watch?v=SJPvNi4HrWQ
-    u8 buffer[1024];
-    Bits bits = bits_from(sizeof(buffer), buffer);
-
-    // Block Type 0
-    bits_write(&bits, 1, 1);
-    bits_write(&bits, 2, 0);
-    bits_byte_align(&bits);
-    char data[] = "Hello World!";
-    u16 len = sizeof(data) - 1;
-    bits_write(&bits, 1, len);
-    bits_write(&bits, 1, ~len);
-    bits_restart(&bits);
-}
-#endif
-
 typedef enum {
-    Deflate_BlockStored = 0,  // Raw data
-    Deflate_BlockFixed = 1,   // Huffman
-    Deflate_BlockDynamic = 2, // Huffman
+    Deflate_BlockStored = 0,  // Raw uncompressed data
+    Deflate_BlockFixed = 1,   // Fixed Huffman table + LZ77
+    Deflate_BlockDynamic = 2, // Dynamic Huffman table + LZ77
 } Deflate_BlockType;
-
-typedef struct {
-    bool is_last;
-    Deflate_BlockType type;
-} Deflate_Block;
-
-static void deflate_read_block(Memory *mem, Stream *input, Stream *output) {
-}
-
 
 typedef struct {
     Huffman *length;
@@ -107,6 +37,60 @@ static Deflate_Huffman *deflate_create_fixed_huffman(Memory *mem) {
     return tab;
 }
 
+static Deflate_Huffman *deflate_create_dynamic_huffman(Memory *mem, Stream *input) {
+    u32 length_count = stream_read_bits(input, 5) + 257;
+    assert(length_count <= 286);
+
+    u32 distance_count = stream_read_bits(input, 5) + 1;
+    assert(distance_count <= 30);
+
+    // CL codes
+    u32 code_count = stream_read_bits(input, 4) + 4; // Number of length codes
+    assert(code_count <= 19);
+
+    u8 code_index[19] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
+    u8 code_lengths[19] = {0};
+    for (u32 i = 0; i < code_count; ++i) {
+        code_lengths[code_index[i]] = stream_read_bits(input, 3);
+    }
+
+    Huffman *code_tree = huffman_new(mem, 19, code_lengths);
+
+    u32 count = 0;
+    u8 lengths[286 + 30];
+    while (count < length_count + distance_count) {
+        u32 symbol = huffman_read(code_tree, input);
+        assert(symbol < 19);
+        u8 repeat = 1;
+        u8 length = symbol;
+
+        // Copy previous value 3 to 6 times
+        if (symbol == 16) {
+            length = lengths[count - 1];
+            repeat = stream_read_bits(input, 2) + 3;
+        }
+
+        // Repeat 0 value 3 to 10 times
+        if (symbol == 17) {
+            length = 0;
+            repeat = stream_read_bits(input, 3) + 3;
+        }
+
+        // Repeat 0 value 11 - 138 times
+        if (symbol == 18) {
+            length = 0;
+            repeat = stream_read_bits(input, 7) + 11;
+        }
+
+        for (u8 i = 0; i < repeat; ++i) lengths[count++] = length;
+    }
+
+    Deflate_Huffman *huffman = mem_struct(mem, Deflate_Huffman);
+    huffman->length = huffman_new(mem, length_count, lengths);
+    huffman->distance = huffman_new(mem, distance_count, lengths + length_count);
+    return huffman;
+}
+
 typedef struct {
     u8 length_bits[29];
     u8 distance_bits[30];
@@ -114,7 +98,7 @@ typedef struct {
     u32 distance_offset[30];
 } Deflate_LLCode;
 
-static Deflate_LLCode * deflate_new_llcode(Memory *mem) {
+static Deflate_LLCode *deflate_new_llcode(Memory *mem) {
     Deflate_LLCode *code = mem_struct(mem, Deflate_LLCode);
 
     // Length values
@@ -128,16 +112,16 @@ static Deflate_LLCode * deflate_new_llcode(Memory *mem) {
     }
 
     // Length offset
-    code->length_offset[0]  = 3;
+    code->length_offset[0] = 3;
     code->length_offset[28] = 258;
     for (u32 i = 1; i < 28; ++i) {
         u32 start = code->length_offset[i - 1];
-        u32 bits  = code->length_bits[i - 1];
+        u32 bits = code->length_bits[i - 1];
         code->length_offset[i] = start + (1 << bits);
     }
 
     // Distance offset
-    code->distance_offset[0]  = 1;
+    code->distance_offset[0] = 1;
     for (u32 i = 1; i < 30; ++i) {
         u32 start = code->distance_offset[i - 1];
         u32 bits = code->distance_bits[i - 1];
@@ -163,19 +147,12 @@ static u32 deflate_read_distance(Deflate_LLCode *code, Stream *input, u16 distan
 }
 
 static Buffer deflate_read(Memory *mem, Stream *input) {
-
-    // 1. LL Code Literal/Length code
-    // 2. Distance code -> encoded distance
-
-    // Data is encoded as a stream of symbols encoded by a prefix code
-    //   0-255 -> regular byte
-    //     256 -> End of block
-    // 257-285 -> Back references
-
     Stream *output = stream_new(mem);
-    while (1) {
+    for (;;) {
         bool is_last = stream_read_bits(input, 1);
         Deflate_BlockType type = stream_read_bits(input, 2);
+
+        // Stored bock
         if (type == Deflate_BlockStored) {
             u16 size = stream_read_u16(input);
             u16 size_check = stream_read_u16(input);
@@ -184,12 +161,14 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
             for (size_t i = 0; i < size; ++i) {
                 stream_write_u8(output, stream_read_u8(input));
             }
-        } else if (type == Deflate_BlockFixed) {
+        } else {
             Deflate_LLCode *code = deflate_new_llcode(mem);
-            Deflate_Huffman *huff = deflate_create_fixed_huffman(mem);
+            Deflate_Huffman *tree = 0;
+            if (type == Deflate_BlockFixed) tree = deflate_create_fixed_huffman(mem);
+            if (type == Deflate_BlockDynamic) tree = deflate_create_dynamic_huffman(mem, input);
 
             while (1) {
-                u32 symbol = huffman_read(huff->length, input);
+                u32 symbol = huffman_read(tree->length, input);
 
                 // Symbol must be valid
                 assert(symbol < 288);
@@ -205,7 +184,7 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
                     u32 length_code = symbol - 257;
                     u32 length = deflate_read_length(code, input, length_code);
 
-                    u32 distance_code = huffman_read(huff->distance, input);
+                    u32 distance_code = huffman_read(tree->distance, input);
                     u32 distance = deflate_read_distance(code, input, distance_code);
 
                     size_t cursor = output->cursor - distance;
@@ -215,12 +194,8 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
                     }
                 }
             }
-        } else if (type == Deflate_BlockDynamic) {
-            // TODO
-            assert(false);
-        } else {
-            assert(false);
         }
+
         if (is_last) break;
     }
     return (Buffer){output->buffer, output->size};
