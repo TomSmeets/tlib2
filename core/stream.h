@@ -244,6 +244,12 @@ static void stream_read_bytes(Stream *stream, size_t count, u8 *data) {
     }
 }
 
+static void stream_write_bytes(Stream *stream, size_t count, u8 *data) {
+    for (size_t i = 0; i < count; ++i) {
+        stream_write_u8(stream, data[i]);
+    }
+}
+
 // Testing
 static void stream_test(void) {
     Memory *mem = mem_new();

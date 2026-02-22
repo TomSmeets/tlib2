@@ -51,7 +51,8 @@ static bool arg_match(Arg *arg, char *name, char *info) {
 }
 
 // Write a help message with possible options
-static void arg_help(Arg *arg, Fmt *fmt) {
+static void arg_help(Arg *arg) {
+    Fmt *fmt = ferr;
     fmt_s(fmt, "Usage: ");
     for (u32 i = 0; i < arg->arg_ix; ++i) {
         fmt_s(fmt, arg->arg_list[i]);
@@ -71,7 +72,7 @@ static void arg_help(Arg *arg, Fmt *fmt) {
 // Show help message and exit if an argument was passed that was not matched
 static void arg_help_opt(Arg *arg) {
     if (arg->arg_ix >= arg->arg_count) return;
-    arg_help(arg, fout);
+    arg_help(arg);
     os_exit(1);
 }
 

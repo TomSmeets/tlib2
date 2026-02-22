@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// build2.c - Makefile but in C
 #include "arg.h"
 #include "base64.h"
 #include "command.h"
@@ -152,6 +154,13 @@ static void build_snake(Arg *arg) {
     // Cleanup
     if (release) os_remove("out/snake/snake.wasm");
 }
+
+static void build_tl(Arg *arg) {
+    os_system("mkdir -p out/tl");
+    char *include[] = {"core", 0};
+    clang_compile(Platform_Linux, Mode_Debug, include, "app/tl.c", "out/tl/tl");
+}
+
 static void build_tmp(Arg *arg) {
     bool quick = arg_match(arg, "quick", "Skip other platforms");
     bool release = arg_match(arg, "release", "Build in release mode");
@@ -249,12 +258,19 @@ void os_main(u32 argc, char **argv) {
         return;
     }
 
+
+    if (arg_match(&arg, "tl", "Build tl cli tool")) {
+        build_tl(&arg);
+        os_exit(0);
+        return;
+    }
+
     if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompletion")) {
         generate_lsp(&arg);
         os_exit(0);
         return;
     }
 
-    arg_help(&arg, fout);
+    arg_help(&arg);
     os_exit(1);
 }

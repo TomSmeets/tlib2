@@ -47,9 +47,6 @@ static Buffer gzip_read(Memory *mem, Buffer data) {
     stream_seek(&stream, stream.size - 8);
     u32 crc = stream_read_u32(&stream);
     u32 isize = stream_read_u32(&stream);
-    fmt_sx(fout, "crc: ", crc, "\n");
-    fmt_sx(fout, "isize: ", isize, "\n");
-
     return out;
 }
 
