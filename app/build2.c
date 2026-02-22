@@ -258,7 +258,6 @@ void os_main(u32 argc, char **argv) {
         return;
     }
 
-
     if (arg_match(&arg, "tl", "Build tl cli tool")) {
         build_tl(&arg);
         os_exit(0);
