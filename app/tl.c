@@ -41,11 +41,18 @@ bool os_main2(u32 argc, char **argv) {
         Stream *input = stream_new(mem);
         Stream *output = stream_new(mem);
         try(stream_from_file(input, os_stdin()));
+        stream_seek(input, 0);
         try(gzip_read(mem, input, output));
         try(stream_to_file(output, os_stdout()));
         return ok();
     }
 
+    if (arg_match(&arg, "dump", "Hexdump")) {
+        Stream *input = stream_new(mem);
+        try(stream_from_file(input, os_stdin()));
+        fmt_hexdump(fout, stream_to_buffer(input));
+        return ok();
+    }
     arg_help(&arg);
     os_exit(1);
 }

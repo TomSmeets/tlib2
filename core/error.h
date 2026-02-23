@@ -9,7 +9,7 @@ static char *error_message[64];
 #define try_msg(cond, msg)                                                                                                                           \
     if (!(cond)) return error_set(__FILE__ ":" TO_STRING(__LINE__) ": try(" #cond ") failed, " msg "\n")
 
-static bool error_set(char *message) {
+static void *error_set(char *message) {
     error_message[(error_count++) % array_count(error_message)] = message;
     return 0;
 }

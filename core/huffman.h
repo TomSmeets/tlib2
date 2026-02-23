@@ -14,13 +14,13 @@ typedef struct {
 
 static Huffman *huffman_new(Memory *mem, u32 count, u8 *symbol_length) {
     Huffman *tab = mem_struct(mem, Huffman);
-    assert(count <= 288);
+    try(count <= 288);
 
     // Count number of symbols per bit length
     for (u32 symbol = 0; symbol < count; ++symbol) {
         u8 len = symbol_length[symbol];
         if (len == 0) continue;
-        assert(len <= 15);
+        try(len <= 15);
         tab->counts[len - 1]++;
     }
 
@@ -80,24 +80,25 @@ static u32 huffman_read(Huffman *tab, Stream *stream) {
     return -1;
 }
 
-static void huffman_test(void) {
+static bool huffman_test(void) {
     u8 len[] = {3, 0, 4, 5, 0, 0, 1, 3, 5, 3};
     u32 code[] = {0b100, 0, 0b1110, 0b11110, 0, 0, 0b0, 0b101, 0b11111, 0b110};
 
     Memory *mem = mem_new();
     Huffman *huf = huffman_new(mem, array_count(len), len);
 
-    assert(huf->counts[1 - 1] == 1);
-    assert(huf->counts[3 - 1] == 3);
-    assert(huf->counts[4 - 1] == 1);
-    assert(huf->counts[5 - 1] == 2);
+    try(huf);
+    try(huf->counts[1 - 1] == 1);
+    try(huf->counts[3 - 1] == 3);
+    try(huf->counts[4 - 1] == 1);
+    try(huf->counts[5 - 1] == 2);
 
     // Total count == symbol count
     u32 sum = 0;
     for (u32 i = 0; i < array_count(huf->counts); ++i) {
         sum += huf->counts[i];
     }
-    assert(sum == 7);
+    try(sum == 7);
 
     Stream *stream = stream_new(mem);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
@@ -111,12 +112,13 @@ static void huffman_test(void) {
         if (!len[sym]) continue;
 
         u32 sym_parse = huffman_read(huf, stream);
-        assert(sym_parse != -1);
-        assert(sym_parse == sym);
+        try(sym_parse != -1);
+        try(sym_parse == sym);
 
         u32 sym_parse2 = huffman_read(huf, stream);
-        assert(sym_parse2 != -1);
-        assert(sym_parse2 == sym);
+        try(sym_parse2 != -1);
+        try(sym_parse2 == sym);
     }
-    assert(stream_eof(stream));
+    try(stream_eof(stream));
+    return ok();
 }

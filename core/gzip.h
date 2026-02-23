@@ -5,6 +5,7 @@
 #include "fmt.h"
 #include "mem.h"
 #include "stream.h"
+#include "crc.h"
 
 static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
     u8 magic1 = stream_read_u8(input);
@@ -41,34 +42,39 @@ static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
     try(deflate_read(mem, input, output));
     u32 crc = stream_read_u32(input);
     u32 isize = stream_read_u32(input);
+    u32 crc_comp = crc_compute(stream_to_buffer(output));
+    try(isize == output->size);
+    try(crc == crc_comp);
     try(stream_eof(input));
     return true;
 }
 
-static Buffer gzip_read_buffer(Memory *mem, Buffer input) {
+static bool gzip_read_buffer(Memory *mem, Buffer input, Buffer *output) {
     Stream input_stream = stream_from(input);
     Stream *output_stream = stream_new(mem);
-    bool ok = gzip_read(mem, &input_stream, output_stream);
-    if (!ok) return (Buffer){};
-    return stream_to_buffer(output_stream);
+    try(gzip_read(mem, &input_stream, output_stream));
+    *output = stream_to_buffer(output_stream);
+    return ok();
 }
 
-static void gzip_test(void) {
+static bool gzip_test(void) {
     Memory *mem = mem_new();
     Buffer t0_target = str_buf("hello hello world hello hello\n");
     Buffer t0_in = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-    Buffer t0_out = gzip_read_buffer(mem, t0_in);
+    Buffer t0_out = {};
+    try(gzip_read_buffer(mem, t0_in, &t0_out));
     fmt_hexdump(fout, t0_target);
     fmt_hexdump(fout, t0_out);
-    assert(buf_eq(t0_out, t0_target));
+    try(buf_eq(t0_out, t0_target));
 
     // Uses fixed huffman table
     Buffer t1_target = base64_decode(mem, str_buf("GnSwX91w7Z9EqpaZeyPCIQ=="));
     Buffer t1_in = base64_decode(mem, str_buf("H4sICHPOkWkAA2RhdGEAkyrZEH+34O18l1XTZlYrH1IEAFve5PUQAAAA"));
-    Buffer t1_out = gzip_read_buffer(mem, t1_in);
+    Buffer t1_out = {};
+    try(gzip_read_buffer(mem, t1_in, &t1_out));
     fmt_hexdump(fout, t1_target);
     fmt_hexdump(fout, t1_out);
-    assert(buf_eq(t1_out, t1_target));
+    try(buf_eq(t1_out, t1_target));
 
     // Uses dynamic huffman table
     Buffer t3_target = str_buf(
@@ -81,10 +87,12 @@ static void gzip_test(void) {
                  "8NlixyRbb7N+7rNljHw4snLhw48H/HePDj4sPGqJXT+gAAAA="
              )
     );
-    Buffer t3_out = gzip_read_buffer(mem, t3_in);
+    Buffer t3_out = {};
+    try(gzip_read_buffer(mem, t3_in, &t3_out));
     fmt_hexdump(fout, t3_target);
     fmt_hexdump(fout, t3_in);
     fmt_hexdump(fout, t3_out);
     fmt_flush(fout);
-    assert(buf_eq(t3_out, t3_target));
+    try(buf_eq(t3_out, t3_target));
+    return ok();
 }

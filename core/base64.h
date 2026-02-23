@@ -2,6 +2,7 @@
 // base64.h - Readable Base64 encoding and decoding
 #pragma once
 #include "mem.h"
+#include "error.h"
 #include "type.h"
 
 // Convert a byte to the correct base64 char
@@ -132,13 +133,14 @@ static bool base64_test_encode(Buffer input, char *expect) {
     return ok;
 }
 
-static void base64_test(void) {
-    assert(base64_test_encode(str_buf("Hello World!"), "SGVsbG8gV29ybGQh"));
-    assert(base64_test_encode(str_buf(""), ""));
-    assert(base64_test_encode(str_buf("a"), "YQ=="));
-    assert(base64_test_encode(str_buf("aa"), "YWE="));
-    assert(base64_test_encode(str_buf("aaa"), "YWFh"));
-    assert(base64_test_encode(str_buf("aaaa"), "YWFhYQ=="));
-    assert(base64_test_encode(BUFFER(u8, 0, 0, 0, 0), "AAAAAA=="));
-    assert(base64_test_encode(BUFFER(u8, 1, 2, 3, 4, 5, 6), "AQIDBAUG"));
+static bool base64_test(void) {
+    try(base64_test_encode(str_buf("Hello World!"), "SGVsbG8gV29ybGQh"));
+    try(base64_test_encode(str_buf(""), ""));
+    try(base64_test_encode(str_buf("a"), "YQ=="));
+    try(base64_test_encode(str_buf("aa"), "YWE="));
+    try(base64_test_encode(str_buf("aaa"), "YWFh"));
+    try(base64_test_encode(str_buf("aaaa"), "YWFhYQ=="));
+    try(base64_test_encode(BUFFER(u8, 0, 0, 0, 0), "AAAAAA=="));
+    try(base64_test_encode(BUFFER(u8, 1, 2, 3, 4, 5, 6), "AQIDBAUG"));
+    return ok();
 }

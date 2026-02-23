@@ -2,6 +2,7 @@
 // fmt.h - Text formatter
 #pragma once
 #include "mem.h"
+#include "error.h"
 #include "str.h"
 #include "type.h"
 
@@ -245,7 +246,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 }
 
 // Test
-static void fmt_test(void) {
+static bool fmt_test(void) {
     Memory *mem = mem_new();
     Fmt *fmt = fmt_new(mem);
     fmt_s(fmt, "Hello");
@@ -255,6 +256,7 @@ static void fmt_test(void) {
     fmt_s(fmt, "\n");
 
     char *output = fmt_end(fmt);
-    assert(str_eq(output, "Hello World: 1234\n"));
+    try(str_eq(output, "Hello World: 1234\n"));
     mem_free(mem);
+    return ok();
 }

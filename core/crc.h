@@ -1,5 +1,6 @@
 #pragma once
 #include "buf.h"
+#include "error.h"
 #include "os.h"
 #include "str.h"
 #include "type.h"
@@ -32,7 +33,8 @@ static u32 crc_compute(Buffer buf) {
     return c ^ xor;
 }
 
-static void crc_test(void) {
-    assert(crc_compute(str_buf("Hello World!")) == 0x1c291ca3);
-    assert(crc_compute(str_buf("1234")) == 0x9be3e0a3);
+static bool crc_test(void) {
+    try(crc_compute(str_buf("Hello World!")) == 0x1c291ca3);
+    try(crc_compute(str_buf("1234")) == 0x9be3e0a3);
+    return ok();
 }
