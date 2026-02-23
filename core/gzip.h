@@ -5,49 +5,44 @@
 #include "mem.h"
 #include "stream.h"
 
-static Buffer gzip_read(Memory *mem, Buffer data) {
-    Stream stream = stream_from(data);
-    Buffer out = {};
-
-    u8 magic1 = stream_read_u8(&stream);
-    u8 magic2 = stream_read_u8(&stream);
-    if (magic1 != 0x1f) return out;
-    if (magic2 != 0x8b) return out;
+static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
+    u8 magic1 = stream_read_u8(input);
+    u8 magic2 = stream_read_u8(input);
+    if (magic1 != 0x1f) return 0;
+    if (magic2 != 0x8b) return 0;
 
     // Compression Method (8 = gzip)
-    u8 method = stream_read_u8(&stream);
-    if (method != 0x8) return out;
+    u8 method = stream_read_u8(input);
+    if (method != 0x8) return 0;
 
-    u8 flags = stream_read_u8(&stream);
+    u8 flags = stream_read_u8(input);
     bool ftext = (flags >> 0) & 1;
     bool fhcrc = (flags >> 1) & 1;
     bool fextra = (flags >> 2) & 1;
     bool fname = (flags >> 3) & 1;
     bool fcomment = (flags >> 4) & 1;
-    if (fextra != 0) return out;
+    if (fextra != 0) return 0;
 
-    u32 mtime = stream_read_u32(&stream);
+    u32 mtime = stream_read_u32(input);
 
     // XFL Compression info:
     // 2 -> Best compression
     // 4 -> Fast compression
-    u8 xfl = stream_read_u8(&stream);
+    u8 xfl = stream_read_u8(input);
 
-    u8 os = stream_read_u8(&stream);
-    while (fname && stream_read_u8(&stream));
-    while (fcomment && stream_read_u8(&stream));
+    u8 os = stream_read_u8(input);
+    while (fname && stream_read_u8(input));
+    while (fcomment && stream_read_u8(input));
 
     if (fhcrc) {
-        u16 crc = stream_read_u16(&stream);
+        u16 crc = stream_read_u16(input);
     }
 
-    out = deflate_read(mem, &stream);
-
-    // Seek to end
-    stream_seek(&stream, stream.size - 8);
-    u32 crc = stream_read_u32(&stream);
-    u32 isize = stream_read_u32(&stream);
-    return out;
+    if (!deflate_read(mem, input, output)) return false;
+    u32 crc = stream_read_u32(input);
+    u32 isize = stream_read_u32(input);
+    if(!stream_eof(input)) return false;
+    return true;
 }
 
 static void gzip_test(void) {
