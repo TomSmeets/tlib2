@@ -14,10 +14,10 @@ void os_main(u32 argc, char **argv) {
     fmt_test();
     base64_test();
     arg_test();
-    gzip_test();
     crc_test();
     stream_test();
     huffman_test();
+    gzip_test();
     fmt_s(fout, "Success!\n");
     os_exit(0);
 }

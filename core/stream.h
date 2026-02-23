@@ -1,6 +1,7 @@
 #pragma once
 #include "mem.h"
 #include "type.h"
+#include "error.h"
 
 // A generic data stream
 // - Can contain raw memory data
@@ -39,7 +40,7 @@ static Stream *stream_new(Memory *mem) {
     return stream;
 }
 
-static Buffer stream_buffer(Stream *stream) {
+static Buffer stream_to_buffer(Stream *stream) {
     return (Buffer) { stream->buffer, stream->size };
 }
 
@@ -242,16 +243,44 @@ static void stream_write_u32(Stream *stream, u32 data) {
     stream_write_u8(stream, (data >> (3 * 8)) & 0xff);
 }
 
-static void stream_read_bytes(Stream *stream, size_t count, u8 *data) {
+static bool stream_read_bytes(Stream *stream, size_t count, u8 *data) {
+    if (stream->cursor + count > stream->size) return false;
     for (size_t i = 0; i < count; ++i) {
         data[i] = stream_read_u8(stream);
     }
+    return true;
 }
 
-static void stream_write_bytes(Stream *stream, size_t count, u8 *data) {
+static bool stream_write_bytes(Stream *stream, size_t count, u8 *data) {
+    if (!stream_reserve(stream, count)) return false;
     for (size_t i = 0; i < count; ++i) {
         stream_write_u8(stream, data[i]);
     }
+    return true;
+}
+
+static bool stream_write_buffer(Stream *stream, Buffer buffer) {
+    return stream_write_bytes(stream, buffer.size, buffer.data);
+}
+
+static bool stream_read_buffer(Stream *stream, Buffer buffer) {
+    return stream_read_bytes(stream, buffer.size, buffer.data);
+}
+
+static bool stream_from_file(Stream *stream, File *input) {
+    u8 buffer[1024];
+    for (;;) {
+        size_t requested = sizeof(buffer);
+        size_t used = 0;
+        try(os_read(input, buffer, requested, &used));
+        stream_write_bytes(stream, used, buffer);
+        if (used < requested) break;
+    }
+    return 1;
+}
+
+static bool stream_to_file(Stream *stream, File *output) {
+    return os_write(output, stream->buffer, stream->size, 0);
 }
 
 // Testing

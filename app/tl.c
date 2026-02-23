@@ -6,32 +6,13 @@
 #include "os.h"
 #include "stream.h"
 
-static Buffer os_read_all(Memory *mem, File *file) {
-    Stream *stream = stream_new(mem);
-    u8 buffer[1024];
-    for (;;) {
-        size_t requested = sizeof(buffer);
-        size_t used = 0;
-        bool ok = os_read(file, buffer, requested, &used);
-        if (!ok) return (Buffer){};
-        stream_write_bytes(stream, used, buffer);
-        if (used < requested) break;
-    }
-    return (Buffer){stream->buffer, stream->size};
-}
-
-static bool os_write_all(Buffer buffer, File *output) {
-    return os_write(output, buffer.data, buffer.size, 0);
-}
-
-void os_main(u32 argc, char **argv) {
+bool os_main2(u32 argc, char **argv) {
     Memory *mem = mem_new();
     Arg arg = arg_new(argc, argv);
 
     if (arg_match(&arg, "hello", "Print Hello World")) {
         fmt_s(fout, "Hello World!\n");
-        os_exit(0);
-        return;
+        return ok();
     }
 
     if (arg_match(&arg, "base64", "Encode / Decode base64")) {
@@ -40,13 +21,15 @@ void os_main(u32 argc, char **argv) {
         if (!encode) decode = 1;
         arg_help_opt(&arg);
 
-        Buffer input = os_read_all(mem, os_stdin());
-        Buffer output;
-        if (encode) output = base64_encode(mem, input);
-        if (decode) output = base64_decode(mem, input);
-        assert(os_write_all(output, os_stdout()));
-        os_exit(0);
-        return;
+        Stream *input = stream_new(mem);
+        try(stream_from_file(input, os_stdin()));
+        Buffer input_buffer = stream_to_buffer(input);
+        Buffer output_buffer = {};
+        if (encode) output_buffer = base64_encode(mem, input_buffer);
+        if (decode) output_buffer = base64_decode(mem, input_buffer);
+        Stream output = stream_from(output_buffer);
+        stream_to_file(&output, os_stdout());
+        return ok();
     }
 
     if (arg_match(&arg, "gzip", "Read / Write Gzip")) {
@@ -55,14 +38,19 @@ void os_main(u32 argc, char **argv) {
         if (!compress) decompress = 1;
         arg_help_opt(&arg);
 
-        Buffer input = os_read_all(mem, os_stdin());
-        Buffer output = gzip_read(mem, input);
-        assert(os_write_all(output, os_stdout()));
-
-        os_exit(0);
-        return;
+        Stream *input = stream_new(mem);
+        Stream *output = stream_new(mem);
+        try(stream_from_file(input, os_stdin()));
+        try(gzip_read(mem, input, output));
+        try(stream_to_file(output, os_stdout()));
+        return ok();
     }
 
     arg_help(&arg);
     os_exit(1);
+}
+
+void os_main(u32 argc, char **argv) {
+    if(!os_main2(argc, argv)) error_exit();
+    os_exit(0);
 }

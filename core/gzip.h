@@ -1,5 +1,6 @@
 #pragma once
 #include "base64.h"
+#include "error.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "mem.h"
@@ -8,12 +9,11 @@
 static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
     u8 magic1 = stream_read_u8(input);
     u8 magic2 = stream_read_u8(input);
-    if (magic1 != 0x1f) return 0;
-    if (magic2 != 0x8b) return 0;
+    try_msg(magic1 == 0x1f && magic2 == 0x8b, "Invalid magic");
 
     // Compression Method (8 = gzip)
     u8 method = stream_read_u8(input);
-    if (method != 0x8) return 0;
+    try_msg(method == 0x8, "Invalid compression method, expecting deflate");
 
     u8 flags = stream_read_u8(input);
     bool ftext = (flags >> 0) & 1;
@@ -21,7 +21,7 @@ static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
     bool fextra = (flags >> 2) & 1;
     bool fname = (flags >> 3) & 1;
     bool fcomment = (flags >> 4) & 1;
-    if (fextra != 0) return 0;
+    try_msg(fextra == 0, "Unsupported gzip flag");
 
     u32 mtime = stream_read_u32(input);
 
@@ -38,18 +38,26 @@ static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
         u16 crc = stream_read_u16(input);
     }
 
-    if (!deflate_read(mem, input, output)) return false;
+    try(deflate_read(mem, input, output));
     u32 crc = stream_read_u32(input);
     u32 isize = stream_read_u32(input);
-    if(!stream_eof(input)) return false;
+    try(stream_eof(input));
     return true;
+}
+
+static Buffer gzip_read_buffer(Memory *mem, Buffer input) {
+    Stream input_stream = stream_from(input);
+    Stream *output_stream = stream_new(mem);
+    bool ok = gzip_read(mem, &input_stream, output_stream);
+    if (!ok) return (Buffer){};
+    return stream_to_buffer(output_stream);
 }
 
 static void gzip_test(void) {
     Memory *mem = mem_new();
     Buffer t0_target = str_buf("hello hello world hello hello\n");
     Buffer t0_in = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-    Buffer t0_out = gzip_read(mem, t0_in);
+    Buffer t0_out = gzip_read_buffer(mem, t0_in);
     fmt_hexdump(fout, t0_target);
     fmt_hexdump(fout, t0_out);
     assert(buf_eq(t0_out, t0_target));
@@ -57,7 +65,7 @@ static void gzip_test(void) {
     // Uses fixed huffman table
     Buffer t1_target = base64_decode(mem, str_buf("GnSwX91w7Z9EqpaZeyPCIQ=="));
     Buffer t1_in = base64_decode(mem, str_buf("H4sICHPOkWkAA2RhdGEAkyrZEH+34O18l1XTZlYrH1IEAFve5PUQAAAA"));
-    Buffer t1_out = gzip_read(mem, t1_in);
+    Buffer t1_out = gzip_read_buffer(mem, t1_in);
     fmt_hexdump(fout, t1_target);
     fmt_hexdump(fout, t1_out);
     assert(buf_eq(t1_out, t1_target));
@@ -73,7 +81,7 @@ static void gzip_test(void) {
                  "8NlixyRbb7N+7rNljHw4snLhw48H/HePDj4sPGqJXT+gAAAA="
              )
     );
-    Buffer t3_out = gzip_read(mem, t3_in);
+    Buffer t3_out = gzip_read_buffer(mem, t3_in);
     fmt_hexdump(fout, t3_target);
     fmt_hexdump(fout, t3_in);
     fmt_hexdump(fout, t3_out);
