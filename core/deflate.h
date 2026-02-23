@@ -146,8 +146,7 @@ static u32 deflate_read_distance(Deflate_LLCode *code, Stream *input, u16 distan
     return offset + data;
 }
 
-static Buffer deflate_read(Memory *mem, Stream *input) {
-    Stream *output = stream_new(mem);
+static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
     for (;;) {
         bool is_last = stream_read_bits(input, 1);
         Deflate_BlockType type = stream_read_bits(input, 2);
@@ -156,7 +155,7 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
         if (type == Deflate_BlockStored) {
             u16 size = stream_read_u16(input);
             u16 size_check = stream_read_u16(input);
-            assert(size == ((~size_check) & 0xffff));
+            if (size != ((~size_check) & 0xffff)) return false;
 
             for (size_t i = 0; i < size; ++i) {
                 stream_write_u8(output, stream_read_u8(input));
@@ -198,5 +197,5 @@ static Buffer deflate_read(Memory *mem, Stream *input) {
 
         if (is_last) break;
     }
-    return (Buffer){output->buffer, output->size};
+    return true;
 }
