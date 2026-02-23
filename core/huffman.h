@@ -1,5 +1,6 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// huffman.h - Canonical huffman table
 #pragma once
-#include "fmt.h"
 #include "mem.h"
 #include "stream.h"
 

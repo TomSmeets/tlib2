@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// gzip.h - GZIP decompressor
 #pragma once
 #include "base64.h"
 #include "crc.h"

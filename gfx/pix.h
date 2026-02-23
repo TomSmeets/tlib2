@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// pix.h - Simple 2d game engine
 #pragma once
 #include "pix_api.h"
 

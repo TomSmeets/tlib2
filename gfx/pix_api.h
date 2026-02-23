@@ -1,5 +1,5 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
-// pix.h - Simple 2d game engine
+// pix_api.h - Simple 2d game engine (Interface)
 #pragma once
 #include "input.h"
 

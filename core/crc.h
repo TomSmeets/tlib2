@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// crc.h - CRC calculator
 #pragma once
 #include "buf.h"
 #include "error.h"

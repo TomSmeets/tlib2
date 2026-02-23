@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // hot_test.h - Test application for hot reloading
 #include <stdio.h>
 #include <unistd.h>

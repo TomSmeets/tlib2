@@ -1,6 +1,9 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// error.h - Error handling without crashing
 #pragma once
 #include "os.h"
 
+// Goal: Error handling with the ease of `assert` but without crashing
 static u32 error_count;
 static char *error_message[64];
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// stream.h - A dynamic Buffer for incremental reading and writing
 #pragma once
 #include "error.h"
 #include "mem.h"
