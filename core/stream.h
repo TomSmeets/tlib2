@@ -1,7 +1,7 @@
 #pragma once
+#include "error.h"
 #include "mem.h"
 #include "type.h"
-#include "error.h"
 
 // A generic data stream
 // - Can contain raw memory data
@@ -41,7 +41,7 @@ static Stream *stream_new(Memory *mem) {
 }
 
 static Buffer stream_to_buffer(Stream *stream) {
-    return (Buffer) { stream->buffer, stream->size };
+    return (Buffer){stream->buffer, stream->size};
 }
 
 // Return current location

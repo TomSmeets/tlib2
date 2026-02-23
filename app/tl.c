@@ -51,6 +51,6 @@ bool os_main2(u32 argc, char **argv) {
 }
 
 void os_main(u32 argc, char **argv) {
-    if(!os_main2(argc, argv)) error_exit();
+    if (!os_main2(argc, argv)) error_exit();
     os_exit(0);
 }

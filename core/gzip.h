@@ -1,7 +1,7 @@
 #pragma once
 #include "base64.h"
-#include "error.h"
 #include "deflate.h"
+#include "error.h"
 #include "fmt.h"
 #include "mem.h"
 #include "stream.h"
