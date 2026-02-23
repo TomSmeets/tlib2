@@ -22,7 +22,7 @@ bool test_test(void) {
 
 void os_main(u32 argc, char **argv) {
     fmt_s(fout, "Running tests...\n");
-    if(!test_test()) error_exit();
+    if (!test_test()) error_exit();
     fmt_s(fout, "Success!\n");
     os_exit(0);
 }

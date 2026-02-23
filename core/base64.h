@@ -1,8 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // base64.h - Readable Base64 encoding and decoding
 #pragma once
-#include "mem.h"
 #include "error.h"
+#include "mem.h"
 #include "type.h"
 
 // Convert a byte to the correct base64 char

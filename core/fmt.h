@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // fmt.h - Text formatter
 #pragma once
-#include "mem.h"
 #include "error.h"
+#include "mem.h"
 #include "str.h"
 #include "type.h"
 

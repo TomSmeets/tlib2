@@ -1,11 +1,11 @@
 #pragma once
 #include "base64.h"
+#include "crc.h"
 #include "deflate.h"
 #include "error.h"
 #include "fmt.h"
 #include "mem.h"
 #include "stream.h"
-#include "crc.h"
 
 static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
     u8 magic1 = stream_read_u8(input);
