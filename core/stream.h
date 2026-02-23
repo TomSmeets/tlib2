@@ -39,6 +39,10 @@ static Stream *stream_new(Memory *mem) {
     return stream;
 }
 
+static Buffer stream_buffer(Stream *stream) {
+    return (Buffer) { stream->buffer, stream->size };
+}
+
 // Return current location
 static size_t stream_cursor(Stream *stream) {
     return stream->cursor;
