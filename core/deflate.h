@@ -100,6 +100,11 @@ typedef struct {
     u32 distance_offset[30];
 } Deflate_LLCode;
 
+static void ll_encode_length(Deflate_LLCode *code, u32 length, Stream *output, u32 *length_symbol) {
+    for(u32 i = 0; i < array_count(code->length_offset); ++i) {
+    }
+}
+
 static Deflate_LLCode *deflate_new_llcode(Memory *mem) {
     Deflate_LLCode *code = mem_struct(mem, Deflate_LLCode);
 
@@ -148,6 +153,7 @@ static u32 deflate_read_distance(Deflate_LLCode *code, Stream *input, u16 distan
     return offset + data;
 }
 
+
 static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
     for (;;) {
         try(stream_eof(input) == false);
@@ -160,7 +166,7 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
             // This block is stored directly, no special encoding
             u16 size = stream_read_u16(input);
             u16 size_check = stream_read_u16(input);
-            if (size != ((~size_check) & 0xffff)) return false;
+            try(size == (size_check ^ 0xffff));
 
             for (size_t i = 0; i < size; ++i) {
                 stream_write_u8(output, stream_read_u8(input));
