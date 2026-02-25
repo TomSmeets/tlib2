@@ -89,7 +89,7 @@ static char *fs_base(char *path) {
 
 static char *buf_to_str(Memory *mem, Buffer buf) {
     char *str = mem_array(mem, char, buf.size + 1);
-    mem_copy((u8 *)str, buf.data, buf.size);
+    mem_copy(str, buf.data, buf.size);
     str[buf.size] = 0;
     return str;
 }

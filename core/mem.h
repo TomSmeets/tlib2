@@ -58,7 +58,7 @@ static void *mem_alloc_uninit(Memory *mem, size_t size) {
         size_t header_size = size_align_up(sizeof(Memory_Chunk), align);
         Buffer buf = chunk_alloc(header_size + size);
 
-        Memory_Chunk *chunk = buf.data;
+        Memory_Chunk *chunk = (Memory_Chunk *)buf.data;
         chunk->size = buf.size;
         chunk->next = mem->chunk;
         mem->chunk = chunk;

@@ -30,7 +30,7 @@ static u32 crc_compute(Buffer buf) {
     u32 crc = 0;
     u32 c = crc ^ xor;
     for (size_t i = 0; i < buf.size; i++) {
-        c = table[(c ^ ((u8 *)buf.data)[i]) & 0xff] ^ (c >> 8);
+        c = table[(c ^ buf.data[i]) & 0xff] ^ (c >> 8);
     }
     return c ^ xor;
 }

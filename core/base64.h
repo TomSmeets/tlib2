@@ -123,7 +123,7 @@ static bool base64_test_encode(Buffer input, char *expect) {
     bool ok = true;
     Memory *mem = mem_new();
 
-    char *output = base64_encode(mem, input).data;
+    char *output = (char *)base64_encode(mem, input).data;
     ok = str_eq(output, expect);
 
     Buffer reverse = base64_decode(mem, str_buf(output));

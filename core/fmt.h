@@ -109,7 +109,7 @@ static void fmt_c(Fmt *fmt, u8 c) {
 
 static void fmt_buf(Fmt *fmt, Buffer data) {
     for (size_t i = 0; i < data.size; ++i) {
-        fmt_c(fmt, ((u8 *)data.data)[i]);
+        fmt_c(fmt, data.data[i]);
     }
 }
 
@@ -228,7 +228,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
                 fmt_s(fmt, "   ");
                 continue;
             }
-            fmt_u_ex(fmt, ((u8 *)data.data)[addr + off], 16, '0', 2);
+            fmt_u_ex(fmt, data.data[addr + off], 16, '0', 2);
             fmt_s(fmt, " ");
         }
         fmt_s(fmt, "| ");
@@ -237,7 +237,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
                 fmt_s(fmt, " ");
                 continue;
             }
-            u8 c = ((u8 *)data.data)[addr + off];
+            u8 c = data.data[addr + off];
             if (!chr_is_printable(c)) c = '.';
             fmt_c(fmt, c);
         }

@@ -54,7 +54,7 @@ static bool mem_eq(void *a, void *b, size_t size) {
 
 // A simple range of data in memory
 typedef struct {
-    void *data;
+    u8 *data;
     size_t size;
 } Buffer;
 

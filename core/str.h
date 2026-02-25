@@ -23,10 +23,7 @@ static size_t str_len(char *str) {
 
 // Convert a zero terminated string to a buffer with a length
 static Buffer str_buf(char *str) {
-    return (Buffer){
-        str,
-        str_len(str),
-    };
+    return buf_from(str, str_len(str));
 }
 
 // Compare two strings
