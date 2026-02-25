@@ -128,17 +128,21 @@ static Huffman_Tree *huffman_tree_from_length_limited(Memory *mem, u32 count, u3
     }
 }
 
-// Convert a huffman tree to a list of symbol lengths
-// NOTE: the list should be zero initialized and the correct length
-static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_length_list, u32 depth) {
+static bool _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 *symbol_length_list, u32 depth) {
     if (tree->is_leaf) {
         try(tree->symbol < count);
         symbol_length_list[tree->symbol] = depth;
     } else {
-        try(huffman_tree_to_lengths(tree->a, count, symbol_length_list, depth + 1));
-        try(huffman_tree_to_lengths(tree->b, count, symbol_length_list, depth + 1));
+        try(_huffman_tree_to_lengths_at_depth(tree->a, count, symbol_length_list, depth + 1));
+        try(_huffman_tree_to_lengths_at_depth(tree->b, count, symbol_length_list, depth + 1));
     }
     return ok();
+}
+
+// Convert a huffman tree to a list of symbol lengths
+// NOTE: the list should be zero initialized and the correct length
+static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_length_list) {
+    return _huffman_tree_to_lengths_at_depth(tree, count, symbol_length_list, 0);
 }
 
 static bool huffman_tree_test(void) {
@@ -173,7 +177,7 @@ static bool huffman_tree_test(void) {
         try(tree);
 
         u8 len_list[256] = {};
-        try(huffman_tree_to_lengths(tree, array_count(len_list), len_list, 0));
+        try(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
 
         if (0) {
             // Debug printing
@@ -199,7 +203,7 @@ static bool huffman_tree_test(void) {
         try(tree);
 
         u8 len_list[256] = {};
-        try(huffman_tree_to_lengths(tree, array_count(len_list), len_list, 0));
+        try(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
 
         if (0) {
             fmt_s(fout, "Len:\n");
