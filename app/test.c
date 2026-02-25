@@ -5,7 +5,8 @@
 #include "crc.h"
 #include "fmt.h"
 #include "gzip.h"
-#include "huffman.h"
+#include "huffman_code.h"
+#include "huffman_tree.h"
 #include "os.h"
 #include "stream.h"
 
@@ -16,6 +17,7 @@ bool test_test(void) {
     try(crc_test());
     try(stream_test());
     try(huffman_code_test());
+    try(huffman_tree_test());
     try(gzip_test());
     return ok();
 }

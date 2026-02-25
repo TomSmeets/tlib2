@@ -1,7 +1,7 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // deflate.h - DEFLATE decompressor implementation
 #pragma once
-#include "huffman.h"
+#include "huffman_code.h"
 #include "mem.h"
 #include "os.h"
 #include "stream.h"
