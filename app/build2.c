@@ -163,14 +163,17 @@ static void build_tl(Arg *arg) {
 
 static void build_test(Arg *arg) {
     bool gdb = arg_match(arg, "gdb", "Start with gdb");
+    bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
     char *include[] = {"core", 0};
-    clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test.elf");
+    clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test");
+    if(build) os_exit(0);
+
     if (gdb) {
-        os_exit(os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test.elf"));
+        os_exit(os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test"));
     } else {
-        os_exit(os_system("out/test.elf"));
+        os_exit(os_system("out/test"));
     }
 }
 
