@@ -148,12 +148,15 @@ static bool huffman_tree_test(void) {
     // Count symbols
     for (u32 i = 0; input[i]; ++i) freq_list[(u8)input[i]]++;
 
-    for (u32 i = 0; i < array_count(freq_list); ++i) {
-        if (!freq_list[i]) continue;
-        fmt_c(fout, i);
-        fmt_s(fout, ": ");
-        fmt_u(fout, freq_list[i]);
-        fmt_s(fout, "\n");
+    if (0) {
+        // Debug printing
+        for (u32 i = 0; i < array_count(freq_list); ++i) {
+            if (!freq_list[i]) continue;
+            fmt_c(fout, i);
+            fmt_s(fout, ": ");
+            fmt_u(fout, freq_list[i]);
+            fmt_s(fout, "\n");
+        }
     }
 
     try(freq_list['a'] == 8);
@@ -172,13 +175,16 @@ static bool huffman_tree_test(void) {
         u8 len_list[256] = {};
         try(huffman_tree_to_lengths(tree, array_count(len_list), len_list, 0));
 
-        fmt_s(fout, "Len:\n");
-        for (u32 i = 0; i < array_count(len_list); ++i) {
-            if (!len_list[i]) continue;
-            fmt_c(fout, i);
-            fmt_s(fout, ": ");
-            fmt_u(fout, len_list[i]);
-            fmt_s(fout, "\n");
+        if (0) {
+            // Debug printing
+            fmt_s(fout, "Len:\n");
+            for (u32 i = 0; i < array_count(len_list); ++i) {
+                if (!len_list[i]) continue;
+                fmt_c(fout, i);
+                fmt_s(fout, ": ");
+                fmt_u(fout, len_list[i]);
+                fmt_s(fout, "\n");
+            }
         }
         try(len_list['a'] == 1);
         try(len_list['b'] == 2);
@@ -195,13 +201,15 @@ static bool huffman_tree_test(void) {
         u8 len_list[256] = {};
         try(huffman_tree_to_lengths(tree, array_count(len_list), len_list, 0));
 
-        fmt_s(fout, "Len:\n");
-        for (u32 i = 0; i < array_count(len_list); ++i) {
-            if (!len_list[i]) continue;
-            fmt_c(fout, i);
-            fmt_s(fout, ": ");
-            fmt_u(fout, len_list[i]);
-            fmt_s(fout, "\n");
+        if (0) {
+            fmt_s(fout, "Len:\n");
+            for (u32 i = 0; i < array_count(len_list); ++i) {
+                if (!len_list[i]) continue;
+                fmt_c(fout, i);
+                fmt_s(fout, ": ");
+                fmt_u(fout, len_list[i]);
+                fmt_s(fout, "\n");
+            }
         }
         try(len_list['a'] == 1);
         try(len_list['b'] == 3);

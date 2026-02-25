@@ -65,8 +65,10 @@ static bool gzip_test(void) {
     Buffer t0_in = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
     Buffer t0_out = {};
     try(gzip_read_buffer(mem, t0_in, &t0_out));
-    fmt_hexdump(fout, t0_target);
-    fmt_hexdump(fout, t0_out);
+    if (0) {
+        fmt_hexdump(fout, t0_target);
+        fmt_hexdump(fout, t0_out);
+    }
     try(buf_eq(t0_out, t0_target));
 
     // Uses fixed huffman table
@@ -74,8 +76,10 @@ static bool gzip_test(void) {
     Buffer t1_in = base64_decode(mem, str_buf("H4sICHPOkWkAA2RhdGEAkyrZEH+34O18l1XTZlYrH1IEAFve5PUQAAAA"));
     Buffer t1_out = {};
     try(gzip_read_buffer(mem, t1_in, &t1_out));
-    fmt_hexdump(fout, t1_target);
-    fmt_hexdump(fout, t1_out);
+    if (0) {
+        fmt_hexdump(fout, t1_target);
+        fmt_hexdump(fout, t1_out);
+    }
     try(buf_eq(t1_out, t1_target));
 
     // Uses dynamic huffman table
@@ -91,10 +95,11 @@ static bool gzip_test(void) {
     );
     Buffer t3_out = {};
     try(gzip_read_buffer(mem, t3_in, &t3_out));
-    fmt_hexdump(fout, t3_target);
-    fmt_hexdump(fout, t3_in);
-    fmt_hexdump(fout, t3_out);
-    fmt_flush(fout);
+    if (0) {
+        fmt_hexdump(fout, t3_target);
+        fmt_hexdump(fout, t3_in);
+        fmt_hexdump(fout, t3_out);
+    }
     try(buf_eq(t3_out, t3_target));
     return ok();
 }
