@@ -10,20 +10,23 @@
 #include "os.h"
 #include "stream.h"
 
+#define TEST(name)                                                                                                                                   \
+    fmt_s(fout, "Running " #name "\n");                                                                                                              \
+    try(name)
+
 bool test_test(void) {
-    try(base64_test());
-    try(fmt_test());
-    try(arg_test());
-    try(crc_test());
-    try(stream_test());
-    try(huffman_code_test());
-    try(huffman_tree_test());
-    try(gzip_test());
+    TEST(base64_test());
+    TEST(fmt_test());
+    TEST(arg_test());
+    TEST(crc_test());
+    TEST(stream_test());
+    TEST(huffman_code_test());
+    TEST(huffman_tree_test());
+    TEST(gzip_test());
     return ok();
 }
 
 void os_main(u32 argc, char **argv) {
-    fmt_s(fout, "Running tests...\n");
     if (!test_test()) error_exit();
     fmt_s(fout, "Success!\n");
     os_exit(0);
