@@ -15,7 +15,7 @@ bool test_test(void) {
     try(arg_test());
     try(crc_test());
     try(stream_test());
-    try(huffman_test());
+    try(huffman_code_test());
     try(gzip_test());
     return ok();
 }

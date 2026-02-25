@@ -14,8 +14,8 @@ typedef enum {
 } Deflate_BlockType;
 
 typedef struct {
-    Huffman *length;
-    Huffman *distance;
+    Huffman_Code *length;
+    Huffman_Code *distance;
 } Deflate_Huffman;
 
 static Deflate_Huffman *deflate_create_fixed_huffman(Memory *mem) {
@@ -27,12 +27,12 @@ static Deflate_Huffman *deflate_create_fixed_huffman(Memory *mem) {
     for (u32 i = 144; i < 256; ++i) h_len_bits[i] = 9;
     for (u32 i = 256; i < 280; ++i) h_len_bits[i] = 7;
     for (u32 i = 280; i < 288; ++i) h_len_bits[i] = 8;
-    Huffman *h_len = huffman_new(mem, array_count(h_len_bits), h_len_bits);
+    Huffman_Code *h_len = huffman_code_from(mem, array_count(h_len_bits), h_len_bits);
 
     // distance prefix code bit sizes are always 5
     u8 h_dist_bits[32];
     for (u32 i = 0; i < 32; ++i) h_dist_bits[i] = 5;
-    Huffman *h_dist = huffman_new(mem, array_count(h_dist_bits), h_dist_bits);
+    Huffman_Code *h_dist = huffman_code_from(mem, array_count(h_dist_bits), h_dist_bits);
 
     tab->length = h_len;
     tab->distance = h_dist;
@@ -56,12 +56,12 @@ static Deflate_Huffman *deflate_create_dynamic_huffman(Memory *mem, Stream *inpu
         code_lengths[code_index[i]] = stream_read_bits(input, 3);
     }
 
-    Huffman *code_tree = huffman_new(mem, 19, code_lengths);
+    Huffman_Code *code_tree = huffman_code_from(mem, 19, code_lengths);
 
     u32 count = 0;
     u8 lengths[286 + 30];
     while (count < length_count + distance_count) {
-        u32 symbol = huffman_read(code_tree, input);
+        u32 symbol = huffman_code_read(code_tree, input);
         assert(symbol < 19);
         u8 repeat = 1;
         u8 length = symbol;
@@ -88,8 +88,8 @@ static Deflate_Huffman *deflate_create_dynamic_huffman(Memory *mem, Stream *inpu
     }
 
     Deflate_Huffman *huffman = mem_struct(mem, Deflate_Huffman);
-    huffman->length = huffman_new(mem, length_count, lengths);
-    huffman->distance = huffman_new(mem, distance_count, lengths + length_count);
+    huffman->length = huffman_code_from(mem, length_count, lengths);
+    huffman->distance = huffman_code_from(mem, distance_count, lengths + length_count);
     return huffman;
 }
 
@@ -169,7 +169,7 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
             if (type == Deflate_BlockDynamic) tree = deflate_create_dynamic_huffman(mem, input);
 
             while (1) {
-                u32 symbol = huffman_read(tree->length, input);
+                u32 symbol = huffman_code_read(tree->length, input);
 
                 // Symbol must be valid
                 assert(symbol < 288);
@@ -185,7 +185,7 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
                     u32 length_code = symbol - 257;
                     u32 length = deflate_read_length(code, input, length_code);
 
-                    u32 distance_code = huffman_read(tree->distance, input);
+                    u32 distance_code = huffman_code_read(tree->distance, input);
                     u32 distance = deflate_read_distance(code, input, distance_code);
 
                     size_t cursor = output->cursor - distance;
