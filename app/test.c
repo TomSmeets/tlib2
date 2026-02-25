@@ -9,6 +9,7 @@
 #include "huffman_tree.h"
 #include "os.h"
 #include "stream.h"
+#include "deflate_write.h"
 
 #define TEST(name)                                                                                                                                   \
     fmt_s(fout, "Running " #name "\n");                                                                                                              \
@@ -23,6 +24,7 @@ bool test_test(void) {
     TEST(huffman_code_test());
     TEST(huffman_tree_test());
     TEST(gzip_test());
+    TEST(deflate_write_test());
     return ok();
 }
 

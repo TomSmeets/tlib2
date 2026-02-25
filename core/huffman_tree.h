@@ -47,14 +47,23 @@ static Huffman_Tree *_huffman_tree_remove_least_frequent_node(u32 *count, Huffma
 }
 
 // Construct a huffman tree for the given frequencies
-static Huffman_Tree *huffman_tree_from(Memory *mem, u32 freq_count, u32 *freq_list) {
+static Huffman_Tree *huffman_tree_from(Memory *mem, u32 freq_count, u32 *freq_list, u32 min_freq) {
     Huffman_Tree **nodes = mem_array(mem, Huffman_Tree *, freq_count);
 
     // Add all leaf nodes
     u32 node_count = 0;
     for (u32 i = 0; i < freq_count; ++i) {
-        if (freq_list[i] == 0) continue;
-        nodes[node_count++] = huffman_tree_leaf(mem, i, freq_list[i]);
+        u32 freq = freq_list[i];
+
+        // Skip symbols that don't exist
+        if (freq == 0) continue;
+
+        // Increase frequency if it is below a threshold
+        // This can be used to reduce final bit length
+        if (freq < min_freq) freq = min_freq;
+
+        // Allocate a leaf node
+        nodes[node_count++] = huffman_tree_leaf(mem, i, freq);
     }
 
     // There should be at least one node
@@ -84,47 +93,42 @@ static u32 huffman_tree_max_depth(Huffman_Tree *tree) {
 // frequency of the lowest frequent item.
 //
 // This is not the most computationally efficient method, but it is simple and might even be optimal (I have no idea).
-static bool _huffman_tree_reduce(u32 count, u32 *freq_list) {
+// Find lowest frequency that is higher than a threshold
+// Returns 0 on failure
+static u32 _huffman_tree_next_min_freq(u32 count, u32 *freq_list, u32 threshold) {
     // Find smallest freq
-    u32 min_freq1 = -1;
+    u32 min_freq = -1;
     for (u32 i = 0; i < count; ++i) {
-        if (freq_list[i] == 0) continue;
-        if (freq_list[i] >= min_freq1) continue;
-        min_freq1 = freq_list[i];
+        u32 freq = freq_list[i];
+        if (freq > threshold && freq < min_freq) {
+            min_freq = freq;
+        }
     }
-    try(min_freq1 != -1);
-
-    // Find next smallest freq
-    u32 min_freq2 = -1;
-    for (u32 i = 0; i < count; ++i) {
-        if (freq_list[i] == 0) continue;
-        if (freq_list[i] <= min_freq1) continue;
-        if (freq_list[i] >= min_freq2) continue;
-        min_freq2 = freq_list[i];
-    }
-    try(min_freq2 != -1);
-    try(min_freq2 > min_freq1);
-
-    // Make sure frequency can be increased
-    try(min_freq1 < min_freq2);
-
-    // Increase frequency of lowest item
-    for (u32 i = 0; i < count; ++i) {
-        if (freq_list[i] != min_freq1) continue;
-        freq_list[i] = min_freq2;
-    }
-
-    return ok();
+    if (min_freq == -1) return 0;
+    return min_freq;
 }
 
 // Construct a length limited huffman tree
 static Huffman_Tree *huffman_tree_from_length_limited(Memory *mem, u32 count, u32 *freq_list, u32 max_depth) {
+    u32 min_freq = 0;
     for (;;) {
-        Huffman_Tree *tree = huffman_tree_from(mem, count, freq_list);
+        // Construct huffman tree
+        Huffman_Tree *tree = huffman_tree_from(mem, count, freq_list, min_freq);
         try(tree);
+
+        // Check if max depth was exceeded
         u32 depth = huffman_tree_max_depth(tree);
         if (depth <= max_depth) return tree;
-        try(_huffman_tree_reduce(count, freq_list));
+
+        // Find next lowest frequency higher than the previous
+        u32 next_min_freq = _huffman_tree_next_min_freq(count, freq_list, min_freq);
+
+        // The lowest is never zero, so the first time we have to find the lowest twice to find the next lowest>
+        if (min_freq == 0) next_min_freq = _huffman_tree_next_min_freq(count, freq_list, next_min_freq);
+
+        // Returns zero when frequency cannot be reduced anymore
+        try(next_min_freq);
+        min_freq = next_min_freq;
     }
 }
 
@@ -143,6 +147,18 @@ static bool _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 
 // NOTE: the list should be zero initialized and the correct length
 static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_length_list) {
     return _huffman_tree_to_lengths_at_depth(tree, count, symbol_length_list, 0);
+}
+
+static bool huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list, u32 max_len){
+    Memory *tmp = mem_new();
+    Huffman_Tree *tree = huffman_tree_from_length_limited(tmp, count, freq_list, max_len);
+    if(!tree) mem_free(tmp);
+    try(tree);
+
+    // Construct list of bit lengths
+    bool ret = huffman_tree_to_lengths(tree, count, len_list);
+    mem_free(tmp);
+    return ret;
 }
 
 static bool huffman_tree_test(void) {
@@ -173,7 +189,7 @@ static bool huffman_tree_test(void) {
     Memory *mem = mem_new();
 
     {
-        Huffman_Tree *tree = huffman_tree_from(mem, array_count(freq_list), freq_list);
+        Huffman_Tree *tree = huffman_tree_from(mem, array_count(freq_list), freq_list, 0);
         try(tree);
 
         u8 len_list[256] = {};

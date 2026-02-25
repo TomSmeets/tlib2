@@ -12,6 +12,10 @@ typedef struct {
 
     // list of symbols sorted by bit length
     u16 symbols[288];
+
+    // Symbols to encoding
+    u8 symbol_len[288];
+    u16 symbol_code[288];
 } Huffman_Code;
 
 static Huffman_Code *huffman_code_from(Memory *mem, u32 count, u8 *symbol_length) {
@@ -42,6 +46,18 @@ static Huffman_Code *huffman_code_from(Memory *mem, u32 count, u8 *symbol_length
         symbol_index[len - 1]++;
     }
 
+    // Fill in symbol -> code mapping
+    u32 code = 0;
+    u32 symbol_ix = 0;
+    for (u32 i = 0; i < 15; ++i) {
+        for(u32 j = 0; j < table->counts[i]; ++j) {
+            u32 symbol = table->symbols[symbol_ix++];
+            table->symbol_code[symbol] = code;
+            table->symbol_len[symbol] = i + 1;
+            code++;
+        }
+        code <<= 1;
+    }
     return table;
 }
 
@@ -82,6 +98,21 @@ static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
     return -1;
 }
 
+// Write a symbol into a bit stream
+static bool huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) {
+    try(symbol < array_count(table->symbol_len));
+    u32 len = table->symbol_len[symbol];
+    try(len > 0);
+
+    u32 code = table->symbol_code[symbol];
+
+    // Write bits bits
+    stream_write_bits_be(stream, len, code);
+
+    // invalid
+    return -1;
+}
+
 static bool huffman_code_test(void) {
     u8 len[] = {3, 0, 4, 5, 0, 0, 1, 3, 5, 3};
     u32 code[] = {0b100, 0, 0b1110, 0b11110, 0, 0, 0b0, 0b101, 0b11111, 0b110};
@@ -104,6 +135,7 @@ static bool huffman_code_test(void) {
 
     Stream *stream = stream_new(mem);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
+        if(len[sym] == 0) continue;
         stream_write_bits_be(stream, len[sym], code[sym]);
         stream_write_bits_be(stream, len[sym], code[sym]);
     }
@@ -111,7 +143,7 @@ static bool huffman_code_test(void) {
     stream_seek(stream, 0);
 
     for (u32 sym = 0; sym < array_count(len); ++sym) {
-        if (!len[sym]) continue;
+        if(len[sym] == 0) continue;
 
         u32 sym_parse = huffman_code_read(table, stream);
         try(sym_parse != -1);
@@ -122,5 +154,21 @@ static bool huffman_code_test(void) {
         try(sym_parse2 == sym);
     }
     try(stream_eof(stream));
+
+    // Test writing codes
+    stream_seek(stream, 0);
+    for (u32 sym = 0; sym < array_count(len); ++sym) {
+        if(len[sym] == 0) continue;
+        try(huffman_code_write(table, stream, sym));
+        try(huffman_code_write(table, stream, sym));
+    }
+    stream_seek(stream, 0);
+    for (u32 sym = 0; sym < array_count(len); ++sym) {
+        if (len[sym] == 0) continue;
+        try(huffman_code_read(table, stream) == sym);
+        try(huffman_code_read(table, stream) == sym);
+    }
+    try(stream_eof(stream));
+
     return ok();
 }
