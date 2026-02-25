@@ -3,13 +3,13 @@
 #include "arg.h"
 #include "base64.h"
 #include "crc.h"
+#include "deflate_write.h"
 #include "fmt.h"
 #include "gzip.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "os.h"
 #include "stream.h"
-#include "deflate_write.h"
 
 #define TEST(name)                                                                                                                                   \
     fmt_s(fout, "Running " #name "\n");                                                                                                              \
