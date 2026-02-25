@@ -87,18 +87,18 @@ static bool huffman_code_test(void) {
     u32 code[] = {0b100, 0, 0b1110, 0b11110, 0, 0, 0b0, 0b101, 0b11111, 0b110};
 
     Memory *mem = mem_new();
-    Huffman_Code *huf = huffman_code_from(mem, array_count(len), len);
+    Huffman_Code *table = huffman_code_from(mem, array_count(len), len);
 
-    try(huf);
-    try(huf->counts[1 - 1] == 1);
-    try(huf->counts[3 - 1] == 3);
-    try(huf->counts[4 - 1] == 1);
-    try(huf->counts[5 - 1] == 2);
+    try(table);
+    try(table->counts[1 - 1] == 1);
+    try(table->counts[3 - 1] == 3);
+    try(table->counts[4 - 1] == 1);
+    try(table->counts[5 - 1] == 2);
 
     // Total count == symbol count
     u32 sum = 0;
-    for (u32 i = 0; i < array_count(huf->counts); ++i) {
-        sum += huf->counts[i];
+    for (u32 i = 0; i < array_count(table->counts); ++i) {
+        sum += table->counts[i];
     }
     try(sum == 7);
 
@@ -113,11 +113,11 @@ static bool huffman_code_test(void) {
     for (u32 sym = 0; sym < array_count(len); ++sym) {
         if (!len[sym]) continue;
 
-        u32 sym_parse = huffman_code_read(huf, stream);
+        u32 sym_parse = huffman_code_read(table, stream);
         try(sym_parse != -1);
         try(sym_parse == sym);
 
-        u32 sym_parse2 = huffman_code_read(huf, stream);
+        u32 sym_parse2 = huffman_code_read(table, stream);
         try(sym_parse2 != -1);
         try(sym_parse2 == sym);
     }

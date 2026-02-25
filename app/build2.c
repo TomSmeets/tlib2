@@ -168,7 +168,7 @@ static void build_test(Arg *arg) {
 
     char *include[] = {"core", 0};
     clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test");
-    if(build) os_exit(0);
+    if (build) os_exit(0);
 
     if (gdb) {
         os_exit(os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test"));
