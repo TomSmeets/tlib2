@@ -150,11 +150,14 @@ static u32 deflate_read_distance(Deflate_LLCode *code, Stream *input, u16 distan
 
 static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
     for (;;) {
+        try(stream_eof(input) == false);
+
+        // Read block header
         bool is_last = stream_read_bits(input, 1);
         Deflate_BlockType type = stream_read_bits(input, 2);
 
-        // Stored bock
         if (type == Deflate_BlockStored) {
+            // This block is stored directly, no special encoding
             u16 size = stream_read_u16(input);
             u16 size_check = stream_read_u16(input);
             if (size != ((~size_check) & 0xffff)) return false;
@@ -163,31 +166,44 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
                 stream_write_u8(output, stream_read_u8(input));
             }
         } else {
+            // This is an Huffman + LZ77 encoded block
+
+            // Construct length and distance code lookup table
             Deflate_LLCode *code = deflate_new_llcode(mem);
             Deflate_Huffman *tree = 0;
+
+            // Fixed blocks have a pre-defined huffman tree
             if (type == Deflate_BlockFixed) tree = deflate_create_fixed_huffman(mem);
+
+            // Dynamic blocks store the huffman tree at the beginning of the stream
             if (type == Deflate_BlockDynamic) tree = deflate_create_dynamic_huffman(mem, input);
 
             while (1) {
+                // Read encoded length-symbol using the huffman tree
                 u32 symbol = huffman_code_read(tree->length, input);
 
-                // Symbol must be valid
-                assert(symbol < 288);
+                // Symbol must be valid (return 0 otherwise)
+                try(symbol < 288);
 
-                // End of block
+                // End of block marker
                 if (symbol == 256) break;
 
-                // Normal byte
+                // A regular byte
                 if (symbol < 256) stream_write_u8(output, symbol);
 
-                // LZ77 sequence
+                // A LZ77 sequence
                 if (symbol > 256) {
+                    // Symbols 257-287 encode the length of the back reference
+                    // with a few extra bits depending on the symbol
                     u32 length_code = symbol - 257;
                     u32 length = deflate_read_length(code, input, length_code);
 
+                    // The distance is how far to look backwards, these are encoded
+                    // using their own huffman tree, and are also followed by a few extra bits
                     u32 distance_code = huffman_code_read(tree->distance, input);
                     u32 distance = deflate_read_distance(code, input, distance_code);
 
+                    // Look backwards and emit the bytes in order
                     size_t cursor = output->cursor - distance;
                     for (size_t i = 0; i < length; ++i) {
                         u8 c = output->buffer[cursor + i];
@@ -197,6 +213,7 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
             }
         }
 
+        // Continue reading until the last block
         if (is_last) break;
     }
     return true;
