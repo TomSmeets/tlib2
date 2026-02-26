@@ -133,6 +133,8 @@ static Huffman_Tree *huffman_tree_from_length_limited(Memory *mem, u32 count, u3
 }
 
 static bool _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 *symbol_length_list, u32 depth) {
+    if(!tree) return true;
+
     if (tree->is_leaf) {
         try(tree->symbol < count);
         symbol_length_list[tree->symbol] = depth;
@@ -152,8 +154,6 @@ static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_le
 static bool huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list, u32 max_len) {
     Memory *tmp = mem_new();
     Huffman_Tree *tree = huffman_tree_from_length_limited(tmp, count, freq_list, max_len);
-    if (!tree) mem_free(tmp);
-    try(tree);
 
     // Construct list of bit lengths
     bool ret = huffman_tree_to_lengths(tree, count, len_list);

@@ -2,23 +2,37 @@
 // deflate.h - DEFLATE decompressor implementation
 #pragma once
 #include "huffman_code.h"
+#include "huffman_tree.h"
 #include "mem.h"
 #include "os.h"
 #include "stream.h"
 #include "type.h"
 
+// Deflate block types (2 bit value)
 typedef enum {
     Deflate_BlockStored = 0,  // Raw uncompressed data
     Deflate_BlockFixed = 1,   // Fixed Huffman table + LZ77
     Deflate_BlockDynamic = 2, // Dynamic Huffman table + LZ77
 } Deflate_BlockType;
 
+
+// ======== Huffman Table Creation ========
+
+// Combination of length and distance symbol huffman codes
 typedef struct {
     Huffman_Code *length;
     Huffman_Code *distance;
 } Deflate_Huffman;
 
-static Deflate_Huffman *deflate_create_fixed_huffman(Memory *mem) {
+// Accumulator that counts the number of occurrences of each symbol
+// This can be used to construct the dynamic huffman tables
+typedef struct {
+    u32 length_freq[288];
+    u32 distance_freq[30];
+} Deflate_Encode_Info;
+
+// Create the fixed huffman table for block type 1
+static Deflate_Huffman *deflate_huffman_fixed(Memory *mem) {
     Deflate_Huffman *tab = mem_struct(mem, Deflate_Huffman);
 
     // length prefix code bit sizes
@@ -39,7 +53,8 @@ static Deflate_Huffman *deflate_create_fixed_huffman(Memory *mem) {
     return tab;
 }
 
-static Deflate_Huffman *deflate_create_dynamic_huffman(Memory *mem, Stream *input) {
+// Read the dynamic huffman table for block type 2 from the input stream
+static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input) {
     u32 length_count = stream_read_bits(input, 5) + 257;
     assert(length_count <= 286);
 
@@ -93,10 +108,41 @@ static Deflate_Huffman *deflate_create_dynamic_huffman(Memory *mem, Stream *inpu
     return huffman;
 }
 
+// Create a dynamic huffman table based on the symbol frequencies
+static Deflate_Huffman *deflate_huffman_dynamic_create(Memory *mem, Deflate_Encode_Info *info) {
+    // Construct an improved huffman code using the frequencies
+    u8 length_bits[array_count(info->length_freq)] = {};
+    u8 distance_bits[array_count(info->distance_freq)] = {};
+
+    try(huffman_tree_freq_to_lengths(array_count(info->length_freq), info->length_freq, length_bits, 15));
+    try(huffman_tree_freq_to_lengths(array_count(info->distance_freq), info->distance_freq, distance_bits, 15));
+
+    Huffman_Code *length_code = huffman_code_from(mem, array_count(length_bits), length_bits);
+    try(length_code);
+
+    Huffman_Code *distance_code = huffman_code_from(mem, array_count(distance_bits), distance_bits);
+    try(distance_code);
+
+    Deflate_Huffman *table = mem_struct(mem, Deflate_Huffman);
+    table->length = length_code;
+    table->distance = distance_code;
+    return table;
+}
+
+// ======== LL Code ========
+
+// Symbol to actual length / distance encoding
+// Each symbol starts at some offset is followed
+// by a number of bits
 typedef struct {
+    // To calculate the length value:
+    // - length_value = length_offset[sym] + read(length_bits[sym])
     u8 length_bits[29];
-    u8 distance_bits[30];
     u32 length_offset[29];
+
+    // To calculate the distance value:
+    // - distance_value = distance_offset[sym] + read(distance_bits[sym])
+    u8 distance_bits[30];
     u32 distance_offset[30];
 } Deflate_LLCode;
 
@@ -105,7 +151,8 @@ static void ll_encode_length(Deflate_LLCode *code, u32 length, Stream *output, u
     }
 }
 
-static Deflate_LLCode *deflate_new_llcode(Memory *mem) {
+// Create the fixed llcode table
+static Deflate_LLCode *deflate_llcode_new(Memory *mem) {
     Deflate_LLCode *code = mem_struct(mem, Deflate_LLCode);
 
     // Length values
@@ -137,23 +184,53 @@ static Deflate_LLCode *deflate_new_llcode(Memory *mem) {
     return code;
 }
 
-static u32 deflate_read_length(Deflate_LLCode *code, Stream *input, u16 length_code) {
-    assert(length_code < 29);
-    u32 bits = code->length_bits[length_code];
-    u32 offset = code->length_offset[length_code];
+// Read construct an absolute length by reading the extra bits from the input stream based on the length_symbol
+static u32 deflate_llcode_length_read(Deflate_LLCode *code, Stream *input, u16 length_symbol) {
+    assert(length_symbol < 29);
+    u32 bits = code->length_bits[length_symbol];
+    u32 offset = code->length_offset[length_symbol];
     u32 data = stream_read_bits(input, bits);
     return offset + data;
 }
 
-static u32 deflate_read_distance(Deflate_LLCode *code, Stream *input, u16 distance_code) {
-    assert(distance_code < 30);
-    u32 bits = code->distance_bits[distance_code];
-    u32 offset = code->distance_offset[distance_code];
+// Read construct an absolute distance by reading the extra bits from the input stream based on the distance_symbol
+static u32 deflate_llcode_distance_read(Deflate_LLCode *code, Stream *input, u16 distance_symbol) {
+    assert(distance_symbol < 30);
+    u32 bits = code->distance_bits[distance_symbol];
+    u32 offset = code->distance_offset[distance_symbol];
     u32 data = stream_read_bits(input, bits);
     return offset + data;
 }
 
+// ===== LZSS ====
 
+// Compress the input data using LZSS and encode it with the provided huffman code
+// The symbol frequencies in the optional argument 'info' are incremented if present
+static bool deflate_lzss_encode(Memory *mem, Deflate_Huffman *code, Buffer input, Buffer *output, Deflate_Encode_Info *info) {
+    Stream *output_stream = stream_new(mem);
+
+    // Add values
+    for (size_t i = 0; i < input.size; ++i) {
+        // Decide what symbol to encode
+        u16 symbol = input.data[i];
+
+        // Write length symbol
+        huffman_code_write(code->length, output_stream, symbol);
+        if (info) info->length_freq[symbol]++;
+
+        // TODO: smarter lzss compression
+    }
+
+    // End of block marker
+    huffman_code_write(code->length, output_stream, 256);
+    if (info) info->length_freq[256]++;
+
+    *output = stream_to_buffer(output_stream);
+    return ok();
+}
+
+
+// ======== Deflate implementation ========
 static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
     for (;;) {
         try(stream_eof(input) == false);
@@ -175,14 +252,14 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
             // This is an Huffman + LZ77 encoded block
 
             // Construct length and distance code lookup table
-            Deflate_LLCode *code = deflate_new_llcode(mem);
+            Deflate_LLCode *code = deflate_llcode_new(mem);
             Deflate_Huffman *tree = 0;
 
             // Fixed blocks have a pre-defined huffman tree
-            if (type == Deflate_BlockFixed) tree = deflate_create_fixed_huffman(mem);
+            if (type == Deflate_BlockFixed) tree = deflate_huffman_fixed(mem);
 
             // Dynamic blocks store the huffman tree at the beginning of the stream
-            if (type == Deflate_BlockDynamic) tree = deflate_create_dynamic_huffman(mem, input);
+            if (type == Deflate_BlockDynamic) tree = deflate_huffman_dynamic_read(mem, input);
 
             while (1) {
                 // Read encoded length-symbol using the huffman tree
@@ -202,12 +279,12 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
                     // Symbols 257-287 encode the length of the back reference
                     // with a few extra bits depending on the symbol
                     u32 length_code = symbol - 257;
-                    u32 length = deflate_read_length(code, input, length_code);
+                    u32 length = deflate_llcode_length_read(code, input, length_code);
 
                     // The distance is how far to look backwards, these are encoded
                     // using their own huffman tree, and are also followed by a few extra bits
                     u32 distance_code = huffman_code_read(tree->distance, input);
-                    u32 distance = deflate_read_distance(code, input, distance_code);
+                    u32 distance = deflate_llcode_distance_read(code, input, distance_code);
 
                     // Look backwards and emit the bytes in order
                     size_t cursor = output->cursor - distance;
