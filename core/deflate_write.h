@@ -1,9 +1,9 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // deflate_write.h - DEFLATE compression implementation
 #pragma once
+#include "deflate.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
-#include "deflate.h"
 
 typedef struct {
     // Which block types to allow
@@ -28,7 +28,7 @@ static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
     try(stream_reserve(stored_stream, stored_size));
 
     size_t input_offset = 0;
-    for(;;) {
+    for (;;) {
         u16 block_size = MIN(input.size - input_offset, 0xffff);
         bool is_last = input_offset + block_size == input.size;
         stream_write_u8(stored_stream, is_last);
@@ -36,22 +36,23 @@ static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
         stream_write_u16(stored_stream, block_size ^ 0xffff);
         stream_write_bytes(stored_stream, block_size, input.data + input_offset);
         input_offset += block_size;
-        if(is_last) break;
+        if (is_last) break;
     }
     *output = stream_to_buffer(stored_stream);
     return ok();
 }
 
-static bool deflate_lzss_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Buffer *output){
+static bool
+deflate_lzss_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Buffer *output) {
     Stream input_stream = stream_from(input);
     Stream *output_stream = stream_new(mem);
 
-    for(;;) {
+    for (;;) {
         u32 symbol = huffman_code_read(input_code->length, &input_stream);
         huffman_code_write(output_code->length, output_stream, symbol);
 
-        if(symbol == 256) break;
-        if(symbol < 256) continue;
+        if (symbol == 256) break;
+        if (symbol < 256) continue;
         try(symbol < 288);
 
         // Construct length symbol
@@ -80,7 +81,7 @@ static bool deflate_write(Memory *mem, Buffer input, Deflate_Option *opt, Buffer
     // Idea to reduce memory usage:
     // 1. Encode directly using fixed huffman table, and count freqs directly
     // 3. Re-encode the data using new huffman table
-    // 
+    //
     // Temporary memory used during the encoding
     // Memory will be cleared at the end of this function
 

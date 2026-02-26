@@ -15,7 +15,6 @@ typedef enum {
     Deflate_BlockDynamic = 2, // Dynamic Huffman table + LZ77
 } Deflate_BlockType;
 
-
 // ======== Huffman Table Creation ========
 
 // Combination of length and distance symbol huffman codes
@@ -147,7 +146,7 @@ typedef struct {
 } Deflate_LLCode;
 
 static void ll_encode_length(Deflate_LLCode *code, u32 length, Stream *output, u32 *length_symbol) {
-    for(u32 i = 0; i < array_count(code->length_offset); ++i) {
+    for (u32 i = 0; i < array_count(code->length_offset); ++i) {
     }
 }
 
@@ -228,7 +227,6 @@ static bool deflate_lzss_encode(Memory *mem, Deflate_Huffman *code, Buffer input
     *output = stream_to_buffer(output_stream);
     return ok();
 }
-
 
 // ======== Deflate implementation ========
 static bool deflate_read(Memory *mem, Stream *input, Stream *output) {

@@ -133,7 +133,7 @@ static Huffman_Tree *huffman_tree_from_length_limited(Memory *mem, u32 count, u3
 }
 
 static bool _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 *symbol_length_list, u32 depth) {
-    if(!tree) return true;
+    if (!tree) return true;
 
     if (tree->is_leaf) {
         try(tree->symbol < count);
