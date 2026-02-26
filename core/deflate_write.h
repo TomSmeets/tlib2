@@ -42,16 +42,6 @@ static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
     return ok();
 }
 
-static bool deflate_write_fixed(Memory *mem, Buffer input, Buffer *output, Deflate_Encode_Info *frequency_info) {
-    Deflate_Huffman *code = deflate_huffman_fixed(mem);
-    try(code);
-
-    Stream *output_stream = stream_new(mem);
-    try(deflate_lzss_encode(code, input, output_stream, frequency_info));
-    *output = stream_to_buffer(output_stream);
-}
-
-
 static bool deflate_lzss_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Buffer *output){
     Stream input_stream = stream_from(input);
     Stream *output_stream = stream_new(mem);
@@ -114,6 +104,7 @@ static bool deflate_write(Memory *mem, Buffer input, Deflate_Option *opt, Buffer
     try(deflate_lzss_recode(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
 
     // Check if dynamic data is smaller
+    *output = fixed_output;
     if (dynamic_output.size < output->size) *output = dynamic_output;
 
     // Check if stored data is smaller
