@@ -108,9 +108,7 @@ static bool huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) 
 
     // Write bits bits
     stream_write_bits_be(stream, len, code);
-
-    // invalid
-    return -1;
+    return ok();
 }
 
 static bool huffman_code_test(void) {
