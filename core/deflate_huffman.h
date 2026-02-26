@@ -151,12 +151,12 @@ static bool deflate_huffman_dynamic_write(Deflate_Huffman *code, Stream *output)
     }
 
     for (u32 i = 0; i < length_count; ++i) {
-        if(code->length->symbol_len[i]) fmt_su(fout, "leng: ", i, "\n");
+        if (code->length->symbol_len[i]) fmt_su(fout, "leng: ", i, "\n");
         try(huffman_code_write(code_tree, output, code->length->symbol_len[i]));
     }
 
     for (u32 i = 0; i < distance_count; ++i) {
-        if(code->distance->symbol_len[i]) fmt_su(fout, "dist: ", i, "\n");
+        if (code->distance->symbol_len[i]) fmt_su(fout, "dist: ", i, "\n");
         try(huffman_code_write(code_tree, output, code->distance->symbol_len[i]));
     }
     mem_free(tmp);

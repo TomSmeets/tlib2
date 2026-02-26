@@ -152,12 +152,12 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *output) {
     // Check if dynamic data is smaller
     *output = stream_to_buffer(output_fixed);
     // if (output_dynamic->size < output->size) {
-        *output = stream_to_buffer(output_dynamic);
+    *output = stream_to_buffer(output_dynamic);
     // }
 
     // Check if stored data is smaller
     // if (deflate_calculate_stored_block_size(input.size) <= output->size) {
-        // deflate_write_stored(mem, input, output);
+    // deflate_write_stored(mem, input, output);
     // }
 
     return ok();
@@ -178,12 +178,12 @@ static bool deflate_test(void) {
     fmt_s(fout, "Input:\n");
     fmt_hexdump(fout, input);
 
-    fmt_s(fout,"Compressed:\n");
-    Buffer compressed   = {};
+    fmt_s(fout, "Compressed:\n");
+    Buffer compressed = {};
     try(deflate_write(mem, input, &compressed));
     fmt_hexdump(fout, compressed);
 
-    fmt_s(fout,"Decompressed:\n");
+    fmt_s(fout, "Decompressed:\n");
     Buffer decompressed = {};
     try(deflate_read_buf(mem, compressed, &decompressed));
     fmt_hexdump(fout, decompressed);
