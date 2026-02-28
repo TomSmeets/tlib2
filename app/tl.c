@@ -42,15 +42,22 @@ bool os_main2(u32 argc, char **argv) {
         Stream *output = stream_new(mem);
         try(stream_from_file(input, os_stdin()));
         stream_seek(input, 0);
-        try(gzip_read(mem, input, output));
+        if(compress) try(gzip_write(mem, stream_to_buffer(input), output));
+        if(decompress) try(gzip_read(mem, input, output));
         try(stream_to_file(output, os_stdout()));
         return ok();
     }
 
     if (arg_match(&arg, "dump", "Hexdump")) {
+        bool bin = arg_match(&arg, "bin", "Binary");
         Stream *input = stream_new(mem);
         try(stream_from_file(input, os_stdin()));
-        fmt_hexdump(fout, stream_to_buffer(input));
+
+        if(bin) {
+            fmt_hexdump_x(fout, stream_to_buffer(input), 2, 4);
+        } else {
+            fmt_hexdump_x(fout, stream_to_buffer(input), 16, 16);
+        }
         return ok();
     }
     arg_help(&arg);

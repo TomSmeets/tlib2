@@ -215,20 +215,27 @@ static bool chr_is_printable(u32 c) {
     return c >= 0x20 && c <= 0x7e;
 }
 
-static void fmt_hexdump(Fmt *fmt, Buffer data) {
+static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
     u32 pad = 0;
     while (data.size >> pad * 4) pad += 4;
-    u32 width = 16;
     size_t addr = 0;
+
+    u32 pad2 = 2;
+    if(base < 16)  pad2 = 4;
+    if(base < 4)   pad2 = 8;
+
     for (size_t addr = 0; addr < data.size; addr += width) {
         fmt_u_ex(fmt, addr, 16, ' ', pad);
         fmt_s(fmt, " | ");
         for (u32 off = 0; off < width; ++off) {
             if (addr + off >= data.size) {
-                fmt_s(fmt, "   ");
+                for(u32 i = 0; i < pad2+1; ++i) {
+                    fmt_c(fmt, ' ');
+                }
                 continue;
             }
-            fmt_u_ex(fmt, data.data[addr + off], 16, '0', 2);
+
+            fmt_u_ex(fmt, data.data[addr + off], base, '0', pad2);
             fmt_s(fmt, " ");
         }
         fmt_s(fmt, "| ");
@@ -243,6 +250,10 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
         }
         fmt_s(fmt, "|\n");
     }
+}
+
+static void fmt_hexdump(Fmt *fmt, Buffer data) {
+    fmt_hexdump_x(fmt, data, 16, 4);
 }
 
 // Test
