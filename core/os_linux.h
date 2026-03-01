@@ -218,7 +218,7 @@ static void os_sleep(time_t duration) {
 static u64 os_rand(void) {
     u64 seed = 0;
     i64 ret = linux_getrandom(&seed, sizeof(seed), 0);
-    assert_msg(ret == sizeof(seed), "linux getrandom must succeed");
+    assert(ret == sizeof(seed), "linux getrandom failed");
     return seed;
 }
 
