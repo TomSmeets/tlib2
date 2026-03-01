@@ -13,14 +13,14 @@ static bool deflate_lzss_encode(Memory *mem, Deflate_Huffman *code, Buffer input
         u16 symbol = input.data[i];
 
         // Write length symbol
-        huffman_code_write(code->length, output_stream, symbol);
+        try(huffman_code_write(code->length, output_stream, symbol));
         if (info) info->length_freq[symbol]++;
 
         // TODO: smarter lzss compression
     }
 
     // End of block marker
-    huffman_code_write(code->length, output_stream, 256);
+    try(huffman_code_write(code->length, output_stream, 256));
     if (info) info->length_freq[256]++;
     return ok();
 }

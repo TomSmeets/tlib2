@@ -11,6 +11,13 @@
 #include "stream.h"
 #include "type.h"
 
+static Buffer *stream_clone(Memory *mem, Stream *stream) {
+    Buffer *out = mem_alloc_uninit(mem, sizeof(Buffer));
+    out->size = stream->size;
+    out->data = (u8 *)mem_clone(mem, stream->buffer, stream->size);
+    return out;
+}
+
 // Deflate block types (2 bit value)
 typedef enum {
     Deflate_BlockStored = 0,  // Raw uncompressed data
@@ -25,7 +32,11 @@ static size_t deflate_calculate_stored_block_size(size_t input_size) {
     return stored_size;
 }
 
-static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
+static Buffer *deflate_read(Memory *mem, Buffer input_buf) {
+    Stream input_ = stream_from(input_buf);
+    Stream *input = &input_;
+
+    Stream *output = stream_new(mem);
     for (;;) {
         try(stream_eof(input) == false);
 
@@ -94,7 +105,7 @@ static bool deflate_read(Memory *mem, Stream *input, Stream *output) {
         // Continue reading until the last block
         if (is_last) break;
     }
-    return true;
+    return ok(), stream_clone(mem, output);
 }
 
 static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
@@ -117,7 +128,14 @@ static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
     return ok();
 }
 
-static bool deflate_write(Memory *mem, Buffer input, Buffer *output) {
+
+typedef struct {
+    size_t size;
+    u8 *data[];
+} Bytes;
+
+
+static Buffer *deflate_write(Memory *mem, Buffer input) {
     // Idea to reduce memory usage:
     // 1. Encode directly using fixed huffman table, and count freqs directly
     // 3. Re-encode the data using new huffman table
@@ -135,24 +153,25 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *output) {
     Deflate_LLCode *llcode = deflate_llcode_new(mem);
 
     // Encode using fixed huffman code and also collect frequency info
-    Stream *output_fixed = stream_new(mem);
-    stream_write_bits(output_fixed, 1, 1);
-    stream_write_bits(output_fixed, 2, Deflate_BlockFixed);
-    try(deflate_lzss_encode(mem, fixed_code, input, output_fixed, &frequency_info));
+    // Stream *output_fixed = stream_new(mem);
+    Stream *output = stream_new(mem);
+    stream_write_bits(output, 1, 1);
+    stream_write_bits(output, 2, Deflate_BlockFixed);
+    try(deflate_lzss_encode(mem, fixed_code, input, output, &frequency_info));
 
-    Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
+    // Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
 
     // Re encode with the new huffman table
-    Stream *output_dynamic = stream_new(mem);
-    stream_write_bits(output_dynamic, 1, 1);
-    stream_write_bits(output_dynamic, 2, Deflate_BlockDynamic);
-    try(deflate_huffman_dynamic_write(dynamic_code, output_dynamic));
-    try(deflate_lzss_recode(mem, llcode, fixed_code, stream_to_buffer(output_fixed), dynamic_code, output_dynamic));
+    // Stream *output_dynamic = stream_new(mem);
+    // stream_write_bits(output_dynamic, 1, 1);
+    // stream_write_bits(output_dynamic, 2, Deflate_BlockDynamic);
+    // try(deflate_huffman_dynamic_write(dynamic_code, output_dynamic));
+    // try(deflate_lzss_recode(mem, llcode, fixed_code, stream_to_buffer(output_fixed), dynamic_code, output_dynamic));
 
     // Check if dynamic data is smaller
-    *output = stream_to_buffer(output_fixed);
+    // *output = stream_to_buffer(output_fixed);
     // if (output_dynamic->size < output->size) {
-    *output = stream_to_buffer(output_dynamic);
+    // *output = stream_to_buffer(output_dynamic);
     // }
 
     // Check if stored data is smaller
@@ -160,15 +179,9 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *output) {
     // deflate_write_stored(mem, input, output);
     // }
 
-    return ok();
-}
-
-static bool deflate_read_buf(Memory *mem, Buffer input_buffer, Buffer *output_buffer) {
-    Stream input = stream_from(input_buffer);
-    Stream *output = stream_new(mem);
-    try(deflate_read(mem, &input, output));
-    *output_buffer = stream_to_buffer(output);
-    return ok();
+    Buffer *out = stream_clone(mem, output);
+    try(out);
+    return ok(), out;
 }
 
 static bool deflate_test(void) {
@@ -179,16 +192,16 @@ static bool deflate_test(void) {
     fmt_hexdump(fout, input);
 
     fmt_s(fout, "Compressed:\n");
-    Buffer compressed = {};
-    try(deflate_write(mem, input, &compressed));
-    fmt_hexdump(fout, compressed);
+    Buffer *compressed = deflate_write(mem, input);
+    try(compressed);
+    fmt_hexdump(fout, *compressed);
 
     fmt_s(fout, "Decompressed:\n");
-    Buffer decompressed = {};
-    try(deflate_read_buf(mem, compressed, &decompressed));
-    fmt_hexdump(fout, decompressed);
+    Buffer *decompressed = deflate_read(mem, *compressed);
+    try(decompressed);
+    fmt_hexdump(fout, *decompressed);
 
-    try(decompressed.size == input.size);
-    try(mem_eq(decompressed.data, input.data, input.size));
+    try(decompressed->size == input.size);
+    try(mem_eq(decompressed->data, input.data, input.size));
     return ok();
 }

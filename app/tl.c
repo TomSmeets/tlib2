@@ -5,6 +5,7 @@
 #include "gzip.h"
 #include "os.h"
 #include "stream.h"
+#include "error2.h"
 
 bool os_main2(u32 argc, char **argv) {
     Memory *mem = mem_new();
@@ -49,15 +50,20 @@ bool os_main2(u32 argc, char **argv) {
     }
 
     if (arg_match(&arg, "dump", "Hexdump")) {
-        bool bin = arg_match(&arg, "bin", "Binary");
+        bool bin = arg_match(&arg, "bin", "Base 2");
+        bool hex = arg_match(&arg, "hex", "Base 16");
+        bool wide = arg_match(&arg, "wide", "Wide");
+        bool compact = arg_match(&arg, "compact", "Less wide");
+        if (!bin && !hex) hex = 1;
+        if (!wide && !compact) wide = hex;
+        arg_help_opt(&arg);
+
         Stream *input = stream_new(mem);
         try(stream_from_file(input, os_stdin()));
 
-        if(bin) {
-            fmt_hexdump_x(fout, stream_to_buffer(input), 2, 4);
-        } else {
-            fmt_hexdump_x(fout, stream_to_buffer(input), 16, 16);
-        }
+        u32 base = hex ? 16 : 2;
+        u32 width= wide ? 16 : 4;
+        fmt_hexdump_x(fout, stream_to_buffer(input), base, width);
         return ok();
     }
     arg_help(&arg);

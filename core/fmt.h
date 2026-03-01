@@ -215,15 +215,22 @@ static bool chr_is_printable(u32 c) {
     return c >= 0x20 && c <= 0x7e;
 }
 
+// 2  -> 1
+// 16 -> 4
+static u32 u32_log2_ceil(u32 x) {
+    for (u32 i = 0;; ++i) {
+        x >>= 1;
+        if (!x) return i;
+    }
+}
+
 static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
     u32 pad = 0;
     while (data.size >> pad * 4) pad += 4;
     size_t addr = 0;
 
-    u32 pad2 = 2;
-    if(base < 16)  pad2 = 4;
-    if(base < 4)   pad2 = 8;
-
+    // 8 / log2(base)
+    u32 pad2 = 8 / u32_log2_ceil(base);
     for (size_t addr = 0; addr < data.size; addr += width) {
         fmt_u_ex(fmt, addr, 16, ' ', pad);
         fmt_s(fmt, " | ");

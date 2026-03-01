@@ -3,6 +3,7 @@
 #include "arg.h"
 #include "base64.h"
 #include "crc.h"
+#include "error2.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"

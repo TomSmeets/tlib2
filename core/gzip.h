@@ -9,14 +9,14 @@
 #include "mem.h"
 #include "stream.h"
 
-static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
+static Buffer *gzip_read(Memory *mem, Buffer *input) {
     u8 magic1 = stream_read_u8(input);
     u8 magic2 = stream_read_u8(input);
-    try_msg(magic1 == 0x1f && magic2 == 0x8b, "Invalid magic");
+    try(magic1 == 0x1f && magic2 == 0x8b, "Invalid magic");
 
     // Compression Method (8 = gzip)
     u8 method = stream_read_u8(input);
-    try_msg(method == 0x8, "Invalid compression method, expecting deflate");
+    try(method == 0x8, "Invalid compression method, expecting deflate");
 
     u8 flags = stream_read_u8(input);
     bool ftext = (flags >> 0) & 1;
@@ -24,7 +24,7 @@ static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
     bool fextra = (flags >> 2) & 1;
     bool fname = (flags >> 3) & 1;
     bool fcomment = (flags >> 4) & 1;
-    try_msg(fextra == 0, "Unsupported gzip flag");
+    try(fextra == 0, "Unsupported gzip flag");
 
     u32 mtime = stream_read_u32(input);
 
@@ -41,14 +41,31 @@ static bool gzip_read(Memory *mem, Stream *input, Stream *output) {
         u16 crc = stream_read_u16(input);
     }
 
-    try(deflate_read(mem, input, output));
+    Buffer *out = deflate_read(mem, (Buffer){input->buffer + input->cursor, input->size - input->cursor });
+
     u32 crc = stream_read_u32(input);
     u32 isize = stream_read_u32(input);
-    u32 crc_comp = crc_compute(stream_to_buffer(output));
-    try(isize == output->size);
+    u32 crc_comp = crc_compute(*out);
+    try(isize == out->size);
     try(crc == crc_comp);
     try(stream_eof(input));
-    return true;
+    return ok(), out;
+}
+
+static bool gzip_write(Memory *mem, Buffer input, Stream *output) {
+    stream_write_u8(output, 0x1f);
+    stream_write_u8(output, 0x8b);
+    stream_write_u8(output, 0x08); // method
+    stream_write_u8(output, 0); // flags
+    stream_write_u32(output, 0); // mtime
+    stream_write_u8(output, 0); // xfl
+    Buffer *deflated = deflate_write(mem, input);
+    try(deflated);
+    stream_write_buffer(output, *deflated);
+    stream_write_u32(output, crc_compute(input));
+    stream_write_u32(output, input.size);
+    u32 crc_comp = crc_compute(stream_to_buffer(output));
+    return ok();
 }
 
 static bool gzip_read_buffer(Memory *mem, Buffer input, Buffer *output) {
