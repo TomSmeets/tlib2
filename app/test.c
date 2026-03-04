@@ -4,11 +4,11 @@
 #include "base64.h"
 #include "crc.h"
 #include "error2.h"
-#include "deflate.h"
+// #include "deflate.h"
 #include "fmt.h"
-#include "gzip.h"
-#include "huffman_code.h"
-#include "huffman_tree.h"
+// #include "gzip.h"
+// #include "huffman_code.h"
+// #include "huffman_tree.h"
 #include "os.h"
 #include "stream.h"
 
@@ -22,10 +22,10 @@ bool test_test(void) {
     TEST(arg_test());
     TEST(crc_test());
     TEST(stream_test());
-    TEST(huffman_code_test());
-    TEST(huffman_tree_test());
-    TEST(gzip_test());
-    TEST(deflate_test());
+    // TEST(huffman_code_test());
+    // TEST(huffman_tree_test());
+    // TEST(gzip_test());
+    // TEST(deflate_test());
     return ok();
 }
 

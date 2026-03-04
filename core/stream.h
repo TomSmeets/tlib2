@@ -269,7 +269,7 @@ static bool stream_write_buffer(Stream *stream, Buffer buffer) {
     return stream_write_bytes(stream, buffer.size, buffer.data);
 }
 
-static bool stream_read_buffer(Stream *stream, Buffer buffer) {
+static bool stream_read_intobuffer(Stream *stream, Buffer buffer) {
     return stream_read_bytes(stream, buffer.size, buffer.data);
 }
 
