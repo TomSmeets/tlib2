@@ -9,16 +9,17 @@
 #include "mem.h"
 #include "stream.h"
 
-static Buffer *gzip_read(Memory *mem, Buffer *input) {
-    u8 magic1 = stream_read_u8(input);
-    u8 magic2 = stream_read_u8(input);
+static Buffer *gzip_read(Memory *mem, Buffer input_buf) {
+    Stream input = stream_from(input_buf);
+    u8 magic1 = stream_read_u8(&input);
+    u8 magic2 = stream_read_u8(&input);
     try(magic1 == 0x1f && magic2 == 0x8b, "Invalid magic");
 
     // Compression Method (8 = gzip)
-    u8 method = stream_read_u8(input);
+    u8 method = stream_read_u8(&input);
     try(method == 0x8, "Invalid compression method, expecting deflate");
 
-    u8 flags = stream_read_u8(input);
+    u8 flags = stream_read_u8(&input);
     bool ftext = (flags >> 0) & 1;
     bool fhcrc = (flags >> 1) & 1;
     bool fextra = (flags >> 2) & 1;
@@ -26,29 +27,29 @@ static Buffer *gzip_read(Memory *mem, Buffer *input) {
     bool fcomment = (flags >> 4) & 1;
     try(fextra == 0, "Unsupported gzip flag");
 
-    u32 mtime = stream_read_u32(input);
+    u32 mtime = stream_read_u32(&input);
 
     // XFL Compression info:
     // 2 -> Best compression
     // 4 -> Fast compression
-    u8 xfl = stream_read_u8(input);
+    u8 xfl = stream_read_u8(&input);
 
-    u8 os = stream_read_u8(input);
-    while (fname && stream_read_u8(input));
-    while (fcomment && stream_read_u8(input));
+    u8 os = stream_read_u8(&input);
+    while (fname && stream_read_u8(&input));
+    while (fcomment && stream_read_u8(&input));
 
     if (fhcrc) {
-        u16 crc = stream_read_u16(input);
+        u16 crc = stream_read_u16(&input);
     }
 
     Buffer *out = deflate_read(mem, (Buffer){input->buffer + input->cursor, input->size - input->cursor });
 
-    u32 crc = stream_read_u32(input);
-    u32 isize = stream_read_u32(input);
+    u32 crc = stream_read_u32(&input);
+    u32 isize = stream_read_u32(&input);
     u32 crc_comp = crc_compute(*out);
     try(isize == out->size);
     try(crc == crc_comp);
-    try(stream_eof(input));
+    try(stream_eof(&input));
     return ok(), out;
 }
 
