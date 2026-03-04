@@ -241,3 +241,47 @@ static bool huffman_tree_test(void) {
 
     return ok();
 }
+
+// Length limit huffman code
+static bool huffman_reduce(u32 count, u8 *len, u32 limit) {
+    for (;;) {
+        // Find longest bit length
+        u8 max = 0;
+        for (u32 i = 0; i < count; ++i) {
+            if (len[i] > max) max = len[i];
+        }
+
+        // Done
+        if (max <= limit) return ok();
+
+        // Find next longest bit length
+        u8 next = 0;
+        for (u32 i = 0; i < count; ++i) {
+            if (len[i] < next) continue;
+            if (len[i] + 1 >= max) continue;
+            next = len[i];
+        }
+        try(next > 0);
+
+        // first max -> max - 1
+        for (u32 i = 0; i < count; ++i) {
+            if (len[i] != max) continue;
+            len[i] = max - 1;
+            break;
+        }
+
+        // next max -> next + 1
+        for (u32 i = 0; i < count; ++i) {
+            if (len[i] != max) continue;
+            len[i] = next + 1;
+            break;
+        }
+
+        // next -> next + 1
+        for (u32 i = 0; i < count; ++i) {
+            if (len[i] != next) continue;
+            len[i] = next + 1;
+            break;
+        }
+    }
+}
