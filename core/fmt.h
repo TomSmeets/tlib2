@@ -260,7 +260,7 @@ static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
 }
 
 static void fmt_hexdump(Fmt *fmt, Buffer data) {
-    fmt_hexdump_x(fmt, data, 16, 4);
+    fmt_hexdump_x(fmt, data, 16, 8);
 }
 
 // Test

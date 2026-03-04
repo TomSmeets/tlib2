@@ -157,14 +157,18 @@ static Buffer *deflate_write(Memory *mem, Buffer input) {
     stream_write_bits(output, 2, Deflate_BlockFixed);
     try(deflate_lzss_encode(mem, fixed_code, input, output, &frequency_info));
 
-    // Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
+    // for(u32 i = 0; i < array_count(frequency_info.distance_freq); ++i) {
+    //     frequency_info.distance_freq[i];
+    // }
+
+    Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
 
     // Re encode with the new huffman table
-    // Stream *output_dynamic = stream_new(mem);
-    // stream_write_bits(output_dynamic, 1, 1);
-    // stream_write_bits(output_dynamic, 2, Deflate_BlockDynamic);
-    // try(deflate_huffman_dynamic_write(dynamic_code, output_dynamic));
-    // try(deflate_lzss_recode(mem, llcode, fixed_code, stream_to_buffer(output_fixed), dynamic_code, output_dynamic));
+    Stream *output_dynamic = stream_new(mem);
+    stream_write_bits(output_dynamic, 1, 1);
+    stream_write_bits(output_dynamic, 2, Deflate_BlockDynamic);
+    try(deflate_huffman_dynamic_write(dynamic_code, output_dynamic));
+    try(deflate_lzss_recode(mem, llcode, fixed_code, stream_to_buffer(output), dynamic_code, output_dynamic));
 
     // Check if dynamic data is smaller
     // *output = stream_to_buffer(output_fixed);
@@ -177,13 +181,13 @@ static Buffer *deflate_write(Memory *mem, Buffer input) {
     // deflate_write_stored(mem, input, output);
     // }
 
-    Buffer *out = stream_clone(mem, output);
+    Buffer *out = stream_clone(mem, output_dynamic);
     try(out);
     return ok(), out;
 }
 
 static bool deflate_test(void) {
-    Buffer input = str_buf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    Buffer input = str_buf("heeeeeeeeeeeeeeeello hello");
     Memory *mem = mem_new();
 
     fmt_s(fout, "Input:\n");
