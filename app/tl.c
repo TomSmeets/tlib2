@@ -2,10 +2,10 @@
 // tl.c - Cli utils using tlib
 #include "arg.h"
 #include "base64.h"
+#include "error2.h"
 #include "gzip.h"
 #include "os.h"
 #include "stream.h"
-#include "error2.h"
 
 bool os_main2(u32 argc, char **argv) {
     Memory *mem = mem_new();
@@ -43,8 +43,8 @@ bool os_main2(u32 argc, char **argv) {
         Stream *output = stream_new(mem);
         try(stream_from_file(input, os_stdin()));
         stream_seek(input, 0);
-        if(compress) try(gzip_write(mem, stream_to_buffer(input), output));
-        if(decompress) try(gzip_read(mem, input, output));
+        if (compress) try(gzip_write(mem, stream_to_buffer(input), output));
+        if (decompress) try(gzip_read(mem, input, output));
         try(stream_to_file(output, os_stdout()));
         return ok();
     }
@@ -62,7 +62,7 @@ bool os_main2(u32 argc, char **argv) {
         try(stream_from_file(input, os_stdin()));
 
         u32 base = hex ? 16 : 2;
-        u32 width= wide ? 16 : 4;
+        u32 width = wide ? 16 : 4;
         fmt_hexdump_x(fout, stream_to_buffer(input), base, width);
         return ok();
     }

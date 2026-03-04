@@ -112,7 +112,7 @@ static u8 stream_read_u8(Stream *stream) {
 }
 
 static Buffer stream_read_buffer(Stream *stream, size_t size) {
-    return (Buffer) {stream->buffer + stream->cursor, stream->size - stream->cursor};
+    return (Buffer){stream->buffer + stream->cursor, stream->size - stream->cursor};
 }
 
 // Write a single bit from the stream

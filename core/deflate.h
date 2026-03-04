@@ -128,12 +128,10 @@ static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
     return ok();
 }
 
-
 typedef struct {
     size_t size;
     u8 *data[];
 } Bytes;
-
 
 static Buffer *deflate_write(Memory *mem, Buffer input) {
     // Idea to reduce memory usage:

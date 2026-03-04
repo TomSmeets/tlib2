@@ -236,7 +236,7 @@ static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
         fmt_s(fmt, " | ");
         for (u32 off = 0; off < width; ++off) {
             if (addr + off >= data.size) {
-                for(u32 i = 0; i < pad2+1; ++i) {
+                for (u32 i = 0; i < pad2 + 1; ++i) {
                     fmt_c(fmt, ' ');
                 }
                 continue;

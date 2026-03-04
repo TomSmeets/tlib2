@@ -42,7 +42,7 @@ static Buffer *gzip_read(Memory *mem, Buffer input_buf) {
         u16 crc = stream_read_u16(&input);
     }
 
-    Buffer *out = deflate_read(mem, (Buffer){input->buffer + input->cursor, input->size - input->cursor });
+    Buffer *out = deflate_read(mem, (Buffer){input->buffer + input->cursor, input->size - input->cursor});
 
     u32 crc = stream_read_u32(&input);
     u32 isize = stream_read_u32(&input);
@@ -57,9 +57,9 @@ static bool gzip_write(Memory *mem, Buffer input, Stream *output) {
     stream_write_u8(output, 0x1f);
     stream_write_u8(output, 0x8b);
     stream_write_u8(output, 0x08); // method
-    stream_write_u8(output, 0); // flags
-    stream_write_u32(output, 0); // mtime
-    stream_write_u8(output, 0); // xfl
+    stream_write_u8(output, 0);    // flags
+    stream_write_u32(output, 0);   // mtime
+    stream_write_u8(output, 0);    // xfl
     Buffer *deflated = deflate_write(mem, input);
     try(deflated);
     stream_write_buffer(output, *deflated);

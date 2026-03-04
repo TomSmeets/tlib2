@@ -8,16 +8,15 @@ static u32 error_count;
 static char *error_message[16];
 
 // Exit current function with 0 when condition becomes false
-#define try(cond, ...)                                                                                                                                    \
-    if (!(cond)) return error_set(__FILE__ ":" TO_STRING(__LINE__) ": try(" #cond ") failed " __VA_ARGS__ " \n"), (void*)0
+#define try(cond, ...)                                                                                                                               \
+    if (!(cond)) return error_set(__FILE__ ":" TO_STRING(__LINE__) ": try(" #cond ") failed " __VA_ARGS__ " \n"), (void *)0
 
 // Clear errors and return 1
 // Usage:
 //   return ok();
 // or to return a value
 //   return ok(), VALUE;
-#define ok() error_clear(),1
-
+#define ok() error_clear(), 1
 
 // try(x)
 //  0 -> set error,   return 0
