@@ -11,13 +11,6 @@
 #include "stream.h"
 #include "type.h"
 
-static Buffer *stream_clone(Memory *mem, Stream *stream) {
-    Buffer *out = mem_alloc_uninit(mem, sizeof(Buffer));
-    out->size = stream->size;
-    out->data = (u8 *)mem_clone(mem, stream->buffer, stream->size);
-    return out;
-}
-
 // Deflate block types (2 bit value)
 typedef enum {
     Deflate_BlockStored = 0,  // Raw uncompressed data
@@ -32,7 +25,7 @@ static size_t deflate_calculate_stored_block_size(size_t input_size) {
     return stored_size;
 }
 
-static Buffer *deflate_read(Memory *mem, Buffer input_buf) {
+static bool deflate_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
     Stream input_ = stream_from(input_buf);
     Stream *input = &input_;
 
@@ -105,7 +98,8 @@ static Buffer *deflate_read(Memory *mem, Buffer input_buf) {
         // Continue reading until the last block
         if (is_last) break;
     }
-    return ok(), stream_clone(mem, output);
+    *output_buf = stream_to_buffer(output);
+    return ok();
 }
 
 static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
@@ -133,7 +127,40 @@ typedef struct {
     u8 *data[];
 } Bytes;
 
-static Buffer *deflate_write(Memory *mem, Buffer input) {
+typedef struct {
+    bool ok;
+    Buffer output;
+    Deflate_Encode_Info frequency_info;
+    Deflate_Huffman *encoding;
+} Deflate_Result;
+
+static bool deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Buffer *result, Deflate_Encode_Info *frequency_info) {
+    Stream *stream = stream_new(mem);
+    stream_write_bits(stream, 1, 1);
+    stream_write_bits(stream, 2, Deflate_BlockFixed);
+    try(deflate_lzss_encode(mem, code, input, stream, frequency_info));
+    *result = stream_to_buffer(stream);
+    return ok();
+
+}
+
+static bool deflate_write_dynamic(Memory *mem,
+              Deflate_LLCode *llcode,
+              Deflate_Huffman *input_code,
+              Buffer input,
+              Deflate_Huffman *output_code,
+              Buffer *output) {
+    Stream *stream = stream_new(mem);
+    stream_write_bits(stream, 1, 1);
+    stream_write_bits(stream, 2, Deflate_BlockDynamic);
+    try(deflate_huffman_dynamic_write(output_code, stream));
+    try(deflate_lzss_recode(mem, llcode, input_code, input, output_code, stream));
+    *output = stream_to_buffer(stream);
+    return ok();
+
+}
+
+static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
     // Idea to reduce memory usage:
     // 1. Encode directly using fixed huffman table, and count freqs directly
     // 3. Re-encode the data using new huffman table
@@ -142,48 +169,35 @@ static Buffer *deflate_write(Memory *mem, Buffer input) {
     // Memory will be cleared at the end of this function
 
     // Symbol frequency info
-    Deflate_Encode_Info frequency_info = {};
 
     // Fixed huffman table
-    Deflate_Huffman *fixed_code = deflate_huffman_fixed(mem);
 
     // Length/Distnace Symbol to offset/bit_count mapping
     Deflate_LLCode *llcode = deflate_llcode_new(mem);
 
     // Encode using fixed huffman code and also collect frequency info
-    // Stream *output_fixed = stream_new(mem);
-    Stream *output = stream_new(mem);
-    stream_write_bits(output, 1, 1);
-    stream_write_bits(output, 2, Deflate_BlockFixed);
-    try(deflate_lzss_encode(mem, fixed_code, input, output, &frequency_info));
-
-    // for(u32 i = 0; i < array_count(frequency_info.distance_freq); ++i) {
-    //     frequency_info.distance_freq[i];
-    // }
-
-    Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
+    Deflate_Huffman *fixed_code = deflate_huffman_fixed(mem);
+    Deflate_Encode_Info frequency_info = {};
+    Buffer fixed_output = {};
+    try(deflate_write_fixed(mem, llcode, fixed_code, input, &fixed_output, &frequency_info));
+    *result = fixed_output;
 
     // Re encode with the new huffman table
-    Stream *output_dynamic = stream_new(mem);
-    stream_write_bits(output_dynamic, 1, 1);
-    stream_write_bits(output_dynamic, 2, Deflate_BlockDynamic);
-    try(deflate_huffman_dynamic_write(dynamic_code, output_dynamic));
-    try(deflate_lzss_recode(mem, llcode, fixed_code, stream_to_buffer(output), dynamic_code, output_dynamic));
+    Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
+    Buffer dynamic_output = {};
+    try(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
+    if(result->size > dynamic_output.size) *result = dynamic_output;
 
-    // Check if dynamic data is smaller
-    // *output = stream_to_buffer(output_fixed);
-    // if (output_dynamic->size < output->size) {
-    // *output = stream_to_buffer(output_dynamic);
-    // }
+    if(result->size > deflate_calculate_stored_block_size(input.size)) {
+        Buffer stored_output = {};
+        try(deflate_write_stored(mem, input, &stored_output));
+        *result = stored_output;
+    }
 
-    // Check if stored data is smaller
-    // if (deflate_calculate_stored_block_size(input.size) <= output->size) {
-    // deflate_write_stored(mem, input, output);
-    // }
-
-    Buffer *out = stream_clone(mem, output_dynamic);
-    try(out);
-    return ok(), out;
+    // *result = fixed_output;
+    // *result = dynamic_output;
+    // *result =stored_output;
+    return ok();
 }
 
 static bool deflate_test(void) {
@@ -194,16 +208,15 @@ static bool deflate_test(void) {
     fmt_hexdump(fout, input);
 
     fmt_s(fout, "Compressed:\n");
-    Buffer *compressed = deflate_write(mem, input);
-    try(compressed);
-    fmt_hexdump(fout, *compressed);
+    Buffer compressed = {};
+    try(deflate_write(mem, input, &compressed));
+    fmt_hexdump(fout, compressed);
 
     fmt_s(fout, "Decompressed:\n");
-    Buffer *decompressed = deflate_read(mem, *compressed);
-    try(decompressed);
-    fmt_hexdump(fout, *decompressed);
+    Buffer decompressed = {};
+    try(deflate_read(mem, compressed, &decompressed));
+    fmt_hexdump(fout, decompressed);
 
-    try(decompressed->size == input.size);
-    try(mem_eq(decompressed->data, input.data, input.size));
+    try(buf_eq(decompressed, input));
     return ok();
 }

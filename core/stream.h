@@ -42,6 +42,7 @@ static Stream *stream_new(Memory *mem) {
     return stream;
 }
 
+// Get full contents of the stream
 static Buffer stream_to_buffer(Stream *stream) {
     return (Buffer){stream->buffer, stream->size};
 }
@@ -111,8 +112,16 @@ static u8 stream_read_u8(Stream *stream) {
     return stream->buffer[stream->cursor++];
 }
 
+// Number of bytes that remain for reading after the current position
+static size_t stream_remaining(Stream *stream) {
+    return stream->size - stream->cursor;
+}
+
 static Buffer stream_read_buffer(Stream *stream, size_t size) {
-    return (Buffer){stream->buffer + stream->cursor, stream->size - stream->cursor};
+    if (size > stream_remaining(stream)) size = stream_remaining(stream);
+    u8 *start = stream->buffer + stream->cursor;
+    stream->cursor += size;
+    return (Buffer){start, size};
 }
 
 // Write a single bit from the stream
@@ -181,46 +190,6 @@ static void stream_write_bits_be(Stream *stream, u32 count, u32 bits) {
     }
 }
 
-#if 0
-// Align up to a byte
-static void stream_align(Stream *stream) {
-    assert(stream->bit_ix < 8);
-    if (stream->bit_ix) {
-        stream->bit_ix = 0;
-        stream->size++;
-    }
-}
-
-
-
-// Read a single bit from the stream
-static bool stream_read_bit(Stream *stream) {
-    if (stream_eof(stream)) return 0;
-    u8 byte = stream->buffer[stream->cursor];
-    u8 bit = (byte >> stream->bit_ix) & 1;
-    stream_next_bit(stream);
-    return bit;
-}
-
-#endif
-
-// // Read a number of little endian bytes
-// static u32 stream_read_bytes(Stream *stream, u32 count) {
-//     assert(count <= 4);
-//     u32 res = 0;
-//     for (u32 i = 0; i < count; ++i) {
-//         res |= stream_read_u8(stream) << (i * 8);
-//     }
-//     return res;
-// }
-
-// static void stream_write_bytes(Stream *stream, u32 count, u32 data) {
-//     assert(count <= 4);
-//     for (u32 i = 0; i < count; ++i) {
-//         stream_write_u8(stream, (data >> (i * 8)) & 0xff);
-//     }
-// }
-
 static u16 stream_read_u16(Stream *stream) {
     u16 out = 0;
     out |= (u16)stream_read_u8(stream) << (0 * 8);
@@ -282,7 +251,7 @@ static bool stream_from_file(Stream *stream, File *input) {
         stream_write_bytes(stream, used, buffer);
         if (used < requested) break;
     }
-    return 1;
+    return ok();
 }
 
 static bool stream_to_file(Stream *stream, File *output) {

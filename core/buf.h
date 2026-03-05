@@ -66,6 +66,12 @@ typedef struct {
 } List;
 #define LIST(T, ...) ((T *[]){__VA_ARGS__, 0})
 
+// An invalid buffer
+static Buffer buf_null(void) {
+    return (Buffer){0};
+}
+
+// Create a new buffer view
 static Buffer buf_from(void *data, size_t size) {
     return (Buffer){data, size};
 }
@@ -80,4 +86,16 @@ static bool buf_starts_with(Buffer buf, Buffer start) {
 static bool buf_eq(Buffer a, Buffer b) {
     if (a.size != b.size) return 0;
     return mem_eq(a.data, b.data, a.size);
+}
+
+// Return the first 'size' bytes of the buffer
+static Buffer buf_take(Buffer a, size_t size) {
+    if(size > a.size) size = a.size;
+    return (Buffer){a.data, size};
+}
+
+// Discard the first 'size' bytes of the buffer, and return the rest
+static Buffer buf_drop(Buffer a, size_t size) {
+    if(size > a.size) size = a.size;
+    return (Buffer){a.data + size, a.size - size};
 }

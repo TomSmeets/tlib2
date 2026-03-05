@@ -11,6 +11,9 @@ static char *error_message[16];
 #define try(cond, ...)                                                                                                                               \
     if (!(cond)) return error_set(__FILE__ ":" TO_STRING(__LINE__) ": try(" #cond ") failed " __VA_ARGS__ " \n"), (void *)0
 
+#define try1(cond)                                                                                                                               \
+    if (!(cond)) return error_set(__FILE__ ":" TO_STRING(__LINE__) ": try(" #cond ") failed\n"), result
+
 // Clear errors and return 1
 // Usage:
 //   return ok();

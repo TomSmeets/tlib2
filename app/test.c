@@ -6,7 +6,7 @@
 #include "error2.h"
 #include "deflate.h"
 #include "fmt.h"
-// #include "gzip.h"
+#include "gzip.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "os.h"
@@ -25,7 +25,7 @@ bool test_test(void) {
     TEST(huffman_code_test());
     TEST(huffman_tree_test());
     TEST(deflate_test());
-    // TEST(gzip_test());
+    TEST(gzip_test());
     return ok();
 }
 

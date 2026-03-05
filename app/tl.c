@@ -7,6 +7,17 @@
 #include "os.h"
 #include "stream.h"
 
+static bool os_read_full(Memory *mem, File *file, Buffer *output) {
+    Stream *input = stream_new(mem);
+    try(stream_from_file(input, file));
+    *output = stream_to_buffer(input);
+    return ok();
+}
+
+static bool os_write_full(File *file, Buffer data) {
+    return os_write(file, data.data, data.size, 0);
+}
+
 bool os_main2(u32 argc, char **argv) {
     Memory *mem = mem_new();
     Arg arg = arg_new(argc, argv);
@@ -22,14 +33,14 @@ bool os_main2(u32 argc, char **argv) {
         if (!encode) decode = 1;
         arg_help_opt(&arg);
 
-        Stream *input = stream_new(mem);
-        try(stream_from_file(input, os_stdin()));
-        Buffer input_buffer = stream_to_buffer(input);
-        Buffer output_buffer = {};
-        if (encode) output_buffer = base64_encode(mem, input_buffer);
-        if (decode) output_buffer = base64_decode(mem, input_buffer);
-        Stream output = stream_from(output_buffer);
-        stream_to_file(&output, os_stdout());
+        Buffer input;
+        try(os_read_full(mem, os_stdin(), &input));
+
+        Buffer output = {};
+        if (encode) output = base64_encode(mem, input);
+        if (decode) output = base64_decode(mem, input);
+        try(output.data);
+        os_write_full(os_stdout(), output);
         return ok();
     }
 
@@ -39,13 +50,15 @@ bool os_main2(u32 argc, char **argv) {
         if (!compress) decompress = 1;
         arg_help_opt(&arg);
 
-        Stream *input = stream_new(mem);
-        Stream *output = stream_new(mem);
-        try(stream_from_file(input, os_stdin()));
-        stream_seek(input, 0);
-        if (compress) try(gzip_write(mem, stream_to_buffer(input), output));
-        if (decompress) try(gzip_read(mem, input, output));
-        try(stream_to_file(output, os_stdout()));
+        Buffer input;
+        try(os_read_full(mem, os_stdin(), &input));
+        try(input.size);
+
+        Buffer output = {};
+        if(compress)   try(gzip_write(mem, input, &output));
+        if(decompress) try(gzip_read(mem, input, &output));
+        try(output.size);
+        os_write_full(os_stdout(), output);
         return ok();
     }
 

@@ -9,7 +9,7 @@
 #include "mem.h"
 #include "stream.h"
 
-static Buffer *gzip_read(Memory *mem, Buffer input_buf) {
+static bool gzip_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
     Stream input = stream_from(input_buf);
     u8 magic1 = stream_read_u8(&input);
     u8 magic2 = stream_read_u8(&input);
@@ -42,58 +42,57 @@ static Buffer *gzip_read(Memory *mem, Buffer input_buf) {
         u16 crc = stream_read_u16(&input);
     }
 
-    Buffer *out = deflate_read(mem, (Buffer){input->buffer + input->cursor, input->size - input->cursor});
+    Buffer deflate = stream_read_buffer(&input, stream_remaining(&input) - 8);
+    try(deflate_read(mem, deflate, output_buf));
 
-    u32 crc = stream_read_u32(&input);
-    u32 isize = stream_read_u32(&input);
-    u32 crc_comp = crc_compute(*out);
-    try(isize == out->size);
-    try(crc == crc_comp);
+    u32 crc_gzip = stream_read_u32(&input);
+    u32 size_gzip = stream_read_u32(&input);
+    u32 crc_real = crc_compute(*output_buf);
+    try(size_gzip == output_buf->size);
+    try(crc_gzip == crc_real);
     try(stream_eof(&input));
-    return ok(), out;
+    return ok();
 }
 
-static bool gzip_write(Memory *mem, Buffer input, Stream *output) {
+static bool gzip_write(Memory *mem, Buffer input, Buffer *output_buf) {
+    Stream *output = stream_new(mem);
     stream_write_u8(output, 0x1f);
     stream_write_u8(output, 0x8b);
     stream_write_u8(output, 0x08); // method
     stream_write_u8(output, 0);    // flags
     stream_write_u32(output, 0);   // mtime
     stream_write_u8(output, 0);    // xfl
-    Buffer *deflated = deflate_write(mem, input);
-    try(deflated);
-    stream_write_buffer(output, *deflated);
+    Buffer deflated_buffer = {};
+    try(deflate_write(mem, input, &deflated_buffer));
+    stream_write_buffer(output, deflated_buffer);
     stream_write_u32(output, crc_compute(input));
     stream_write_u32(output, input.size);
     u32 crc_comp = crc_compute(stream_to_buffer(output));
-    return ok();
-}
-
-static bool gzip_read_buffer(Memory *mem, Buffer input, Buffer *output) {
-    Stream input_stream = stream_from(input);
-    Stream *output_stream = stream_new(mem);
-    try(gzip_read(mem, &input_stream, output_stream));
-    *output = stream_to_buffer(output_stream);
+    *output_buf = stream_to_buffer(output);
     return ok();
 }
 
 static bool gzip_test(void) {
     Memory *mem = mem_new();
-    Buffer t0_target = str_buf("hello hello world hello hello\n");
-    Buffer t0_in = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-    Buffer t0_out = {};
-    try(gzip_read_buffer(mem, t0_in, &t0_out));
-    if (0) {
-        fmt_hexdump(fout, t0_target);
-        fmt_hexdump(fout, t0_out);
+    {
+        Buffer target = str_buf("hello hello world hello hello\n");
+        Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
+        Buffer output = {};
+        fmt_s(fout, "Input:\n");
+        fmt_hexdump(fout, input);
+        fmt_s(fout, "Target:\n");
+        fmt_hexdump(fout, target);
+        try(gzip_read(mem, input, &output));
+        fmt_s(fout, "Output:\n");
+        fmt_hexdump(fout, output);
+        try(buf_eq(target, output));
     }
-    try(buf_eq(t0_out, t0_target));
 
     // Uses fixed huffman table
     Buffer t1_target = base64_decode(mem, str_buf("GnSwX91w7Z9EqpaZeyPCIQ=="));
     Buffer t1_in = base64_decode(mem, str_buf("H4sICHPOkWkAA2RhdGEAkyrZEH+34O18l1XTZlYrH1IEAFve5PUQAAAA"));
     Buffer t1_out = {};
-    try(gzip_read_buffer(mem, t1_in, &t1_out));
+    try(gzip_read(mem, t1_in, &t1_out));
     if (0) {
         fmt_hexdump(fout, t1_target);
         fmt_hexdump(fout, t1_out);
@@ -112,7 +111,7 @@ static bool gzip_test(void) {
              )
     );
     Buffer t3_out = {};
-    try(gzip_read_buffer(mem, t3_in, &t3_out));
+    try(gzip_read(mem, t3_in, &t3_out));
     if (0) {
         fmt_hexdump(fout, t3_target);
         fmt_hexdump(fout, t3_in);

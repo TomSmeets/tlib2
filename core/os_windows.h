@@ -228,7 +228,7 @@ static time_t os_time(void) {
         LARGE_INTEGER big_freq;
         assert(QueryPerformanceFrequency(&big_freq));
         freq = (u64)big_freq.QuadPart / 1000 / 1000;
-        assert_msg(freq > 0, "Invalid performance frequency");
+        assert(freq > 0, "Invalid performance frequency");
 
         // Initialize offset to match system time
         FILETIME ft;
