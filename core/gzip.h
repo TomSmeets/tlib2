@@ -11,9 +11,8 @@
 
 static bool gzip_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
     Stream input = stream_from(input_buf);
-    u8 magic1 = stream_read_u8(&input);
-    u8 magic2 = stream_read_u8(&input);
-    try(magic1 == 0x1f && magic2 == 0x8b, "Invalid magic");
+    u16 magic = stream_read_u16(&input);
+    try(magic == 0x8b1f, "Invalid magic");
 
     // Compression Method (8 = gzip)
     u8 method = stream_read_u8(&input);
@@ -56,13 +55,12 @@ static bool gzip_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
 
 static bool gzip_write(Memory *mem, Buffer input, Buffer *output_buf) {
     Stream *output = stream_new(mem);
-    stream_write_u8(output, 0x1f);
-    stream_write_u8(output, 0x8b);
-    stream_write_u8(output, 0x08); // method
-    stream_write_u8(output, 0);    // flags
-    stream_write_u32(output, 0);   // mtime
-    stream_write_u8(output, 0);    // xfl
-    stream_write_u8(output, 0);    // OS
+    stream_write_u16(output, 0x8b1f); // Magic
+    stream_write_u8(output, 0x08);    // method
+    stream_write_u8(output, 0);       // flags
+    stream_write_u32(output, 0);      // mtime
+    stream_write_u8(output, 0);       // xfl
+    stream_write_u8(output, 0);       // OS
     Buffer deflated_buffer = {};
     try(deflate_write(mem, input, &deflated_buffer));
     try(stream_write_buffer(output, deflated_buffer));
