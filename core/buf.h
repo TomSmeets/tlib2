@@ -102,13 +102,13 @@ static Buffer buf_drop(Buffer a, size_t size) {
 
 // Return the last 'size' bytes of the buffer
 static Buffer buf_take_end(Buffer buf, size_t size) {
-    if(size > buf.size) size = buf.size;
+    if (size > buf.size) size = buf.size;
     return buf_drop(buf, buf.size - size);
 }
 
 // Discard the last 'size' bytes of the buffer
 static Buffer buf_drop_end(Buffer buf, size_t size) {
-    if(size > buf.size) size = buf.size;
+    if (size > buf.size) size = buf.size;
     return buf_take(buf, buf.size - size);
 }
 

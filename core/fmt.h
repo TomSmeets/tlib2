@@ -33,7 +33,7 @@ typedef struct {
 
 // Standard formatters
 static Fmt *fmt_stdout(void) {
-    //TODO: get rid of this
+    // TODO: get rid of this
     static u8 buffer[1024];
     static Fmt fmt = {
         .size = sizeof(buffer),
@@ -116,7 +116,7 @@ static void fmt_c(Fmt *fmt, u8 c) {
     fmt->data[fmt->used++] = c;
     if (fmt->flush_on_newline && c == '\n') {
         fmt_flush(fmt);
-        fmt->opt = (Fmt_Options) {};
+        fmt->opt = (Fmt_Options){};
     }
 }
 
@@ -152,7 +152,7 @@ static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
     u32 digit_count = 0;
     u8 digit_list[64];
 
-    if(fmt->opt.base) base = fmt->opt.base;
+    if (fmt->opt.base) base = fmt->opt.base;
 
     assert(base >= 2 && base <= 16);
     if (pad > array_count(digit_list)) pad = array_count(digit_list);
@@ -302,10 +302,12 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 // print() will get tmp mem and free again
 
 // Set formatting options
-#define O(...) (Fmt_Options){__VA_ARGS__}
+#define O(...)                                                                                                                                       \
+    (Fmt_Options) {                                                                                                                                  \
+        __VA_ARGS__                                                                                                                                  \
+    }
 
 #define EOL "\n"
-
 
 static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
     fmt->opt = opt;
