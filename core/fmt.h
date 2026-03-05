@@ -6,6 +6,13 @@
 #include "str.h"
 #include "type.h"
 
+// Formatting options
+typedef struct {
+    u32 base;
+    u32 pad;
+    u8 pad_chr;
+} Fmt_Options;
+
 typedef struct {
     // Memory used to grow the buffer (Optional)
     Memory *mem;
@@ -20,10 +27,13 @@ typedef struct {
     size_t size;
     size_t used;
     u8 *data;
+
+    Fmt_Options opt;
 } Fmt;
 
 // Standard formatters
 static Fmt *fmt_stdout(void) {
+    //TODO: get rid of this
     static u8 buffer[1024];
     static Fmt fmt = {
         .size = sizeof(buffer),
@@ -104,7 +114,10 @@ static bool fmt_grow(Fmt *fmt, size_t size) {
 static void fmt_c(Fmt *fmt, u8 c) {
     if (!fmt_grow(fmt, 1)) return;
     fmt->data[fmt->used++] = c;
-    if (fmt->flush_on_newline && c == '\n') fmt_flush(fmt);
+    if (fmt->flush_on_newline && c == '\n') {
+        fmt_flush(fmt);
+        fmt->opt = (Fmt_Options) {};
+    }
 }
 
 static void fmt_buf(Fmt *fmt, Buffer data) {
@@ -138,6 +151,8 @@ static void fmt_ss(Fmt *fmt, char *arg1, char *arg2, char *arg3) {
 static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
     u32 digit_count = 0;
     u8 digit_list[64];
+
+    if(fmt->opt.base) base = fmt->opt.base;
 
     assert(base >= 2 && base <= 16);
     if (pad > array_count(digit_list)) pad = array_count(digit_list);
@@ -263,18 +278,72 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
     fmt_hexdump_x(fmt, data, 16, 8);
 }
 
+// Use generic!
+// TODO: add fmt_options() so fmt(..., (Opt){.blah}, ...) changes options
+// also add fmt_pad(x) -> helper for creating the opt type
+#define fmt1(F, x)                                                                                                                                   \
+    _Generic((x), char *: fmt_s, size_t: fmt_u, u32: fmt_u, i32: fmt_i, char: fmt_c, Buffer: fmt_hexdump, Fmt_Options: fmt_setopt)(F, x)
+#define fmt2(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt1(F, __VA_ARGS__))
+#define fmt3(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt2(F, __VA_ARGS__))
+#define fmt4(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt3(F, __VA_ARGS__))
+#define fmt5(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt4(F, __VA_ARGS__))
+#define fmt6(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt5(F, __VA_ARGS__))
+#define fmt7(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt6(F, __VA_ARGS__))
+#define fmt8(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt7(F, __VA_ARGS__))
+#define fmt(F, ...) fmt8(F, __VA_ARGS__)
+#define fstr(mem, ...)                                                                                                                               \
+    ({                                                                                                                                               \
+        Fmt *f = fmt_new(mem);                                                                                                                       \
+        fmt6(f, __VA_ARGS__);                                                                                                                        \
+        fmt_end(f);                                                                                                                                  \
+    })
+#define print(...) fmt(fout, __VA_ARGS__), fmt_s(fout, "\n")
+// TODO: no more 'file' in fmt, just format string
+// print() will get tmp mem and free again
+
+// Set formatting options
+#define O(...) (Fmt_Options){__VA_ARGS__}
+
+#define EOL "\n"
+
+
+static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
+    fmt->opt = opt;
+}
+
+// could add a vararg fmt type
+
 // Test
 static bool fmt_test(void) {
     Memory *mem = mem_new();
-    Fmt *fmt = fmt_new(mem);
-    fmt_s(fmt, "Hello");
-    fmt_s(fmt, " ");
-    fmt_s(fmt, "World: ");
-    fmt_u(fmt, 1234);
-    fmt_s(fmt, "\n");
 
-    char *output = fmt_end(fmt);
-    try(str_eq(output, "Hello World: 1234\n"));
+    {
+        Fmt *fmt = fmt_new(mem);
+        fmt_s(fmt, "Hello");
+        fmt_s(fmt, " ");
+        fmt_s(fmt, "World: ");
+        fmt_u(fmt, 1234);
+        fmt_s(fmt, "\n");
+        char *output = fmt_end(fmt);
+        try(str_eq(output, "Hello World: 1234\n"));
+    }
+
+    {
+        Fmt *f = fmt_new(mem);
+        fmt(f, "Hello", " ", "World: ", 1234, EOL);
+        char *output = fmt_end(f);
+        try(str_eq(output, "Hello World: 1234\n"));
+    }
+    {
+        char *output = fstr(mem, "Hello", " ", "World: ", 1234, EOL);
+        try(str_eq(output, "Hello World: 1234\n"));
+    }
+
+    // Awesome! who needs python :P
+    u32 x = 1234;
+    print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
+    // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
+
     mem_free(mem);
     return ok();
 }
