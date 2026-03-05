@@ -4,19 +4,42 @@
 #include "deflate_huffman.h"
 #include "deflate_llcode.h"
 
+// Find index into data containing the prefix sequence of key
+static Buffer buf_find_longest_match(Buffer data, size_t start, size_t max_size) {
+    size_t match_index = 0;
+    size_t match_size = 0;
+    if (max_size > start) max_size = start;
+    Buffer a = buf_drop(data, start);
+    for (size_t i = start - max_size; i < start; ++i) {
+        Buffer b = buf_drop(data, i);
+        size_t len = buf_match_len(a, b);
+        if (len < match_size) continue;
+        match_size = len;
+        match_index = i;
+    }
+    return (Buffer){data.data + match_index, match_size};
+}
+
 // Compress the input data using LZSS and encode it with the provided huffman code
 // The symbol frequencies in the optional argument 'info' are incremented if present
 static bool deflate_lzss_encode(Memory *mem, Deflate_Huffman *code, Buffer input, Stream *output_stream, Deflate_Encode_Info *info) {
     // Add values
+    size_t match_start = 0;
+    size_t match_len = 0;
     for (size_t i = 0; i < input.size; ++i) {
-        // Decide what symbol to encode
-        u16 symbol = input.data[i];
-
-        // Write length symbol
-        try(huffman_code_write(code->length, output_stream, symbol));
-        if (info) info->length_freq[symbol]++;
-
-        // TODO: smarter lzss compression
+        Buffer match = buf_find_longest_match(input, i, 1 << 15);
+        if (1 || match.size <= 3) {
+            // Raw symbol
+            u16 symbol = input.data[i];
+            try(huffman_code_write(code->length, output_stream, symbol));
+            if (info) info->length_freq[symbol]++;
+            // F(fout, (char)symbol);
+        } else {
+            // LZSS sequence
+            size_t match_ix = input.data - match.data + i;
+            // F(fout, "Match: ", match_ix, " ", match.size, EOL);
+            i += match.size - 1;
+        }
     }
 
     // End of block marker
