@@ -99,3 +99,28 @@ static Buffer buf_drop(Buffer a, size_t size) {
     if (size > a.size) size = a.size;
     return (Buffer){a.data + size, a.size - size};
 }
+
+// Return the last 'size' bytes of the buffer
+static Buffer buf_take_end(Buffer buf, size_t size) {
+    if(size > buf.size) size = buf.size;
+    return buf_drop(buf, buf.size - size);
+}
+
+// Discard the last 'size' bytes of the buffer
+static Buffer buf_drop_end(Buffer buf, size_t size) {
+    if(size > buf.size) size = buf.size;
+    return buf_take(buf, buf.size - size);
+}
+
+// Create a buffer starting at the start offset with the given size
+static Buffer buf_slice(Buffer buf, size_t start, size_t size) {
+    return buf_take(buf_drop(buf, start), size);
+}
+
+// Count the number of matching bytes from the start
+static size_t buf_match_len(Buffer a, Buffer b) {
+    for (size_t i = 0;; ++i) {
+        if (i >= a.size || i >= b.size) return i;
+        if (a.data[i] != b.data[i]) return i;
+    }
+}
