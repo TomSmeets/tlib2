@@ -290,11 +290,15 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 #define fmt6(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt5(F, __VA_ARGS__))
 #define fmt7(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt6(F, __VA_ARGS__))
 #define fmt8(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt7(F, __VA_ARGS__))
-#define fmt(F, ...) fmt8(F, __VA_ARGS__)
+#define fmt9(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt8(F, __VA_ARGS__))
+#define fmt10(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt9(F, __VA_ARGS__))
+#define fmt11(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt10(F, __VA_ARGS__))
+#define fmt12(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt11(F, __VA_ARGS__))
+#define fmt(F, ...) fmt12(F, __VA_ARGS__)
 #define fstr(mem, ...)                                                                                                                               \
     ({                                                                                                                                               \
         Fmt *f = fmt_new(mem);                                                                                                                       \
-        fmt6(f, __VA_ARGS__);                                                                                                                        \
+        fmt12(f, __VA_ARGS__);                                                                                                                        \
         fmt_end(f);                                                                                                                                  \
     })
 #define print(...) fmt(fout, __VA_ARGS__), fmt_s(fout, "\n")

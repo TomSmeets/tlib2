@@ -3,7 +3,7 @@
 #pragma once
 #include "deflate_huffman.h"
 #include "deflate_llcode.h"
-#include "deflate_lzss.h"
+#include "deflate_lz77.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "mem.h"
@@ -139,7 +139,7 @@ deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, 
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockFixed);
-    try(deflate_lzss_encode(mem, code, input, stream, frequency_info));
+    try(deflate_lz_encode(mem, code, llcode, input, stream, frequency_info));
     *result = stream_to_buffer(stream);
     return ok();
 }
@@ -150,7 +150,7 @@ deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *inpu
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockDynamic);
     try(deflate_huffman_dynamic_write(output_code, stream));
-    try(deflate_lzss_recode(mem, llcode, input_code, input, output_code, stream));
+    try(deflate_lz_recode(mem, llcode, input_code, input, output_code, stream));
     *output = stream_to_buffer(stream);
     return ok();
 }
@@ -189,14 +189,14 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
         *result = stored_output;
     }
 
-    // *result = fixed_output;
+    *result = fixed_output;
     // *result = dynamic_output;
-    // *result =stored_output;
+    // *result = stored_output;
     return ok();
 }
 
 static bool deflate_test(void) {
-    Buffer input = str_buf("heeeeeeeeeeeeeeeello hello");
+    Buffer input = str_buf("heeeeeeeeeeeeello hello");
     Memory *mem = mem_new();
 
     fmt_s(fout, "Input:\n");
