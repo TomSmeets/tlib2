@@ -62,12 +62,13 @@ static bool gzip_write(Memory *mem, Buffer input, Buffer *output_buf) {
     stream_write_u8(output, 0);    // flags
     stream_write_u32(output, 0);   // mtime
     stream_write_u8(output, 0);    // xfl
+    stream_write_u8(output, 0);    // OS
     Buffer deflated_buffer = {};
     try(deflate_write(mem, input, &deflated_buffer));
-    stream_write_buffer(output, deflated_buffer);
+    try(stream_write_buffer(output, deflated_buffer));
     stream_write_u32(output, crc_compute(input));
     stream_write_u32(output, input.size);
-    u32 crc_comp = crc_compute(stream_to_buffer(output));
+    u32 crc_comp = crc_compute(input);
     *output_buf = stream_to_buffer(output);
     return ok();
 }
@@ -76,14 +77,33 @@ static bool gzip_test(void) {
     Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");
-        Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-        Buffer output = {};
-        fmt_s(fout, "Input:\n");
-        fmt_hexdump(fout, input);
         fmt_s(fout, "Target:\n");
         fmt_hexdump(fout, target);
+
+        Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
+        fmt_s(fout, "Input:\n");
+        fmt_hexdump(fout, input);
+
+        Buffer output = {};
         try(gzip_read(mem, input, &output));
         fmt_s(fout, "Output:\n");
+        fmt_hexdump(fout, output);
+        try(buf_eq(target, output));
+    }
+
+    {
+        fmt_s(fout, "Target:\n");
+        Buffer target = str_buf("hello hello world hello hello\n");
+        fmt_hexdump(fout, target);
+
+        fmt_s(fout, "Input:\n");
+        Buffer input = {};
+        try(gzip_write(mem, target, &input));
+        fmt_hexdump(fout, input);
+
+        fmt_s(fout, "Output:\n");
+        Buffer output = {};
+        try(gzip_read(mem, input, &output));
         fmt_hexdump(fout, output);
         try(buf_eq(target, output));
     }
