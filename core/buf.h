@@ -90,12 +90,12 @@ static bool buf_eq(Buffer a, Buffer b) {
 
 // Return the first 'size' bytes of the buffer
 static Buffer buf_take(Buffer a, size_t size) {
-    if(size > a.size) size = a.size;
+    if (size > a.size) size = a.size;
     return (Buffer){a.data, size};
 }
 
 // Discard the first 'size' bytes of the buffer, and return the rest
 static Buffer buf_drop(Buffer a, size_t size) {
-    if(size > a.size) size = a.size;
+    if (size > a.size) size = a.size;
     return (Buffer){a.data + size, a.size - size};
 }

@@ -55,8 +55,8 @@ bool os_main2(u32 argc, char **argv) {
         try(input.size);
 
         Buffer output = {};
-        if(compress)   try(gzip_write(mem, input, &output));
-        if(decompress) try(gzip_read(mem, input, &output));
+        if (compress) try(gzip_write(mem, input, &output));
+        if (decompress) try(gzip_read(mem, input, &output));
         try(output.size);
         os_write_full(os_stdout(), output);
         return ok();

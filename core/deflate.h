@@ -134,22 +134,18 @@ typedef struct {
     Deflate_Huffman *encoding;
 } Deflate_Result;
 
-static bool deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Buffer *result, Deflate_Encode_Info *frequency_info) {
+static bool
+deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Buffer *result, Deflate_Encode_Info *frequency_info) {
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockFixed);
     try(deflate_lzss_encode(mem, code, input, stream, frequency_info));
     *result = stream_to_buffer(stream);
     return ok();
-
 }
 
-static bool deflate_write_dynamic(Memory *mem,
-              Deflate_LLCode *llcode,
-              Deflate_Huffman *input_code,
-              Buffer input,
-              Deflate_Huffman *output_code,
-              Buffer *output) {
+static bool
+deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Buffer *output) {
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockDynamic);
@@ -157,7 +153,6 @@ static bool deflate_write_dynamic(Memory *mem,
     try(deflate_lzss_recode(mem, llcode, input_code, input, output_code, stream));
     *output = stream_to_buffer(stream);
     return ok();
-
 }
 
 static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
@@ -186,9 +181,9 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
     Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
     Buffer dynamic_output = {};
     try(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
-    if(result->size > dynamic_output.size) *result = dynamic_output;
+    if (result->size > dynamic_output.size) *result = dynamic_output;
 
-    if(result->size > deflate_calculate_stored_block_size(input.size)) {
+    if (result->size > deflate_calculate_stored_block_size(input.size)) {
         Buffer stored_output = {};
         try(deflate_write_stored(mem, input, &stored_output));
         *result = stored_output;
