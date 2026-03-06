@@ -75,34 +75,30 @@ static bool gzip_test(void) {
     Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");
-        fmt_s(fout, "Target:\n");
-        fmt_hexdump(fout, target);
+        print("Target:\n",target);
 
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-        fmt_s(fout, "Input:\n");
-        fmt_hexdump(fout, input);
+        print("Input:\n",input);
 
         Buffer output = {};
         try(gzip_read(mem, input, &output));
-        fmt_s(fout, "Output:\n");
-        fmt_hexdump(fout, output);
+        print("Output:\n",output);
+
         try(buf_eq(target, output));
     }
 
     {
-        fmt_s(fout, "Target:\n");
         Buffer target = str_buf("hello hello world hello hello\n");
-        fmt_hexdump(fout, target);
+        print("Target:\n", target);
 
-        fmt_s(fout, "Input:\n");
         Buffer input = {};
         try(gzip_write(mem, target, &input));
-        fmt_hexdump(fout, input);
+        print("Input:\n",input);
 
-        fmt_s(fout, "Output:\n");
         Buffer output = {};
         try(gzip_read(mem, input, &output));
-        fmt_hexdump(fout, output);
+        print("Output:\n",output);
+
         try(buf_eq(target, output));
     }
 
@@ -112,8 +108,8 @@ static bool gzip_test(void) {
     Buffer t1_out = {};
     try(gzip_read(mem, t1_in, &t1_out));
     if (0) {
-        fmt_hexdump(fout, t1_target);
-        fmt_hexdump(fout, t1_out);
+        print(t1_target);
+        print(t1_out);
     }
     try(buf_eq(t1_out, t1_target));
 
@@ -131,9 +127,9 @@ static bool gzip_test(void) {
     Buffer t3_out = {};
     try(gzip_read(mem, t3_in, &t3_out));
     if (0) {
-        fmt_hexdump(fout, t3_target);
-        fmt_hexdump(fout, t3_in);
-        fmt_hexdump(fout, t3_out);
+        print(t3_target);
+        print(t3_in);
+        print(t3_out);
     }
     try(buf_eq(t3_out, t3_target));
     return ok();

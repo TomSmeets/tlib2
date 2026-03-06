@@ -196,21 +196,18 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
 }
 
 static bool deflate_test(void) {
-    Buffer input = str_buf("heeeeeeeeeeeeello hello");
     Memory *mem = mem_new();
 
-    fmt_s(fout, "Input:\n");
-    fmt_hexdump(fout, input);
+    Buffer input = str_buf("heeeeeeeeeeeeello hello");
+    print("Input:\n", input);
 
-    fmt_s(fout, "Compressed:\n");
     Buffer compressed = {};
     try(deflate_write(mem, input, &compressed));
-    fmt_hexdump(fout, compressed);
+    print("Compressed:\n", compressed);
 
-    fmt_s(fout, "Decompressed:\n");
     Buffer decompressed = {};
     try(deflate_read(mem, compressed, &decompressed));
-    fmt_hexdump(fout, decompressed);
+    print("Decompressed:\n", decompressed);
 
     try(buf_eq(decompressed, input));
     return ok();
