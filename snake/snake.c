@@ -236,7 +236,7 @@ void os_main(u32 argc, char **argv) {
 
     time_t now = os_time();
     if (!snake) {
-        fmt_s(fout, "Hello World!\n");
+        print("Hello World!");
         Memory *mem = mem_new();
         snake = mem_struct(mem, Snake);
         snake->mem = mem;
@@ -252,10 +252,10 @@ void os_main(u32 argc, char **argv) {
         } else {
             snake_play_sound(snake->pix, 110.0, 0.5, 0, 0.5);
         }
-        fmt_s(fout, "\n");
-        fmt_s(fout, "---- Game Over ----\n");
-        fmt_su(fout, "Score:     ", snake->level->score, "\n");
-        fmt_su(fout, "Highscore: ", snake->high_score, "\n");
+        print("");
+        print("---- Game Over ----");
+        print("Score:     ", snake->level->score);
+        print("Highscore: ", snake->high_score);
         mem_free(snake->level->mem);
         snake->level = snake_level_new(&snake->rand);
     }

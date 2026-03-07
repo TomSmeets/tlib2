@@ -23,7 +23,7 @@ bool os_main2(u32 argc, char **argv) {
     Arg arg = arg_new(argc, argv);
 
     if (arg_match(&arg, "hello", "Print Hello World")) {
-        fmt_s(fout, "Hello World!\n");
+        print("Hello World!");
         return ok();
     }
 
