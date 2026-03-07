@@ -75,7 +75,7 @@ static bool gzip_test(void) {
     Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");
-        print("Target:\n", target);
+        print("Target:", target);
 
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
         print("Input:\n", input);

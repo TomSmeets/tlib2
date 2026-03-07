@@ -58,6 +58,8 @@ static bool deflate_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
 
             // Dynamic blocks store the huffman tree at the beginning of the stream
             if (type == Deflate_BlockDynamic) tree = deflate_huffman_dynamic_read(mem, input);
+
+            // Tree should be valid
             try(tree);
 
             while (1) {

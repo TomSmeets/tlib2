@@ -172,10 +172,7 @@ static bool huffman_tree_test(void) {
         // Debug printing
         for (u32 i = 0; i < array_count(freq_list); ++i) {
             if (!freq_list[i]) continue;
-            fmt_c(fout, i);
-            fmt_s(fout, ": ");
-            fmt_u(fout, freq_list[i]);
-            fmt_s(fout, "\n");
+            print(i, ": ", freq_list[i]);
         }
     }
 
@@ -197,13 +194,10 @@ static bool huffman_tree_test(void) {
 
         if (0) {
             // Debug printing
-            fmt_s(fout, "Len:\n");
+            print("Len:");
             for (u32 i = 0; i < array_count(len_list); ++i) {
                 if (!len_list[i]) continue;
-                fmt_c(fout, i);
-                fmt_s(fout, ": ");
-                fmt_u(fout, len_list[i]);
-                fmt_s(fout, "\n");
+                print(i, ": ", len_list[i]);
             }
         }
         try(len_list['a'] == 1);
@@ -222,13 +216,10 @@ static bool huffman_tree_test(void) {
         try(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
 
         if (0) {
-            fmt_s(fout, "Len:\n");
+            print("Len:");
             for (u32 i = 0; i < array_count(len_list); ++i) {
                 if (!len_list[i]) continue;
-                fmt_c(fout, i);
-                fmt_s(fout, ": ");
-                fmt_u(fout, len_list[i]);
-                fmt_s(fout, "\n");
+                print(i, ": ", len_list[i]);
             }
         }
         try(len_list['a'] == 1);

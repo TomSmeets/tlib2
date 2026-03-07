@@ -13,7 +13,7 @@
 #include "stream.h"
 
 #define TEST(name)                                                                                                                                   \
-    fmt_s(fout, "Running " #name "\n");                                                                                                              \
+    print("Running " #name "\n");                                                                                                                    \
     try(name)
 
 bool test_test(void) {
@@ -31,6 +31,6 @@ bool test_test(void) {
 
 void os_main(u32 argc, char **argv) {
     if (!test_test()) error_exit();
-    fmt_s(fout, "Success!\n");
+    print("Success!");
     os_exit(0);
 }

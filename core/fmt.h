@@ -281,8 +281,10 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 // Use generic!
 // TODO: add fmt_options() so fmt(..., (Opt){.blah}, ...) changes options
 // also add fmt_pad(x) -> helper for creating the opt type
-#define fmt1(F, x)                                                                                                                                   \
-    _Generic((x), char *: fmt_s, size_t: fmt_u, u32: fmt_u, i32: fmt_i, char: fmt_c, Buffer: fmt_hexdump, Fmt_Options: fmt_setopt)(F, x)
+#define fmt1(F, x)                                                                                                                                        \
+    _Generic((x), char *: fmt_s, size_t: fmt_u, u32: fmt_u, i32: fmt_i, u8: fmt_u, i8: fmt_i, char: fmt_c, Buffer: fmt_hexdump, Fmt_Options: fmt_setopt)( \
+        F, x                                                                                                                                              \
+    )
 #define fmt2(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt1(F, __VA_ARGS__))
 #define fmt3(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt2(F, __VA_ARGS__))
 #define fmt4(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt3(F, __VA_ARGS__))
