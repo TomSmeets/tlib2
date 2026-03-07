@@ -66,7 +66,8 @@ static Deflate_Huffman *deflate_huffman_dynamic_create(Memory *mem, Deflate_Enco
 // Read the dynamic huffman table for block type 2 from the input stream
 static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input) {
     u32 length_count = stream_read_bits(input, 5) + 257;
-    assert(length_count <= 288);
+    // NOTE: codes 287 and 288 are invalid
+    assert(length_count <= 286);
 
     u32 distance_count = stream_read_bits(input, 5) + 1;
     assert(distance_count <= 30);
@@ -84,7 +85,7 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
     Huffman_Code *code_tree = huffman_code_from(mem, 19, code_lengths);
 
     u32 count = 0;
-    u8 lengths[288 + 30];
+    u8 lengths[286 + 30];
     while (count < length_count + distance_count) {
         u32 symbol = huffman_code_read(code_tree, input);
         assert(symbol < 19);
@@ -119,8 +120,8 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
 }
 
 static bool deflate_huffman_dynamic_write(Deflate_Huffman *code, Stream *output) {
-    u32 length_count = 288;
-    assert(length_count >= 257 && length_count <= 288);
+    u32 length_count = 286;
+    assert(length_count >= 257 && length_count <= 286);
     stream_write_bits(output, 5, length_count - 257);
 
     u32 distance_count = 30;
