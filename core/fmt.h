@@ -298,7 +298,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 #define fstr(mem, ...)                                                                                                                               \
     ({                                                                                                                                               \
         Fmt *f = fmt_new(mem);                                                                                                                       \
-        fmt12(f, __VA_ARGS__);                                                                                                                        \
+        fmt12(f, __VA_ARGS__);                                                                                                                       \
         fmt_end(f);                                                                                                                                  \
     })
 #define print(...) fmt(fout, __VA_ARGS__), fmt_s(fout, "\n")

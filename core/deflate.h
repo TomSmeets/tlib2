@@ -158,7 +158,7 @@ deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *inpu
 static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
     bool enable_stored = 0;
     bool enable_dynamic = 1;
-    bool enable_fixed   = 0;
+    bool enable_fixed = 0;
     // Idea to reduce memory usage:
     // 1. Encode directly using fixed huffman table, and count freqs directly
     // 3. Re-encode the data using new huffman table
@@ -172,14 +172,14 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
 
     // Length/Distnace Symbol to offset/bit_count mapping
     Deflate_LLCode *llcode = deflate_llcode_new(mem);
-    *result = (Buffer) {};
+    *result = (Buffer){};
 
     // Encode using fixed huffman code and also collect frequency info
     Deflate_Huffman *fixed_code = deflate_huffman_fixed(mem);
     Deflate_Encode_Info frequency_info = {};
     Buffer fixed_output = {};
     try(deflate_write_fixed(mem, llcode, fixed_code, input, &fixed_output, &frequency_info));
-    if(enable_fixed) *result = fixed_output;
+    if (enable_fixed) *result = fixed_output;
 
     if (enable_dynamic) {
         // Re encode with the new huffman table
@@ -189,7 +189,7 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
         if (result->size == 0 || result->size > dynamic_output.size) *result = dynamic_output;
     }
 
-    if (enable_stored && (result->size == 0|| result->size > deflate_calculate_stored_block_size(input.size))) {
+    if (enable_stored && (result->size == 0 || result->size > deflate_calculate_stored_block_size(input.size))) {
         Buffer stored_output = {};
         try(deflate_write_stored(mem, input, &stored_output));
         *result = stored_output;

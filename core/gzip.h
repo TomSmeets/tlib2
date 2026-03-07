@@ -75,14 +75,14 @@ static bool gzip_test(void) {
     Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");
-        print("Target:\n",target);
+        print("Target:\n", target);
 
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
-        print("Input:\n",input);
+        print("Input:\n", input);
 
         Buffer output = {};
         try(gzip_read(mem, input, &output));
-        print("Output:\n",output);
+        print("Output:\n", output);
 
         try(buf_eq(target, output));
     }
@@ -93,11 +93,11 @@ static bool gzip_test(void) {
 
         Buffer input = {};
         try(gzip_write(mem, target, &input));
-        print("Input:\n",input);
+        print("Input:\n", input);
 
         Buffer output = {};
         try(gzip_read(mem, input, &output));
-        print("Output:\n",output);
+        print("Output:\n", output);
 
         try(buf_eq(target, output));
     }
