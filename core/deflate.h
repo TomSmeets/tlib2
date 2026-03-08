@@ -179,6 +179,8 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
 
     // Encode using fixed huffman code and also collect frequency info
     Deflate_Huffman *fixed_code = deflate_huffman_fixed(mem);
+    try(fixed_code);
+
     Deflate_Encode_Info frequency_info = {};
     Buffer fixed_output = {};
     try(deflate_write_fixed(mem, llcode, fixed_code, input, &fixed_output, &frequency_info));
@@ -187,6 +189,8 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
     if (enable_dynamic) {
         // Re encode with the new huffman table
         Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
+        try(dynamic_code);
+
         Buffer dynamic_output = {};
         try(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
         if (result->size == 0 || result->size > dynamic_output.size) *result = dynamic_output;

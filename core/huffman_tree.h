@@ -67,7 +67,7 @@ static Huffman_Tree *huffman_tree_from(Memory *mem, u32 freq_count, u32 *freq_li
     }
 
     // There should be at least one node
-    try(node_count > 0);
+    if(node_count == 0) return 0;
 
     // Where there are more nodes, combine two least frequent nodes
     while (node_count > 1) {
@@ -114,7 +114,9 @@ static Huffman_Tree *huffman_tree_from_length_limited(Memory *mem, u32 count, u3
     for (;;) {
         // Construct huffman tree
         Huffman_Tree *tree = huffman_tree_from(mem, count, freq_list, min_freq);
-        try(tree);
+
+        // Empty tree -> no items
+        if(!tree) return 0;
 
         // Check if max depth was exceeded
         u32 depth = huffman_tree_max_depth(tree);
@@ -148,17 +150,28 @@ static bool _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 
 // Convert a huffman tree to a list of symbol lengths
 // NOTE: the list should be zero initialized and the correct length
 static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_length_list) {
+    // No tree means no nodes, so no bit lengths
+    if (!tree) return ok();
+
+    // Special case, 1 node -> should still have bit length of 1, instead of 0
+    if (tree->is_leaf) {
+        symbol_length_list[tree->symbol] = 1;
+        return ok();
+    }
+
+    // Encode recursively
     return _huffman_tree_to_lengths_at_depth(tree, count, symbol_length_list, 0);
 }
 
 static bool huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list, u32 max_len) {
     Memory *tmp = mem_new();
     Huffman_Tree *tree = huffman_tree_from_length_limited(tmp, count, freq_list, max_len);
+    if(!tree) return ok();
 
     // Construct list of bit lengths
-    bool ret = huffman_tree_to_lengths(tree, count, len_list);
+    try(huffman_tree_to_lengths(tree, count, len_list));
     mem_free(tmp);
-    return ret;
+    return ok();
 }
 
 static bool huffman_tree_test(void) {

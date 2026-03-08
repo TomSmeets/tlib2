@@ -145,7 +145,7 @@ static bool deflate_huffman_dynamic_write(Deflate_Huffman *code, Stream *output)
     u8 code_index[19] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
     u32 code_count = 19;
-    while (code_count > 0) {
+    while (code_count > 4) {
         if (code_len[code_index[code_count - 1]]) break;
         code_count--;
     }
