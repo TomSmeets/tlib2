@@ -13,7 +13,7 @@
 #include "stream.h"
 
 #define TEST(name)                                                                                                                                   \
-    print("Running " #name);                                                                                                                    \
+    print("Running " #name);                                                                                                                         \
     try(name)
 
 bool test_test(void) {

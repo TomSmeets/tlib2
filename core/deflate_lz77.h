@@ -18,7 +18,7 @@ static Buffer buf_find_longest_match(Buffer data, size_t start, size_t max_dista
         match_size = len;
         match_index = j;
         // max length
-        if(len >= 258) break;
+        if (len >= 258) break;
     }
     return (Buffer){data.data + match_index, match_size};
 }

@@ -71,7 +71,6 @@ static bool gzip_write(Memory *mem, Buffer input, Buffer *output_buf) {
     return ok();
 }
 
-
 // Run a deflate/inflate testcase with a given input
 static bool gzip_test_buf(Memory *mem, Buffer input) {
     print("Input:\n", input);

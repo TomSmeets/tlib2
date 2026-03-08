@@ -242,7 +242,7 @@ static u32 u32_log2_ceil(u32 x) {
 static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
     // Ensure we print something when no data is passed
     size_t data_size = MAX(data.size, 1);
-    
+
     // Calculate address padding
     u32 pad = 0;
     while (data_size >> pad * 4) pad += 4;
