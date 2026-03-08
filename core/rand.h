@@ -2,6 +2,7 @@
 // rand.h - 32 bit PCG random number generator
 #pragma once
 #include "math.h"
+#include "buf.h"
 #include "type.h"
 
 typedef struct {
@@ -53,4 +54,11 @@ static i32 rand_i32(Rand *rand, i32 min, i32 max) {
 // chance = 1 -> Always
 static bool rand_choice(Rand *rand, f32 chance) {
     return rand_f32(rand, 0, 1) < chance;
+}
+
+// Fill buffer with random bytes
+static void rand_bytes(Rand *rand, Buffer buffer) {
+    for (size_t i = 0; i < buffer.size; ++i) {
+        buffer.data[i] = rand_next(rand);
+    }
 }

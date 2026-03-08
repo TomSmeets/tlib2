@@ -9,6 +9,7 @@
 #include "mem.h"
 #include "os.h"
 #include "stream.h"
+#include "rand.h"
 #include "type.h"
 
 // Deflate block types (2 bit value)
@@ -158,9 +159,9 @@ deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *inpu
 }
 
 static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
-    bool enable_stored = 0;
+    bool enable_stored = 1;
     bool enable_dynamic = 1;
-    bool enable_fixed = 0;
+    bool enable_fixed = 1;
     // Idea to reduce memory usage:
     // 1. Encode directly using fixed huffman table, and count freqs directly
     // 3. Re-encode the data using new huffman table
@@ -200,10 +201,8 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
     return ok();
 }
 
-static bool deflate_test(void) {
-    Memory *mem = mem_new();
-
-    Buffer input = str_buf("heeeeeeeeeeeeello hello");
+// Run a deflate/inflate testcase with a given input
+static bool deflate_test_buf(Memory *mem, Buffer input) {
     print("Input:\n", input);
 
     Buffer compressed = {};
@@ -215,5 +214,32 @@ static bool deflate_test(void) {
     print("Decompressed:\n", decompressed);
 
     try(buf_eq(decompressed, input));
+    return ok();
+}
+
+static bool deflate_test(void) {
+    {
+        Memory *mem = mem_new();
+        try(deflate_test_buf(mem, str_buf("heeeeeeeeeeeeello hello")));
+        try(deflate_test_buf(mem, str_buf("Hello World!")));
+        try(deflate_test_buf(mem, str_buf("1234567")));
+        try(deflate_test_buf(mem, str_buf("")));
+        try(deflate_test_buf(mem, str_buf("0")));
+        try(deflate_test_buf(mem, str_buf("0000000000000000")));
+        try(deflate_test_buf(mem, str_buf("0000000000000001")));
+        try(deflate_test_buf(mem, str_buf("1000000000000001")));
+        mem_free(mem);
+    }
+
+    Rand rng = {};
+    for (u32 i = 0; i < 16; ++i) {
+        Memory *mem = mem_new();
+        size_t input_size = 1 << i;
+        Buffer input = {mem_alloc_zero(mem, input_size), input_size};
+        try(deflate_test_buf(mem, input));
+        rand_bytes(&rng, input);
+        try(deflate_test_buf(mem, input));
+        mem_free(mem);
+    }
     return ok();
 }
