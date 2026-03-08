@@ -71,11 +71,28 @@ static bool gzip_write(Memory *mem, Buffer input, Buffer *output_buf) {
     return ok();
 }
 
+
+// Run a deflate/inflate testcase with a given input
+static bool gzip_test_buf(Memory *mem, Buffer input) {
+    print("Input:\n", input);
+
+    Buffer compressed = {};
+    try(gzip_write(mem, input, &compressed));
+    print("Compressed:\n", compressed);
+
+    Buffer decompressed = {};
+    try(gzip_read(mem, compressed, &decompressed));
+    print("Decompressed:\n", decompressed);
+
+    try(buf_eq(decompressed, input));
+    return ok();
+}
+
 static bool gzip_test(void) {
     Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");
-        print("Target:", target);
+        print("Target:\n", target);
 
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
         print("Input:\n", input);

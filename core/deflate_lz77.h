@@ -5,17 +5,20 @@
 #include "deflate_llcode.h"
 
 // Find index into data containing the prefix sequence of key
-static Buffer buf_find_longest_match(Buffer data, size_t start, size_t max_size) {
+static Buffer buf_find_longest_match(Buffer data, size_t start, size_t max_distance) {
     size_t match_index = 0;
     size_t match_size = 0;
-    if (max_size > start) max_size = start;
+    if (max_distance > start) max_distance = start;
     Buffer a = buf_drop(data, start);
-    for (size_t i = start - max_size; i < start; ++i) {
-        Buffer b = buf_drop(data, i);
+    for (size_t i = 0; i < max_distance; ++i) {
+        size_t j = start - i - 1;
+        Buffer b = buf_drop(data, j);
         size_t len = buf_match_len(a, b);
-        if (len < match_size) continue;
+        if (len <= match_size) continue;
         match_size = len;
-        match_index = i;
+        match_index = j;
+        // max length
+        if(len >= 258) break;
     }
     return (Buffer){data.data + match_index, match_size};
 }
@@ -25,6 +28,7 @@ static bool deflate_llcode_length_write(Stream *out, Deflate_Huffman *tree, Defl
         u32 start = code->length_offset[i];
         u32 bits = code->length_bits[i];
         u32 count = 1 << bits;
+        if (i == 27) count--;
         if (length >= start && length < start + count) {
             u32 symbol = i + 257;
             if (info) info->length_freq[symbol]++;
@@ -69,7 +73,7 @@ deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer
             // LZ77 sequence
             u32 match_distance = input.data - match.data + i;
             u32 match_len = match.size;
-            u32 max_len = (1 << 15) - 1; // TODO: is this correct?
+            u32 max_len = 258;
             if (match_len > max_len) match_len = max_len;
             try(deflate_llcode_length_write(output_stream, code, ll, match_len, info));
             try(deflate_llcode_distance_write(output_stream, code, ll, match_distance, info));

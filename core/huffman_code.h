@@ -102,7 +102,6 @@ static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
 static bool huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) {
     try(symbol < array_count(table->symbol_len));
     u32 len = table->symbol_len[symbol];
-    print(symbol);
     try(len > 0);
 
     u32 code = table->symbol_code[symbol];

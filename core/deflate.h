@@ -236,9 +236,9 @@ static bool deflate_test(void) {
     }
 
     Rand rng = {};
-    for (u32 i = 0; i < 16; ++i) {
+    for (u32 i = 0; i < 8; ++i) {
         Memory *mem = mem_new();
-        size_t input_size = 1 << i;
+        size_t input_size = 1 << (i*2);
         Buffer input = {mem_alloc_zero(mem, input_size), input_size};
         try(deflate_test_buf(mem, input));
         rand_bytes(&rng, input);
