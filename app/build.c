@@ -168,6 +168,7 @@ static void build_test(Arg *arg) {
 
     char *include[] = {"core", "elf", 0};
     clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test");
+    clang_compile(Platform_Linux, Mode_Debug, include, "app/fuzz.c", "out/fuzz");
     if (build) os_exit(0);
 
     if (gdb) {
@@ -175,6 +176,10 @@ static void build_test(Arg *arg) {
     } else {
         os_exit(os_system("out/test"));
     }
+}
+static void build_fuzz(Arg *arg) {
+    char *include[] = {"core", "elf", 0};
+    os_exit(os_system("clang -Icore -Ielf -g -O2 -fsanitize=fuzzer app/fuzz.c -o out/fuzz && out/fuzz"));
 }
 
 static void generate_lsp(Arg *arg) {
@@ -220,6 +225,12 @@ void os_main(u32 argc, char **argv) {
 
     if (arg_match(&arg, "test", "Run Automated Tests")) {
         build_test(&arg);
+        os_exit(0);
+        return;
+    }
+
+    if (arg_match(&arg, "fuzz", "Run Fuzzy tests")) {
+        build_fuzz(&arg);
         os_exit(0);
         return;
     }

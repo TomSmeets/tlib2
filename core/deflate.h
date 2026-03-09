@@ -207,15 +207,15 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
 
 // Run a deflate/inflate testcase with a given input
 static bool deflate_test_buf(Memory *mem, Buffer input) {
-    print("Input:\n", input);
+    // print("Input:\n", input);
 
     Buffer compressed = {};
     try(deflate_write(mem, input, &compressed));
-    print("Compressed:\n", compressed);
+    // print("Compressed:\n", compressed);
 
     Buffer decompressed = {};
     try(deflate_read(mem, compressed, &decompressed));
-    print("Decompressed:\n", decompressed);
+    // print("Decompressed:\n", decompressed);
 
     try(buf_eq(decompressed, input));
     return ok();

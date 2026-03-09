@@ -32,6 +32,7 @@ static void os_exit(i32 status) {
 // - Does not return
 static void os_fail(char *message) {
     linux_write(2, message, str_len(message));
+    __builtin_trap();
     os_exit(1);
 }
 
