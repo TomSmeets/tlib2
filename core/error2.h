@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// error2.h - Assert like error handling without crashing
 #pragma once
 #include "error.h"
 #include "os.h"

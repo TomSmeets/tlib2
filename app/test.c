@@ -7,6 +7,7 @@
 #include "error2.h"
 #include "fmt.h"
 #include "gzip.h"
+#include "hot.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "os.h"
