@@ -152,7 +152,7 @@ deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *inpu
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockDynamic);
-    try(deflate_huffman_dynamic_write(output_code, stream));
+    try(deflate_huffman_dynamic_write(mem, output_code, stream));
     try(deflate_lz_recode(mem, llcode, input_code, input, output_code, stream));
     *output = stream_to_buffer(stream);
     return ok();

@@ -166,12 +166,15 @@ static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_le
 static bool huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list, u32 max_len) {
     Memory *tmp = mem_new();
     Huffman_Tree *tree = huffman_tree_from_length_limited(tmp, count, freq_list, max_len);
-    if (!tree) return ok();
+    if (!tree) {
+        mem_free(tmp);
+        return ok();
+    }
 
     // Construct list of bit lengths
-    try(huffman_tree_to_lengths(tree, count, len_list));
+    bool ret = huffman_tree_to_lengths(tree, count, len_list);
     mem_free(tmp);
-    return ok();
+    return ret;
 }
 
 static bool huffman_tree_test(void) {

@@ -119,7 +119,7 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
     return huffman;
 }
 
-static bool deflate_huffman_dynamic_write(Deflate_Huffman *code, Stream *output) {
+static bool deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, Stream *output) {
     u32 length_count = 286;
     try(length_count >= 257 && length_count <= 286);
     stream_write_bits(output, 5, length_count - 257);
@@ -134,11 +134,9 @@ static bool deflate_huffman_dynamic_write(Deflate_Huffman *code, Stream *output)
     for (u32 i = 0; i < length_count; ++i) code_freq[code->length->symbol_len[i]]++;
     for (u32 i = 0; i < distance_count; ++i) code_freq[code->distance->symbol_len[i]]++;
 
-    Memory *tmp = mem_new();
-
     u8 code_len[19] = {};
     try(huffman_tree_freq_to_lengths(array_count(code_freq), code_freq, code_len, 7));
-    Huffman_Code *code_tree = huffman_code_from(tmp, array_count(code_len), code_len);
+    Huffman_Code *code_tree = huffman_code_from(mem, array_count(code_len), code_len);
     try(code_tree);
 
     // Count codes
@@ -164,6 +162,5 @@ static bool deflate_huffman_dynamic_write(Deflate_Huffman *code, Stream *output)
     for (u32 i = 0; i < distance_count; ++i) {
         try(huffman_code_write(code_tree, output, code->distance->symbol_len[i]));
     }
-    mem_free(tmp);
     return ok();
 }
