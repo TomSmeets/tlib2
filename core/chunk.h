@@ -18,6 +18,7 @@ struct Chunk_Freelist {
 #define CHUNK_SIZE_MIN ((size_t)1 << CHUNK_CLASS_MIN)
 #define CHUNK_SIZE_MAX ((size_t)1 << CHUNK_CLASS_MAX)
 static Chunk_Freelist *chunk_cache[CHUNK_CLASS_MAX - CHUNK_CLASS_MIN];
+static size_t chunk_alloc_size;
 
 typedef struct {
     size_t size;
@@ -48,6 +49,7 @@ static Chunk_Class chunk_class(size_t size) {
 static Buffer chunk_alloc(size_t size) {
     Chunk_Class class = chunk_class(size);
     Chunk_Freelist *cached_chunk = *class.cache;
+    chunk_alloc_size += class.size;
 
     // Allocate new memory when no cached chunk is found
     if (!cached_chunk) {
@@ -62,6 +64,7 @@ static Buffer chunk_alloc(size_t size) {
 
 static void chunk_free(void *data, size_t size) {
     Chunk_Class class = chunk_class(size);
+    chunk_alloc_size -= class.size;
 
     // Add chunk to cache
     Chunk_Freelist *chunk = data;

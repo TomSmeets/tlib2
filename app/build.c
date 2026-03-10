@@ -168,7 +168,6 @@ static void build_test(Arg *arg) {
 
     char *include[] = {"core", "elf", 0};
     clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test");
-    clang_compile(Platform_Linux, Mode_Debug, include, "app/fuzz.c", "out/fuzz");
     if (build) os_exit(0);
 
     if (gdb) {
@@ -179,7 +178,7 @@ static void build_test(Arg *arg) {
 }
 static void build_fuzz(Arg *arg) {
     char *include[] = {"core", "elf", 0};
-    os_exit(os_system("clang -Icore -Ielf -g -O2 -fsanitize=fuzzer app/fuzz.c -o out/fuzz && out/fuzz"));
+    os_exit(os_system("clang -Icore -Ielf -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz"));
 }
 
 static void generate_lsp(Arg *arg) {
