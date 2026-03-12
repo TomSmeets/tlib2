@@ -30,26 +30,13 @@ Ideas:
 - no sub dirs, only single files, but generate a nice table like below
 - To use Just copy those files where you want
 
-
 Constness:
 - const char *
 
 ## Contents
 
-TODO: Generate this table based on file headers
-
-
-| File     | Description                                  | Depends  |
-|----------|----------------------------------------------|----------|
-| type     | Basic Types                                  | -        |
-| str      | String helpers                               | type     |
-| linux    | Linux syscalls and Types                     | type     |
-| os_api   | Basic interface for talking to an OS         | type     |
-| os_linux | OS API implementation for Linux              | os_api   |
-| os       | OS API implementations                       | os_linux |
-| chunk    | Memory allocator for big power-of-two chunks | os       |
-| mem      | Memory allocator                             | chunk    |
-| fmt      | Text Formatter                               | mem      |
-| elf      | ELF file parser                              | os       |
-| hot      | Hot reloading building blocks                | elf      |
-| dwarf    | DWARF Debug symbol parser                    | elf      |
+- app: Small single source file applications
+- core: Core functionality
+- elf: Reading/writing elf files and Dwarf
+- gfx: 2d and 3d graphics and game engine
+- snake: A sample snake game

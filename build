@@ -1,5 +1,5 @@
 #!/bin/bash
 set -euo pipefail
 mkdir -p out
-clang -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -std=c23 -O0 -g -Icore -Ielf -o out/build app/build.c
+clang -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -std=c23 -O0 -g -Isrc -o out/build src/build.c
 exec -a "$0" out/build "$@"
