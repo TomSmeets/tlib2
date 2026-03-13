@@ -6,46 +6,36 @@
 #include "command.h"
 #include "fmt.h"
 
-static void fmt_file_contents(Fmt *fmt, char *input_path) {
-    Memory *mem = mem_new();
-    Buffer data = {};
-    os_read_file(mem, input_path, &data);
-    fmt_buf(fmt, data);
-    mem_free(mem);
-}
-
 // Generate self contained html page continaing wasm module
 static bool generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
-    u8 buffer[1024 * 4];
-    Fmt f = fmt_from(buffer, sizeof(buffer));
-    f.file = os_open(output_path, FileMode_Create);
-
-    fmt_s(&f, "<!DOCTYPE html>\n");
-    fmt_s(&f, "<head>\n");
-    if (css_path) {
-        fmt_s(&f, "<style>\n");
-        fmt_file_contents(&f, css_path);
-        fmt_s(&f, "</style>\n");
-    }
-
-    fmt_s(&f, "<script>\n");
-    for (u32 i = 0; js_path_list[i]; ++i) {
-        fmt_file_contents(&f, js_path_list[i]);
-    }
-    fmt_s(&f, "tlib.main(Uint8Array.fromBase64(\"");
     Memory *mem = mem_new();
+
+    Fmt *f = fmt_new(mem);
+    fmt(f, "<!DOCTYPE html>\n");
+    fmt(f, "<head>\n");
+    if (css_path) {
+        fmt(f, "<style>\n");
+        fmt(f, os_read_file_string(mem, css_path));
+        fmt(f, "</style>\n");
+    }
+
+    fmt(f, "<script>\n");
+    for (u32 i = 0; js_path_list[i]; ++i) {
+        fmt(f, os_read_file_string(mem, js_path_list[i]));
+    }
+    fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
     Buffer buf = {};
     try(os_read_file(mem, wasm_path, &buf));
-    fmt_buf(&f, base64_encode(mem, buf));
+    fmt_buf(f, base64_encode(mem, buf));
     mem_free(mem);
-    fmt_s(&f, "\"));\n");
-    fmt_s(&f, "</script>\n");
-    fmt_s(&f, "</head>\n");
-    fmt_s(&f, "<body>\n");
-    fmt_file_contents(&f, html_path);
-    fmt_s(&f, "</body>\n");
-    fmt_end(&f);
-    os_close(f.file);
+    fmt(f, "\"));\n");
+    fmt(f, "</script>\n");
+
+    fmt(f, "</head>\n");
+    fmt(f, "<body>\n");
+    fmt(f, os_read_file_string(mem, html_path));
+    fmt(f, "</body>\n");
+    os_write_file(output_path, str_buf(fmt_end(f)));
     return ok();
 }
 

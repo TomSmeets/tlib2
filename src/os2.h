@@ -22,7 +22,8 @@ static bool os_read_file(Memory *mem, char *path, Buffer *result) {
     try(os_stat(path, &info));
 
     File *fd = os_open(path, FileMode_Read);
-    u8 *file_data = mem_array(mem, u8, info.size);
+    u8 *file_data = mem_array(mem, u8, info.size + 1);
+    file_data[info.size] = 0;
     u64 bytes_read = 0;
     try(os_read(fd, file_data, info.size, &bytes_read));
     try(bytes_read == info.size);
@@ -31,6 +32,12 @@ static bool os_read_file(Memory *mem, char *path, Buffer *result) {
     result->size = info.size;
     result->data = file_data;
     return ok();
+}
+
+static char *os_read_file_string(Memory *mem, char *path) {
+    Buffer buf = {};
+    try(os_read_file(mem, path, &buf));
+    return (char *)buf.data;
 }
 
 static bool os_write_file(char *path, Buffer input) {
