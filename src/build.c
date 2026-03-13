@@ -1,99 +1,21 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
-// build2.c - Makefile but in C
+// build.c - Makefile but in C
 #include "arg.h"
 #include "base64.h"
 #include "command.h"
+#include "build.h"
 #include "fmt.h"
-
-typedef enum {
-    Platform_Windows,
-    Platform_Linux,
-    Platform_WASM,
-} Platform;
-
-typedef enum {
-    Mode_Debug,
-    Mode_Release,
-} Mode;
-
-static Command clang_compile_command(Platform platform, Mode mode, char **include, char *input, char *output) {
-    Command cmd = {};
-    cmd_arg(&cmd, "clang");
-
-    // Enforce C23 standard
-    cmd_arg(&cmd, "-std=c23");
-
-    // Warn flags
-    cmd_arg(&cmd, "-Wall");
-    cmd_arg(&cmd, "-Werror");
-    cmd_arg(&cmd, "-Wno-unused-function");
-    cmd_arg(&cmd, "-Wno-unused-variable");
-    cmd_arg(&cmd, "-Wno-unused-but-set-variable");
-
-    // Mode
-    if (mode == Mode_Debug) {
-        cmd_arg(&cmd, "-g");
-        cmd_arg(&cmd, "-O0");
-    }
-
-    if (mode == Mode_Release) {
-        cmd_arg(&cmd, "-g0");
-        cmd_arg(&cmd, "-O2");
-        cmd_arg2(&cmd, "-Xlinker", "--strip-all");
-    }
-
-    if (platform == Platform_Windows) {
-        cmd_arg2(&cmd, "-target", "x86_64-unknown-windows-gnu");
-    }
-
-    if (platform == Platform_WASM) {
-        cmd_arg2(&cmd, "-target", "wasm32");
-        cmd_arg(&cmd, "--no-standard-libraries");
-        cmd_arg(&cmd, "-Wl,--no-entry");
-        cmd_arg(&cmd, "-Wl,--export-all");
-        cmd_arg(&cmd, "-fno-builtin");
-        cmd_arg(&cmd, "-msimd128");
-    }
-
-    cmd_arg2(&cmd, "-o", output);
-    for (u32 i = 0; include[i]; ++i) {
-        cmd_arg2(&cmd, "-I", include[i]);
-    }
-    cmd_arg(&cmd, input);
-    return cmd;
-}
-
-static void clang_compile(Platform platform, Mode mode, char **include, char *input, char *output) {
-    Command cmd = clang_compile_command(platform, mode, include, input, output);
-    fmt_cmd(fout, &cmd);
-    fmt_s(fout, "\n");
-    i32 ret = os_wait(os_exec(cmd.argv));
-    if (ret != 0) os_exit(ret);
-}
-
-// Read entire file into memory
-static Buffer os_read_file(Memory *mem, char *path) {
-    FileInfo info = {};
-    assert(os_stat(path, &info));
-
-    File *fd = os_open(path, FileMode_Read);
-    u8 *file_data = mem_array(mem, u8, info.size);
-    u64 bytes_read = 0;
-    assert(os_read(fd, file_data, info.size, &bytes_read));
-    assert(bytes_read == info.size);
-    assert(os_close(fd));
-    return (Buffer){file_data, info.size};
-}
 
 static void fmt_file_contents(Fmt *fmt, char *input_path) {
     Memory *mem = mem_new();
-    Buffer data = os_read_file(mem, input_path);
+    Buffer data= {};
+    os_read_file(mem, input_path, &data);
     fmt_buf(fmt, data);
     mem_free(mem);
 }
 
 // Generate self contained html page continaing wasm module
-static void generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
+static bool generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
     u8 buffer[1024 * 4];
     Fmt f = fmt_from(buffer, sizeof(buffer));
     f.file = os_open(output_path, FileMode_Create);
@@ -112,18 +34,19 @@ static void generate_html(char *output_path, char *css_path, char **js_path_list
     }
     fmt_s(&f, "tlib.main(Uint8Array.fromBase64(\"");
     Memory *mem = mem_new();
-    Buffer buf = os_read_file(mem, wasm_path);
-    fmt_buf(&f, base64_encode(mem, os_read_file(mem, wasm_path)));
+    Buffer buf = {};
+    try(os_read_file(mem, wasm_path, &buf));
+    fmt_buf(&f, base64_encode(mem, buf));
     mem_free(mem);
     fmt_s(&f, "\"));\n");
     fmt_s(&f, "</script>\n");
-
     fmt_s(&f, "</head>\n");
     fmt_s(&f, "<body>\n");
     fmt_file_contents(&f, html_path);
     fmt_s(&f, "</body>\n");
     fmt_end(&f);
     os_close(f.file);
+    return ok();
 }
 
 static void build_snake(Arg *arg) {
@@ -133,19 +56,18 @@ static void build_snake(Arg *arg) {
     arg_help_opt(arg);
 
     os_system("mkdir -p out/snake");
-    Mode mode = Mode_Debug;
+    Build_Mode mode = Mode_Debug;
     if (release) mode = Mode_Release;
 
-    char *include[] = {"core", "gfx", 0};
-    clang_compile(Platform_Linux, mode, include, "snake/snake.c", "out/snake/snake.elf");
+    build_compile(Platform_Linux, mode, "snake/snake.c", "out/snake/snake.elf");
 
     if (run) os_exit(os_system("out/snake/snake.elf"));
     if (quick) return;
-    clang_compile(Platform_Windows, mode, include, "snake/snake.c", "out/snake/snake.exe");
-    clang_compile(Platform_WASM, mode, include, "snake/snake.c", "out/snake/snake.wasm");
+    build_compile(Platform_Windows, mode, "snake/snake.c", "out/snake/snake.exe");
+    build_compile(Platform_WASM, mode, "snake/snake.c", "out/snake/snake.wasm");
 
     // Generate html page
-    char *js_path[] = {"core/os_wasm.js", "gfx/pix_wasm.js", 0};
+    char *js_path[] = {"src/os_wasm.js", "src/pix_wasm.js", 0};
     char *css_path = "snake/snake.css";
     char *wasm_path = "out/snake/snake.wasm";
     char *html_path = "snake/snake.html";
@@ -157,8 +79,7 @@ static void build_snake(Arg *arg) {
 
 static void build_tl(Arg *arg) {
     os_system("mkdir -p out/tl");
-    char *include[] = {"core", 0};
-    clang_compile(Platform_Linux, Mode_Debug, include, "app/tl.c", "out/tl/tl");
+    build_compile(Platform_Linux, Mode_Debug, "src/tl.c", "out/tl/tl");
 }
 
 static void build_test(Arg *arg) {
@@ -166,8 +87,7 @@ static void build_test(Arg *arg) {
     bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
-    char *include[] = {"core", "elf", 0};
-    clang_compile(Platform_Linux, Mode_Debug, include, "app/test.c", "out/test");
+    build_compile(Platform_Linux, Mode_Debug,  "src/test.c", "out/test");
     if (build) os_exit(0);
 
     if (gdb) {
@@ -177,20 +97,18 @@ static void build_test(Arg *arg) {
     }
 }
 static void build_fuzz(Arg *arg) {
-    char *include[] = {"core", "elf", 0};
-    os_exit(os_system("clang -Icore -Ielf -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz"));
+    os_exit(os_system("clang -Isrc -g -O2 -fsanitize=fuzzer,address src/fuzz.c -o out/fuzz && out/fuzz"));
 }
 
 static void generate_lsp(Arg *arg) {
-    char *include[] = {"core", "gfx", 0};
     bool windows = arg_match(arg, "windows", "Generate for cross compiling to Windows");
     bool wasm = arg_match(arg, "wasm", "Generate for cross compiling to WASM");
     arg_help_opt(arg);
 
-    Platform platform = Platform_Linux;
+    Build_Platform platform = Platform_Linux;
     if (windows) platform = Platform_Windows;
     if (wasm) platform = Platform_WASM;
-    Command cmd = clang_compile_command(platform, Mode_Debug, include, "main.c", "out/main.elf");
+    Command cmd = build_compile_command(platform, Mode_Debug, "main.c", "out/main.elf");
 
     char cwd[1024];
     assert(linux_getcwd(cwd, sizeof(cwd)) > 0);
