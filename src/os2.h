@@ -1,9 +1,9 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // os2.h - Extra OS functions
 #pragma once
-#include "os.h"
-#include "mem.h"
 #include "error.h"
+#include "mem.h"
+#include "os.h"
 
 #if OS_LINUX
 static char *os_cwd(Memory *mem) {
@@ -33,7 +33,6 @@ static bool os_read_file(Memory *mem, char *path, Buffer *result) {
     return ok();
 }
 
-
 static bool os_write_file(char *path, Buffer input) {
     File *fd = os_open(path, FileMode_Create);
     size_t bytes_written = 0;
@@ -42,4 +41,3 @@ static bool os_write_file(char *path, Buffer input) {
     try(os_close(fd));
     return ok();
 }
-

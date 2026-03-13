@@ -1,14 +1,14 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // build.c - Makefile but in C
+#include "build.h"
 #include "arg.h"
 #include "base64.h"
 #include "command.h"
-#include "build.h"
 #include "fmt.h"
 
 static void fmt_file_contents(Fmt *fmt, char *input_path) {
     Memory *mem = mem_new();
-    Buffer data= {};
+    Buffer data = {};
     os_read_file(mem, input_path, &data);
     fmt_buf(fmt, data);
     mem_free(mem);
@@ -87,7 +87,7 @@ static void build_test(Arg *arg) {
     bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
-    build_compile(Platform_Linux, Mode_Debug,  "src/test.c", "out/test");
+    build_compile(Platform_Linux, Mode_Debug, "src/test.c", "out/test");
     if (build) os_exit(0);
 
     if (gdb) {

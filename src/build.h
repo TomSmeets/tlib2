@@ -74,7 +74,6 @@ static bool build_compile(Build_Platform platform, Build_Mode mode, char *input,
     return ok();
 }
 
-
 static bool build_lsp(Build_Platform platform, char *output) {
     Memory *mem = mem_new();
     Command cmd = build_compile_command(platform, Mode_Debug, "main.c", "out/main.elf");
