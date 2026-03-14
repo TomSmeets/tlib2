@@ -1,6 +1,7 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // build.h - Helpers for compiling and packaging tlib applications
 #pragma once
+#include "base64.h"
 #include "command.h"
 #include "os2.h"
 
@@ -90,5 +91,38 @@ static bool build_lsp(Build_Platform platform, char *output) {
     fmt(fmt, "}]");
     char *out = fmt_end(fmt);
     os_write_file("compile_commands.json", str_buf(out));
+    return ok();
+}
+
+// Generate self contained html page containing wasm module
+static bool generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
+    Memory *mem = mem_new();
+
+    Fmt *f = fmt_new(mem);
+    fmt(f, "<!DOCTYPE html>\n");
+    fmt(f, "<head>\n");
+    if (css_path) {
+        fmt(f, "<style>\n");
+        fmt(f, os_read_file_string(mem, css_path));
+        fmt(f, "</style>\n");
+    }
+
+    fmt(f, "<script>\n");
+    for (u32 i = 0; js_path_list[i]; ++i) {
+        fmt(f, os_read_file_string(mem, js_path_list[i]));
+    }
+    fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
+    Buffer buf = {};
+    try(os_read_file(mem, wasm_path, &buf));
+    fmt_buf(f, base64_encode(mem, buf));
+    mem_free(mem);
+    fmt(f, "\"));\n");
+    fmt(f, "</script>\n");
+
+    fmt(f, "</head>\n");
+    fmt(f, "<body>\n");
+    fmt(f, os_read_file_string(mem, html_path));
+    fmt(f, "</body>\n");
+    os_write_file(output_path, str_buf(fmt_end(f)));
     return ok();
 }
