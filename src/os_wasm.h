@@ -122,9 +122,9 @@ static u64 os_rand(void) {
     return os_time();
 }
 
-WASM_IMPORT(wasm_eval) i32 wasm_eval(char *code);
+WASM_IMPORT(wasm_system) i32 wasm_system(char *code, u32 len);
 static i32 os_system(char *command) {
-    return wasm_eval(command);
+    return wasm_system(command, str_len(command));
 }
 
 static Process *os_exec(char **argv) {

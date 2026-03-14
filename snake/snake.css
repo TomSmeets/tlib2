@@ -4,7 +4,7 @@ html,body {
     overflow: hidden;
     background-color: #cccccc;
 }
-canvas {
+canvas, table {
     background-color: #cccccc;
     image-rendering: pixelated;
     padding-left: 0;
@@ -14,3 +14,9 @@ canvas {
     display: block;
     width: 800px;
 }
+
+table, th, td {
+    border-collapse: collapse;
+}
+
+th, td { padding: 8px; width: 100px; background-color: white; }

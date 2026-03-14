@@ -7,6 +7,10 @@
 #include "sound.h"
 #include "vec.h"
 
+#if OS_WASM
+WASM_IMPORT(snake_update) void snake_update(u32 score, u32 higscore);
+#endif
+
 static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
     Memory *tmp = mem_new();
 
@@ -311,5 +315,10 @@ void os_main(u32 argc, char **argv) {
 
     time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
     time_t diff = now + delay - os_time();
+
+#if OS_WASM
+    snake_update(snake->level->score, snake->high_score);
+#endif
+
     os_sleep(diff);
 }

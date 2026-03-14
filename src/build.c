@@ -57,7 +57,7 @@ static void build_snake(Arg *arg) {
     build_compile(Platform_WASM, mode, "snake/snake.c", "out/snake/snake.wasm");
 
     // Generate html page
-    char *js_path[] = {"src/os_wasm.js", "src/pix_wasm.js", 0};
+    char *js_path[] = {"src/os_wasm.js", "src/pix_wasm.js", "snake/snake.js", 0};
     char *css_path = "snake/snake.css";
     char *wasm_path = "out/snake/snake.wasm";
     char *html_path = "snake/snake.html";

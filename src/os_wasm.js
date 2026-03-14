@@ -73,7 +73,13 @@ tlib.export.wasm_sleep = (duration) => {
     tlib.next_sleep = duration
 }
 
-tlib.export.wasm_system = (command) => {
+tlib.export.wasm_system = (command_ptr, len) => {
+    // data is a pointer in wasm memory
+    var bytes = new Uint8Array(tlib.memory.buffer, command_ptr, len)
+
+    // Convert utf8 bytes array to a js string
+    var command = new TextDecoder('utf8').decode(bytes)
+
     try {
         eval(command) 
     } catch (e) {
