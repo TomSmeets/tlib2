@@ -8,7 +8,7 @@
 #include "vec.h"
 
 #if OS_WASM
-WASM_IMPORT(snake_update) void snake_update(u32 score, u32 higscore);
+WASM_IMPORT(snake_update) void snake_update(u32 score, u32 highscore);
 #endif
 
 static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
@@ -275,10 +275,10 @@ void os_main(u32 argc, char **argv) {
         if (in.type == InputEvent_Quit) os_exit(0);
         if (in.type == InputEvent_KeyDown) {
             v2i dir = {};
-            if (in.key_down == Key_W) dir.y = -1;
-            if (in.key_down == Key_S) dir.y = +1;
-            if (in.key_down == Key_A) dir.x = -1;
-            if (in.key_down == Key_D) dir.x = +1;
+            if (in.key_down == Key_W || in.key_down == Key_Up) dir.y = -1;
+            if (in.key_down == Key_S || in.key_down == Key_Down) dir.y = +1;
+            if (in.key_down == Key_A || in.key_down == Key_Left) dir.x = -1;
+            if (in.key_down == Key_D || in.key_down == Key_Right) dir.x = +1;
 
             if ((can_move_x && dir.x) || (can_move_y && dir.y)) {
                 level->next_dir = dir;

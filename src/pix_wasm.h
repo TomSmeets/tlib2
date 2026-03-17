@@ -74,6 +74,10 @@ static void pix_play(Pix *pix, u32 sample_count, Pix_Audio_Sample *samples) {
 }
 
 static Key key_from_char(u32 key) {
+    if (key == 37) return Key_Left;
+    if (key == 38) return Key_Up;
+    if (key == 39) return Key_Right;
+    if (key == 40) return Key_Down;
     if (key >= 'a' && key <= 'z') return key - 'a' + Key_A;
     if (key >= 'A' && key <= 'Z') return key - 'A' + Key_A;
     if (key >= '0' && key <= '9') return key - '0' + Key_0;
