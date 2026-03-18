@@ -1,7 +1,7 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // snake_build.h - Makefile for snake
-#include "arg.h"
 #include "build.h"
+#include "arg.h"
 
 static void snake_build(Arg *arg) {
     char *src = "app/snake";
@@ -17,18 +17,18 @@ static void snake_build(Arg *arg) {
     Build_Mode mode = Mode_Debug;
     if (release) mode = Mode_Release;
 
-    build_compile(Platform_Linux, mode, "snake/snake.c", "out/snake/snake.elf");
+    build_compile(Platform_Linux, mode, "app/snake/snake.c", "out/snake/snake.elf");
 
     if (run) os_exit(os_system("out/snake/snake.elf"));
     if (quick) return;
-    build_compile(Platform_Windows, mode, "snake/snake.c", "out/snake/snake.exe");
-    build_compile(Platform_WASM, mode, "snake/snake.c", "out/snake/snake.wasm");
+    build_compile(Platform_Windows, mode, "app/snake/snake.c", "out/snake/snake.exe");
+    build_compile(Platform_WASM, mode, "app/snake/snake.c", "out/snake/snake.wasm");
 
     // Generate html page
-    char *js_path[] = {"src/os_wasm.js", "src/pix_wasm.js", "snake/snake.js", 0};
-    char *css_path = "snake/snake.css";
+    char *js_path[] = {"lib/core/os_wasm.js", "lib/pix/pix_wasm.js", "app/snake/snake.js", 0};
+    char *css_path = "app/snake/snake.css";
+    char *html_path = "app/snake/snake.html";
     char *wasm_path = "out/snake/snake.wasm";
-    char *html_path = "snake/snake.html";
     generate_html("out/snake/snake.html", css_path, js_path, wasm_path, html_path);
 
     // Cleanup
