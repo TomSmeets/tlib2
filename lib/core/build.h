@@ -57,7 +57,9 @@ static Command build_compile_command(Build_Platform platform, Build_Mode mode, c
     }
 
     cmd_arg2(&cmd, "-o", output);
-    cmd_arg2(&cmd, "-I", "src");
+    cmd_arg2(&cmd, "-I", "lib/core");
+    cmd_arg2(&cmd, "-I", "lib/deflate");
+    cmd_arg2(&cmd, "-I", "lib/pix");
     cmd_arg(&cmd, input);
     return cmd;
 }

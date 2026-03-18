@@ -1,16 +1,14 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // build.c - Makefile but in C
 #include "build.h"
-#include "snake_build.h"
 #include "arg.h"
-#include "base64.h"
 #include "command.h"
 #include "fmt.h"
-
+#include "snake/snake_build.h"
 
 static void build_tl(Arg *arg) {
     os_system("mkdir -p out/tl");
-    build_compile(Platform_Linux, Mode_Debug, "src/tl.c", "out/tl/tl");
+    build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
 }
 
 static void build_test(Arg *arg) {
@@ -18,7 +16,7 @@ static void build_test(Arg *arg) {
     bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
-    build_compile(Platform_Linux, Mode_Debug, "src/test.c", "out/test");
+    build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test");
     if (build) os_exit(0);
 
     if (gdb) {
@@ -28,7 +26,7 @@ static void build_test(Arg *arg) {
     }
 }
 static void build_fuzz(Arg *arg) {
-    os_exit(os_system("clang -Isrc -g -O2 -fsanitize=fuzzer,address src/fuzz.c -o out/fuzz && out/fuzz"));
+    os_exit(os_system("clang -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz"));
 }
 
 static void generate_lsp(Arg *arg) {
@@ -67,7 +65,7 @@ void os_main(u32 argc, char **argv) {
     Arg arg = {argc, argv, 1};
 
     if (arg_match(&arg, "format", "Format all code")) {
-        os_exit(os_system("clang-format -i --verbose */*.h */*.c"));
+        os_exit(os_system("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin"));
         return;
     }
 
