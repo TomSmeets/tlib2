@@ -1,5 +1,20 @@
 #!/bin/bash
 set -euo pipefail
+
+# Ensure an output directory exists
 mkdir -p out
-clang -Wall -Werror -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -std=c23 -O0 -g -Isrc -o out/build src/build.c
+
+# Compile the builder
+clang \
+  -Wall -Werror \
+  -Wno-unused-function \
+  -Wno-unused-variable \
+  -Wno-unused-but-set-variable \
+  -std=c23 -O0 -g \
+  -I lib/core  \
+  -I app/snake \
+  -o out/build \
+  app/build.c
+
+# Run the builder
 exec -a "$0" out/build "$@"
