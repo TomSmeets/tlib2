@@ -6,9 +6,11 @@
 #include "fmt.h"
 #include "snake/snake_build.h"
 
-static void build_tl(Arg *arg) {
+static bool build_tl(Arg *arg) {
+    if (!arg_match(arg, "tl", "Build tl cli tool")) return ok();
     os_system("mkdir -p out/tl");
     build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
+    os_exit(0);
 }
 
 static void build_test(Arg *arg) {
@@ -81,17 +83,9 @@ void os_main(u32 argc, char **argv) {
         return;
     }
 
-    if (arg_match(&arg, "snake", "Build Snake")) {
-        snake_build(&arg);
-        os_exit(0);
-        return;
-    }
+    snake_build(&arg);
+    build_tl(&arg);
 
-    if (arg_match(&arg, "tl", "Build tl cli tool")) {
-        build_tl(&arg);
-        os_exit(0);
-        return;
-    }
 
     if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompletion")) {
         generate_lsp(&arg);

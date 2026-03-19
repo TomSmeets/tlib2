@@ -128,3 +128,110 @@ static bool generate_html(char *output_path, char *css_path, char **js_path_list
     os_write_file(output_path, str_buf(fmt_end(f)));
     return ok();
 }
+
+typedef struct {
+    Memory *mem;
+
+    // platforms
+    bool linux;
+    bool windows;
+    bool wasm;
+    bool html;
+    bool release;
+
+    char *output_name;
+    char *source_file;
+
+    u32 include_count;
+    char *include_list[64];
+
+    u32 js_count;
+    char *js_files[64];
+
+    u32 css_count;
+    char *css_files[64];
+
+    u32 html_count;
+    char *html_files[64];
+} Build;
+
+
+static Build *build_new(Memory *mem, char *source_file, char *output_name) {
+    Build *build = mem_struct(mem, Build);
+    build->mem = mem;
+    build->source_file = source_file;
+    build->output_name = output_name;
+    build->linux = 1;
+    return build;
+}
+
+static void build_include(Build *build, char *path) {
+    build->include_list[build->include_count++] = path;
+}
+
+static void build_js(Build *build, char *path) {
+    build->js_files[build->js_count++] = path;
+}
+
+static void build_css(Build *build, char *path) {
+    build->css_files[build->css_count++] = path;
+}
+
+static void build_html(Build *build, char *path) {
+    build->html_files[build->html_count++] = path;
+}
+
+static bool build_build(Build *build) {
+    Build_Mode mode = build->release ? Mode_Release : Mode_Debug;
+    Memory *mem = build->mem;
+
+    char *out_path = fstr(mem,  "out/", build->output_name);
+    char *out_exe =  fstr(mem, out_path, "/", build->output_name, ".exe");
+    char *out_elf =  fstr(mem, out_path, "/", build->output_name, ".elf");
+    char *out_wasm = fstr(mem, out_path, "/", build->output_name, ".wasm");
+    char *out_html = fstr(mem, out_path, "/", build->output_name, ".html");
+
+    
+    try(os_system(fstr(mem, "mkdir -p ", out_path)) == 0);
+    if (build->windows)             build_compile(Platform_Windows, mode, build->source_file, out_exe);
+    if (build->linux)               build_compile(Platform_Linux, mode, build->source_file, out_elf);
+    if (build->wasm || build->html) build_compile(Platform_WASM, mode, build->source_file, out_wasm);
+
+    if (build->html) {
+        Fmt *f = fmt_new(mem);
+        fmt(f, "<!DOCTYPE html>\n");
+        fmt(f, "<head>\n");
+        for (u32 i = 0; i < build->css_count; ++i) {
+            fmt(f, "<style>\n");
+            fmt(f, os_read_file_string(mem, build->css_files[i]));
+            fmt(f, "</style>\n");
+        }
+
+        fmt(f, "<script>\n");
+
+        // Embed js files
+        for (u32 i = 0; i < build->js_count; ++i) {
+            fmt(f, "// ", build->js_files[i], "\n");
+            fmt(f, os_read_file_string(mem, build->js_files[i]));
+        }
+
+        // Load embedded wasm file
+        fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
+        Buffer buf = {};
+        try(os_read_file(mem, out_wasm, &buf));
+        fmt_buf(f, base64_encode(mem, buf));
+        mem_free(mem);
+        fmt(f, "\"));\n");
+        fmt(f, "</script>\n");
+
+        fmt(f, "</head>\n");
+        fmt(f, "<body>\n");
+        for (u32 i = 0; i < build->html_count; ++i) {
+            fmt(f, os_read_file_string(mem, build->html_files[i]));
+        }
+        fmt(f, "</body>\n");
+        os_write_file(out_html, str_buf(fmt_end(f)));
+        if (!build->wasm) os_remove(out_wasm);
+    }
+    return ok();
+}

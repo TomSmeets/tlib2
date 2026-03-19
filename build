@@ -12,7 +12,6 @@ clang \
   -Wno-unused-but-set-variable \
   -std=c23 -O0 -g \
   -I lib/core  \
-  -I app/snake \
   -o out/build \
   app/build.c
 
