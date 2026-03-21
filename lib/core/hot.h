@@ -4,30 +4,7 @@
 #include "elf.h"
 #include "fmt.h"
 #include "mem.h"
-
-// Create a unique path to a temporary file
-static char *os_mktmp(Memory *mem, char *prefix, char *suffix) {
-    time_t time = os_time();
-    Fmt *fmt = fmt_new(mem);
-    fmt_s(fmt, prefix);
-    fmt_u_ex(fmt, time, 16, 0, 0);
-    fmt_s(fmt, suffix);
-    return fmt_end(fmt);
-}
-
-static void os_file_copy(char *src_path, char *dst_path) {
-    File *src = os_open(src_path, FileMode_Read);
-    File *dst = os_open(dst_path, FileMode_CreateExe);
-    u8 buffer[4 * 1024];
-    for (;;) {
-        u64 bytes_read = 0;
-        assert(os_read(src, buffer, sizeof(buffer), &bytes_read));
-        if (bytes_read == 0) break;
-        assert(os_write(dst, buffer, bytes_read, 0));
-    }
-    os_close(src);
-    os_close(dst);
-}
+#include "os2.h"
 
 typedef struct {
     Memory *mem;
@@ -45,7 +22,8 @@ static Hot *hot_new(Memory *mem) {
 // Load a (new) version of the library
 static void *hot_load(Hot *hot, char *path, char *symbol) {
     // Path must be copied to a unique location
-    char *unique_path = os_mktmp(hot->mem, "/tmp/hot_", ".so");
+    time_t time = os_time();
+    char *unique_path = fstr(hot->mem, "/tmp/hot_", O(.base = 16), (u64)time, ".so");
     os_file_copy(path, unique_path);
 
     // Load library

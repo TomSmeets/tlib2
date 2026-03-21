@@ -3,6 +3,8 @@
 #pragma once
 #include "type.h"
 
+#define buf_stack(size) (Buffer){(u8[1024]){}, 1024}
+
 // Copy a non-overlapping memory region from src to dst
 static void mem_copy(void *restrict dst, void *restrict src, size_t size) {
     if (dst == src || size == 0) return;
@@ -59,6 +61,8 @@ typedef struct {
 } Buffer;
 
 #define BUFFER(T, ...) ((Buffer){(T[]){__VA_ARGS__}, sizeof((T[]){__VA_ARGS__})})
+#define buf_from(DATA, SIZE) ((Buffer){(u8 *)(DATA), (SIZE)})
+#define buf_from_struct(S) buf_from((S), sizeof(*(S)))
 
 typedef struct {
     void **items;
@@ -69,11 +73,6 @@ typedef struct {
 // An invalid buffer
 static Buffer buf_null(void) {
     return (Buffer){0};
-}
-
-// Create a new buffer view
-static Buffer buf_from(void *data, size_t size) {
-    return (Buffer){data, size};
 }
 
 // Check if buffer starts with the same data

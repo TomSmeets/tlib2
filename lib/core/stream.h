@@ -241,18 +241,12 @@ static void stream_read_intobuffer(Stream *stream, Buffer buffer) {
 }
 
 static void stream_from_file(Stream *stream, File *input) {
-    u8 buffer[1024];
+    Buffer buffer = buf_stack(1024);
     for (;;) {
-        size_t requested = sizeof(buffer);
-        size_t used = 0;
-        check_or(os_read(input, buffer, requested, &used)) return;
-        stream_write_bytes(stream, used, buffer);
-        if (used < requested) break;
+        size_t used = os_read(input, buffer);
+        stream_write_buffer(stream, buf_take(buffer, used));
+        if (used < buffer.size) break;
     }
-}
-
-static bool stream_to_file(Stream *stream, File *output) {
-    return os_write(output, stream->buffer, stream->size, 0);
 }
 
 // Testing

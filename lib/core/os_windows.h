@@ -2,6 +2,7 @@
 // os_linux.h - Linux syscalls
 #pragma once
 #include "os_api.h"
+#include "error.h"
 #include "str.h"
 #include "type.h"
 #pragma push_macro("TIME_MS")
@@ -12,7 +13,10 @@
 // - This function is called in an infinite loop
 // - not defined as static to support hot reloading
 int main(int argc, char **argv) {
-    for (;;) os_main(argc, argv);
+    for (;;) {
+        os_main(argc, argv);
+        if(error) os_exit();
+    }
 }
 
 // Allocate a new chunk of memory
@@ -60,41 +64,39 @@ static File *os_stderr(void) {
 // Read data from file or stream
 // - Returns actual number of bytes read in 'used' on success
 // - Returns false on failure
-static bool os_read(File *file, void *data, size_t size, size_t *used) {
-    size_t size_64 = size;
+static size_t os_read(File *file, Buffer data) {
+    size_t size_64 = data.size;
     size_t used_64 = 0;
     while (size_64) {
         // Windows supports only 32 bit reads
         DWORD size_32 = MIN(size_64, U32_MAX);
         DWORD used_32 = 0;
-        bool ret = ReadFile(file, (u8 *)data + used_64, size_32, &used_32, 0);
-        if (!ret) return false;
+        bool ret = ReadFile(file, (u8 *)data.data + used_64, size_32, &used_32, 0);
+        check_or(ret) break;
         size_64 -= size_32;
         used_64 += used_32;
         if (used_32 != size_32) break;
     }
-    if (used) *used = used_64;
-    return true;
+    return used_64;
 }
 
 // Write data from file or stream
 // - Returns actual number of bytes written in 'used' on success
 // - Returns false on failure
-static bool os_write(File *file, void *data, size_t size, size_t *used) {
-    size_t size_64 = size;
+static size_t os_write(File *file, Buffer data) {
+    size_t size_64 = data.size;
     size_t used_64 = 0;
     while (size_64) {
         // Windows supports only 32 bit writes
         DWORD size_32 = MIN(size_64, U32_MAX);
         DWORD used_32 = 0;
-        bool ret = WriteFile(file, (u8 *)data + used_64, size_32, &used_32, 0);
-        if (!ret) return false;
+        bool ret = WriteFile(file, (u8 *)data.data + used_64, size_32, &used_32, 0);
+        check_or(ret) break;
         size_64 -= size_32;
         used_64 += used_32;
         if (used_32 != size_32) break;
     }
-    if (used) *used = used_64;
-    return true;
+    return used_64;
 }
 
 // Open a file for reading or writing
@@ -112,9 +114,9 @@ static File *os_open(char *path, FileMode mode) {
 
 // Close a file
 // - Returns false on failure
-static bool os_close(File *file) {
+static void os_close(File *file) {
     assert(file);
-    return CloseHandle(file);
+    check(CloseHandle(file));
 }
 
 // Seek to an absolute position in the current file

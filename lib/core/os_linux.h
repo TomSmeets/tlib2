@@ -51,24 +51,16 @@ static File *os_stderr(void) {
     return linux_file(2);
 }
 
-// Write data from file or stream
-// - Returns actual number of bytes read in 'used' on success
-// - Returns false on failure
-static bool os_read(File *file, void *data, size_t size, size_t *used) {
-    i64 ret = linux_read(linux_fd(file), data, size);
-    if (ret < 0) return 0;
-    if (used) *used = ret;
-    return 1;
+static size_t os_read(File *file, Buffer buffer) {
+    i64 ret = linux_read(linux_fd(file), buffer.data, buffer.size);
+    check_or(ret >= 0) return 0;
+    return ret;
 }
 
-// Read data to file or stream
-// - Returns actual number of bytes written in 'used' on success
-// - Returns false on failure
-static bool os_write(File *file, void *data, size_t size, size_t *used) {
-    i64 ret = linux_write(linux_fd(file), data, size);
-    if (ret < 0) return 0;
-    if (used) *used = ret;
-    return 1;
+static size_t os_write(File *file, Buffer buffer) {
+    i64 ret = linux_write(linux_fd(file), buffer.data, buffer.size);
+    check_or(ret >= 0) return 0;
+    return ret;
 }
 
 // Open a file for reading or writing
@@ -85,9 +77,9 @@ static File *os_open(char *path, FileMode mode) {
 
 // Close a file
 // - Returns false on failure
-static bool os_close(File *file) {
+static void os_close(File *file) {
     assert(file);
-    return linux_close(linux_fd(file)) == 0;
+    check(linux_close(linux_fd(file)) == 0);
 }
 
 // Seek to an absolute position in the current file

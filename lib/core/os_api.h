@@ -2,6 +2,7 @@
 // os_api.h - Operating System API Interface
 #pragma once
 #include "type.h"
+#include "buf.h"
 
 // The main function, to exit call os_exit()
 // - This function is called in an infinite loop
@@ -24,15 +25,15 @@ static File *os_stdin(void);
 static File *os_stdout(void);
 static File *os_stderr(void);
 
-// Write data from file or stream
-// - Returns actual number of bytes read in 'used' on success
-// - Returns false on failure
-static bool os_read(File *file, void *data, size_t size, size_t *used);
+// Read data from file or stream, returns number of bytes read
+// - Returns number of bytes read
+// - Sets error on failure
+static size_t os_read(File *file, Buffer buffer);
 
-// Read data to file or stream
-// - Returns actual number of bytes written in 'used' on success
-// - Returns false on failure
-static bool os_write(File *file, void *data, size_t size, size_t *used);
+// Write data to file or stream, returns number of bytes written
+// - Returns number of bytes written
+// - Sets error on failure
+static size_t os_write(File *file, Buffer buffer);
 
 typedef enum {
     // Read only
@@ -50,8 +51,8 @@ typedef enum {
 static File *os_open(char *path, FileMode mode);
 
 // Close a file
-// - Returns false on failure
-static bool os_close(File *file);
+// - Sets error on failure
+static void os_close(File *file);
 
 // Seek to an absolute position in the current file
 // - Returns false on failure

@@ -43,22 +43,21 @@ static File *os_stdout(void) { return wasm_file(2); }
 static File *os_stderr(void) { return wasm_file(3); }
 // clang-format on
 
-static bool os_read(File *file, void *data, size_t size, size_t *used) {
+static size_t os_read(File *file, Buffer data) {
     os_fail("Not Implemented");
 }
 
 WASM_IMPORT(wasm_write) bool wasm_write(u32 fd, void *data, size_t size);
-static bool os_write(File *file, void *data, size_t size, size_t *used) {
-    assert(file);
-    if (used) *used = size;
-    return wasm_write(wasm_fd(file), data, size);
+static size_t os_write(File *file, Buffer data) {
+    check(wasm_write(wasm_fd(file), data.data, data.size));
+    return data.size;
 }
 
 static File *os_open(char *path, FileMode mode) {
     os_fail("Not implemented");
 }
 
-static bool os_close(File *file) {
+static void os_close(File *file) {
     os_fail("Not implemented");
 }
 

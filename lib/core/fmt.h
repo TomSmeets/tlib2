@@ -81,9 +81,9 @@ static Fmt fmt_from(u8 *data, size_t size) {
 // Write all buffered data to file
 static void fmt_flush(Fmt *fmt) {
     if (!fmt->file) return;
-    size_t written = 0;
-    assert(os_write(fmt->file, fmt->data, fmt->used, &written));
-    assert(written == fmt->used);
+    Buffer data = buf_from(fmt->data, fmt->used);
+    size_t written = os_write(fmt->file, data);
+    check(written == data.size);
     fmt->used = 0;
 }
 
