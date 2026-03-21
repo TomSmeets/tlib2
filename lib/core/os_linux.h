@@ -26,7 +26,7 @@ static void *os_alloc(size_t size) {
 // Exit current application
 // - Does not return
 static void os_exit(void) {
-    if(error) {
+    if (error) {
         linux_write(2, error, str_len(error));
         linux_exit_group(1);
     } else {

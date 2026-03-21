@@ -59,7 +59,6 @@ void os_main(u32 argc, char **argv) {
         if (decompress) output = gzip_read(mem, input);
         check(output.size);
         if (error) os_exit();
-
         os_write_full(os_stdout(), output);
         os_exit();
     }

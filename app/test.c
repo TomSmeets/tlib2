@@ -26,6 +26,6 @@ void os_main(u32 argc, char **argv) {
     deflate_test(mem);
     gzip_test(mem);
 
-    if(!error) print("Success!");
+    if (!error) print("Success!");
     os_exit();
 }

@@ -101,11 +101,11 @@ static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
 // Write a symbol into a bit stream
 static void huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) {
     check(symbol < array_count(table->symbol_len));
-    if(error) return;
+    if (error) return;
 
     u32 len = table->symbol_len[symbol];
     check(len > 0);
-    if(error) return;
+    if (error) return;
 
     u32 code = table->symbol_code[symbol];
     stream_write_bits_be(stream, len, code);

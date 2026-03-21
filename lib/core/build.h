@@ -191,7 +191,7 @@ static bool build_build(Build *build) {
     char *out_html = fstr(mem, out_path, "/", build->output_name, ".html");
 
     os_system(fstr(mem, "mkdir -p ", out_path));
-    if(error) return 0;
+    if (error) return 0;
 
     if (build->windows) build_compile(Platform_Windows, mode, build->source_file, out_exe);
     if (build->linux) build_compile(Platform_Linux, mode, build->source_file, out_elf);
