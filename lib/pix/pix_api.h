@@ -27,7 +27,7 @@ typedef struct {
     f32 left;
     f32 right;
 } Pix_Audio_Sample;
-assert_static(sizeof(Pix_Audio_Sample) == 2 * sizeof(f32));
+static_assert(sizeof(Pix_Audio_Sample) == 2 * sizeof(f32));
 
 // Play a sound effect
 // - sample rate is 48000 Hz

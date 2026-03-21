@@ -92,7 +92,7 @@ typedef union {
     SDL_MouseButtonEvent button;
     u8 padding[sizeof(void *) <= 8 ? 56 : sizeof(void *) == 16 ? 64 : 3 * sizeof(void *)];
 } SDL_Event;
-assert_static(sizeof(SDL_Event) == sizeof(((SDL_Event *)0)->padding));
+static_assert(sizeof(SDL_Event) == sizeof(((SDL_Event *)0)->padding));
 
 typedef struct {
     int x, y;
