@@ -13,7 +13,7 @@ static Buffer os_read_full(Memory *mem, File *file) {
 }
 
 static void os_write_full(File *file, Buffer data) {
-    while(data.size) {
+    while (data.size) {
         size_t written = os_write(file, data);
         data = buf_drop(data, written);
         if (error) return;

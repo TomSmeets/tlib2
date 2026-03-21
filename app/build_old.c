@@ -8,7 +8,6 @@
 #include "parse.h"
 #include "tlib.h"
 
-
 static thread_local Memory *mem;
 static thread_local Hot *hot;
 

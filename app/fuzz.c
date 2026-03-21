@@ -8,7 +8,8 @@
 #include "fmt.h"
 #include "gzip.h"
 
-void os_main(u32 argc, char **argv) { }
+void os_main(u32 argc, char **argv) {
+}
 
 int LLVMFuzzerTestOneInput(u8 *data, size_t size) {
     Buffer input = {data, size};
@@ -23,6 +24,6 @@ int LLVMFuzzerTestOneInput(u8 *data, size_t size) {
     crc_compute(input);
     mem_free(mem);
     check(chunk_alloc_size == 0);
-    if(error) __builtin_trap();
+    if (error) __builtin_trap();
     return 0;
 }

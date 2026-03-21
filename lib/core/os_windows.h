@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // os_linux.h - Linux syscalls
 #pragma once
-#include "os_api.h"
 #include "error.h"
+#include "os_api.h"
 #include "str.h"
 #include "type.h"
 #pragma push_macro("TIME_MS")
@@ -15,7 +15,7 @@
 int main(int argc, char **argv) {
     for (;;) {
         os_main(argc, argv);
-        if(error) os_exit();
+        if (error) os_exit();
     }
 }
 

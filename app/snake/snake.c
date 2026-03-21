@@ -1,13 +1,13 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // snake.c - A simple snake game
+#include "base64.h"
+#include "deflate.h"
 #include "fmt.h"
 #include "os.h"
 #include "pix.h"
 #include "rand.h"
 #include "sound.h"
 #include "vec.h"
-#include "deflate.h"
-#include "base64.h"
 
 #if OS_WASM
 WASM_IMPORT(snake_update) void snake_update(u32 score, u32 highscore);
@@ -322,6 +322,6 @@ void os_main(u32 argc, char **argv) {
     snake_update(snake->level->score, snake->high_score);
 #endif
 
-    if(error) os_exit();
+    if (error) os_exit();
     os_sleep(diff);
 }

@@ -65,7 +65,7 @@ typedef struct {
 static Elf *elf_load(Memory *mem, File *file) {
     Elf64_Ehdr header;
     os_read_exact(file, buf_from_struct(&header));
-    if(error) return 0;
+    if (error) return 0;
 
     // Check ELF magic number
     check(header.ident[0] == 0x7f);
@@ -82,13 +82,13 @@ static Elf *elf_load(Memory *mem, File *file) {
     // Read section headers
     os_seek(file, header.shoff);
     Elf64_Shdr *table = os_read_alloc(mem, file, header.shnum * sizeof(Elf64_Shdr));
-    if(error) return 0;
+    if (error) return 0;
 
     // Read section header string table
     Elf64_Shdr *strtab = &table[header.shstrndx];
     os_seek(file, strtab->offset);
     char *str = os_read_alloc(mem, file, strtab->size);
-    if(error) return 0;
+    if (error) return 0;
 
     for (u32 i = 0; i < elf->section_count; i++) {
         elf->sections[i].name = str + table[i].name;

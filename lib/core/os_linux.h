@@ -13,7 +13,7 @@
 int main(i32 argc, char **argv) {
     for (;;) {
         os_main(argc, argv);
-        if(error) os_exit();
+        if (error) os_exit();
     }
 }
 

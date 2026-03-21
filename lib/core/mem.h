@@ -126,14 +126,14 @@ static void mem_test(void) {
     size_t original_size1 = chunk_alloc_size;
     Memory *tmp = mem_new();
     size_t original_size = chunk_alloc_size;
-    for(u32 i = 0; i < 64; ++i) {
+    for (u32 i = 0; i < 64; ++i) {
         Memory *mem = mem_new();
 
-        for(u32 j = 1; j < 32; ++j) {
-            size_t size = j*j*j*j*3;
+        for (u32 j = 1; j < 32; ++j) {
+            size_t size = j * j * j * j * 3;
 
-            volatile u8* data = mem_alloc_uninit(mem, size);
-            for(size_t k = 0; k < size; ++k) {
+            volatile u8 *data = mem_alloc_uninit(mem, size);
+            for (size_t k = 0; k < size; ++k) {
                 data[k] = k;
             }
         }

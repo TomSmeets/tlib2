@@ -1,10 +1,10 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // os_wasm.h - WASM OS abstraction
 #pragma once
+#include "error.h"
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
-#include "error.h"
 
 #define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
 

@@ -2,9 +2,9 @@
 // os2.h - Extra OS functions
 #pragma once
 #include "error.h"
+#include "fmt.h"
 #include "mem.h"
 #include "os.h"
-#include "fmt.h"
 
 #if OS_LINUX
 static char *os_cwd(Memory *mem) {
@@ -20,18 +20,18 @@ static char *os_cwd(Memory *mem) {
 #endif
 
 static void os_read_exact(File *file, Buffer buf) {
-    while(buf.size) {
+    while (buf.size) {
         size_t read = os_read(file, buf);
         buf = buf_drop(buf, read);
-        if(error) break;
+        if (error) break;
     }
 }
 
 static void os_write_exact(File *file, Buffer buf) {
-    while(buf.size) {
+    while (buf.size) {
         size_t written = os_write(file, buf);
         buf = buf_drop(buf, written);
-        if(error) break;
+        if (error) break;
     }
 }
 
@@ -77,9 +77,8 @@ static void os_file_copy(char *src_path, char *dst_path) {
         if (error) break;
         if (bytes_read == 0) break;
         os_write(dst, buf_take(buffer, bytes_read));
-        if(error) break;
+        if (error) break;
     }
     os_close(src);
     os_close(dst);
 }
-

@@ -17,7 +17,7 @@ void os_main(u32 argc, char **argv) {
 
     // Run tests
     mem_test();
-    if(error) os_exit();
+    if (error) os_exit();
 
     base64_test(mem);
     fmt_test(mem);
@@ -29,7 +29,7 @@ void os_main(u32 argc, char **argv) {
     deflate_test(mem);
     gzip_test(mem);
 
-    if(error) os_exit();
+    if (error) os_exit();
 
     print("Success!");
     os_exit();

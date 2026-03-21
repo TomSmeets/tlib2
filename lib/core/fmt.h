@@ -341,8 +341,6 @@ static void fmt_test(Memory *mem) {
     // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
 }
 
-
-
 typedef struct {
     Memory *mem;
     u32 count;
@@ -361,7 +359,7 @@ static Buffer fmt2_end(Fmt2 *fmt) {
 
     // Get total size
     u32 len = 0;
-    for(u32 i = 0; i < fmt->count; ++i) {
+    for (u32 i = 0; i < fmt->count; ++i) {
         len += fmt->chunks[i].size;
     }
 
@@ -386,7 +384,7 @@ static Buffer fmt2_end(Fmt2 *fmt) {
 }
 
 static void fmt2_buf(Fmt2 *fmt, Buffer buf) {
-    if(fmt->count == array_count(fmt->chunks)) fmt2_end(fmt);
+    if (fmt->count == array_count(fmt->chunks)) fmt2_end(fmt);
     fmt->chunks[fmt->count++] = buf;
 }
 

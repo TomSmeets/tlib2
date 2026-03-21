@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // os_api.h - Operating System API Interface
 #pragma once
-#include "type.h"
 #include "buf.h"
+#include "type.h"
 
 // The main function, to exit call os_exit()
 // - This function is called in an infinite loop
