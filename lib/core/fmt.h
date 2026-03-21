@@ -356,7 +356,7 @@ static void fmt_test(Memory *mem) {
     check(str_eq(fstr(mem, "Hello", " ", "World: ", 1234, EOL), "Hello World: 1234\n"));
 
     // Awesome! who needs python :P
-    u32 x = 1234;
-    print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
+    // u32 x = 1234;
+    // print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
     // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
 }

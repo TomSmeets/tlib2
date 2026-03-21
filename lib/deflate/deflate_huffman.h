@@ -156,11 +156,11 @@ static bool deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, St
     }
 
     for (u32 i = 0; i < length_count; ++i) {
-        try(huffman_code_write(code_tree, output, code->length->symbol_len[i]));
+        huffman_code_write(code_tree, output, code->length->symbol_len[i]);
     }
 
     for (u32 i = 0; i < distance_count; ++i) {
-        try(huffman_code_write(code_tree, output, code->distance->symbol_len[i]));
+        huffman_code_write(code_tree, output, code->distance->symbol_len[i]);
     }
     return ok();
 }

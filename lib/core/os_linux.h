@@ -230,7 +230,7 @@ static u64 os_rand(void) {
 // ==================================
 
 static i32 os_system(char *command) {
-    return system(command);
+    return system(command) != 0;
 }
 
 // Execute a system command, returns the exit code

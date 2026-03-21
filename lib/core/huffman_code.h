@@ -99,16 +99,16 @@ static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
 }
 
 // Write a symbol into a bit stream
-static bool huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) {
-    try(symbol < array_count(table->symbol_len));
+static void huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) {
+    check(symbol < array_count(table->symbol_len));
+    if(error) return;
+
     u32 len = table->symbol_len[symbol];
-    try(len > 0);
+    check(len > 0);
+    if(error) return;
 
     u32 code = table->symbol_code[symbol];
-
-    // Write bits
     stream_write_bits_be(stream, len, code);
-    return ok();
 }
 
 static void huffman_code_test(Memory *mem) {
@@ -156,8 +156,8 @@ static void huffman_code_test(Memory *mem) {
     stream_seek(stream, 0);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
         if (len[sym] == 0) continue;
-        check(huffman_code_write(table, stream, sym));
-        check(huffman_code_write(table, stream, sym));
+        huffman_code_write(table, stream, sym);
+        huffman_code_write(table, stream, sym);
     }
     stream_seek(stream, 0);
     for (u32 sym = 0; sym < array_count(len); ++sym) {

@@ -152,15 +152,13 @@ static Buffer deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_H
     return stream_to_buffer(stream);
 }
 
-static bool
-deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Buffer *output) {
+static Buffer deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code) {
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockDynamic);
-    try(deflate_huffman_dynamic_write(mem, output_code, stream));
-    try(deflate_lz_recode(mem, llcode, input_code, input, output_code, stream));
-    *output = stream_to_buffer(stream);
-    return ok();
+    check(deflate_huffman_dynamic_write(mem, output_code, stream));
+    check(deflate_lz_recode(mem, llcode, input_code, input, output_code, stream));
+    return stream_to_buffer(stream);
 }
 
 static Buffer deflate_write(Memory *mem, Buffer input) {
@@ -198,8 +196,7 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
         check(dynamic_code);
         if (error) return buf_null();
 
-        Buffer dynamic_output = {};
-        check(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
+        Buffer dynamic_output = deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code);
         if (error) return buf_null();
         if (result.size == 0 || result.size > dynamic_output.size) result = dynamic_output;
     }
@@ -217,7 +214,7 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
 static void deflate_test_buf(Memory *mem, Buffer input) {
     Buffer compressed = deflate_write(mem, input);
     Buffer decompressed = deflate_read(mem, compressed);
-    buf_eq(decompressed, input);
+    check(buf_eq(decompressed, input));
 }
 
 static void deflate_test(Memory *mem) {
