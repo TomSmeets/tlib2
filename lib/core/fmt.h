@@ -1,7 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // fmt.h - Text formatter
 #pragma once
-#include "error.h"
+#include "error0.h"
 #include "mem.h"
 #include "str.h"
 #include "type.h"
@@ -317,7 +317,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
         fmt12(f, __VA_ARGS__);                                                                                                                       \
         fmt_end(f);                                                                                                                                  \
     })
-#define print(...) fmt(fout, __VA_ARGS__), fmt_s(fout, "\n")
+#define print(...) fmt(fout, __VA_ARGS__, "\n")
 // TODO: no more 'file' in fmt, just format string
 // print() will get tmp mem and free again
 
@@ -332,8 +332,6 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
     fmt->opt = opt;
 }
-
-// could add a vararg fmt type
 
 // Test
 static void fmt_test(Memory *mem) {

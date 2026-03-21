@@ -47,9 +47,7 @@ void os_main(u32 argc, char **argv) {
 
     // Check result
     if (error) {
-        for (u32 i = 0; i < error; ++i) {
-            print(error_stack[i].file, ":", error_stack[i].line, ":", error_stack[i].function, ": Error ", error_stack[i].expr, " failed");
-        }
+        print(error);
         os_exit(1);
     } else {
         print("Success!");

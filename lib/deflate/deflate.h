@@ -111,10 +111,11 @@ static Buffer deflate_read(Memory *mem, Buffer input_buf) {
     return stream_to_buffer(output);
 }
 
-static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
+static Buffer deflate_write_stored(Memory *mem, Buffer input) {
     size_t stored_size = deflate_calculate_stored_block_size(input.size);
     Stream *stored_stream = stream_new(mem);
-    try(stream_reserve(stored_stream, stored_size));
+    check(stream_reserve(stored_stream, stored_size));
+    if(error) return buf_null();
 
     size_t input_offset = 0;
     for (;;) {
@@ -127,8 +128,7 @@ static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
         input_offset += block_size;
         if (is_last) break;
     }
-    *output = stream_to_buffer(stored_stream);
-    return ok();
+    return stream_to_buffer(stored_stream);
 }
 
 typedef struct {
@@ -143,14 +143,14 @@ typedef struct {
     Deflate_Huffman *encoding;
 } Deflate_Result;
 
-static bool
-deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Buffer *result, Deflate_Encode_Info *frequency_info) {
+static Buffer
+deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Deflate_Encode_Info *frequency_info) {
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockFixed);
-    try(deflate_lz_encode(mem, code, llcode, input, stream, frequency_info));
-    *result = stream_to_buffer(stream);
-    return ok();
+    check(deflate_lz_encode(mem, code, llcode, input, stream, frequency_info));
+    if(error) return buf_null();
+    return stream_to_buffer(stream);
 }
 
 static bool
@@ -189,9 +189,8 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
     if(error) return buf_null();
 
     Deflate_Encode_Info frequency_info = {};
-    Buffer fixed_output = {};
-    check(deflate_write_fixed(mem, llcode, fixed_code, input, &fixed_output, &frequency_info));
-    if(error) return buf_null();
+    Buffer fixed_output = deflate_write_fixed(mem, llcode, fixed_code, input, &frequency_info);
+    if (error) return buf_null();
     if (enable_fixed) result = fixed_output;
 
     if (enable_dynamic) {
@@ -207,9 +206,7 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
     }
 
     if (enable_stored && (result.size == 0 || result.size > deflate_calculate_stored_block_size(input.size))) {
-        Buffer stored_output = {};
-        check(deflate_write_stored(mem, input, &stored_output));
-        result = stored_output;
+        result = deflate_write_stored(mem, input);
     }
 
     if(error) return buf_null();

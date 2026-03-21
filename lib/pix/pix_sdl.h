@@ -23,8 +23,7 @@ struct Pix {
 };
 
 // Create a new Pix renderer with a given title and window size
-static Pix *pix_new(char *title, v2i window_size) {
-    Memory *mem = mem_new();
+static Pix *pix_new(Memory *mem, char *title, v2i window_size) {
     Pix *pix = mem_struct(mem, Pix);
     pix->mem = mem;
     sdl2_load(&pix->sdl);
@@ -40,13 +39,12 @@ static Pix *pix_new(char *title, v2i window_size) {
 }
 
 // Destroy window and cleanup renderer
-static void pix_free(Pix *pix) {
+static void pix_quit(Pix *pix) {
     if (pix->texture) pix->sdl.SDL_DestroyTexture(pix->texture);
     if (pix->audio_device) pix->sdl.SDL_CloseAudioDevice(pix->audio_device);
     pix->sdl.SDL_DestroyRenderer(pix->renderer);
     pix->sdl.SDL_DestroyWindow(pix->window);
     pix->sdl.SDL_Quit();
-    mem_free(pix->mem);
 }
 
 static Key sdl_mouse_to_key(u32 button) {

@@ -244,7 +244,7 @@ void os_main(u32 argc, char **argv) {
         Memory *mem = mem_new();
         snake = mem_struct(mem, Snake);
         snake->mem = mem;
-        snake->pix = pix_new("Snake", (v2i){800, 600});
+        snake->pix = pix_new(mem, "Snake", (v2i){800, 600});
         snake->rand = rand_new(os_rand());
         snake->level = snake_level_new(&snake->rand);
     }

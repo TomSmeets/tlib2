@@ -7,15 +7,14 @@
 #include "os.h"
 #include "stream.h"
 
-static bool os_read_full(Memory *mem, File *file, Buffer *output) {
+static Buffer os_read_full(Memory *mem, File *file) {
     Stream *input = stream_new(mem);
-    try(stream_from_file(input, file));
-    *output = stream_to_buffer(input);
-    return ok();
+    check(stream_from_file(input, file));
+    return stream_to_buffer(input);
 }
 
-static bool os_write_full(File *file, Buffer data) {
-    return os_write(file, data.data, data.size, 0);
+static void os_write_full(File *file, Buffer data) {
+    check(os_write(file, data.data, data.size, 0));
 }
 
 bool os_main2(u32 argc, char **argv) {
@@ -33,13 +32,15 @@ bool os_main2(u32 argc, char **argv) {
         if (!encode) decode = 1;
         arg_help_opt(&arg);
 
-        Buffer input;
-        try(os_read_full(mem, os_stdin(), &input));
+        Buffer input = os_read_full(mem, os_stdin());
+        if(error) return 0;
 
         Buffer output = {};
         if (encode) output = base64_encode(mem, input);
         if (decode) output = base64_decode(mem, input);
-        try(output.data);
+        check(output.data);
+        if(error) return 0;
+
         os_write_full(os_stdout(), output);
         return ok();
     }
@@ -50,14 +51,16 @@ bool os_main2(u32 argc, char **argv) {
         if (!compress) decompress = 1;
         arg_help_opt(&arg);
 
-        Buffer input;
-        try(os_read_full(mem, os_stdin(), &input));
-        try(input.size);
+        Buffer input = os_read_full(mem, os_stdin());
+        check(input.size);
+        if(error) return 0;
 
         Buffer output = {};
-        if (compress) try(gzip_write(mem, input, &output));
-        if (decompress) try(gzip_read(mem, input, &output));
-        try(output.size);
+        if (compress) output = gzip_write(mem, input);
+        if (decompress) output = gzip_read(mem, input);
+        check(output.size);
+        if(error) return 0;
+
         os_write_full(os_stdout(), output);
         return ok();
     }
@@ -84,6 +87,12 @@ bool os_main2(u32 argc, char **argv) {
 }
 
 void os_main(u32 argc, char **argv) {
-    if (!os_main2(argc, argv)) error_exit();
+    os_main2(argc, argv);
+
+    if(error) {
+        fmt(ferr, error, "\n");
+        os_exit(1);
+    }
+
     os_exit(0);
 }
