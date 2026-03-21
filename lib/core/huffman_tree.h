@@ -34,7 +34,9 @@ static Huffman_Tree *huffman_tree_node(Memory *mem, Huffman_Tree *a, Huffman_Tre
 
 // Remove least frequent node from the unordered list
 static Huffman_Tree *_huffman_tree_remove_least_frequent_node(u32 *count, Huffman_Tree **nodes) {
-    try(*count > 0);
+    check(*count > 0);
+    if (error) return 0;
+
     u32 smallest = 0;
     for (u32 i = 0; i < *count; ++i) {
         if (nodes[i]->freq >= nodes[smallest]->freq) continue;
@@ -129,52 +131,48 @@ static Huffman_Tree *huffman_tree_from_length_limited(Memory *mem, u32 count, u3
         if (min_freq == 0) next_min_freq = _huffman_tree_next_min_freq(count, freq_list, next_min_freq);
 
         // Returns zero when frequency cannot be reduced anymore
-        try(next_min_freq);
+        check(next_min_freq);
         min_freq = next_min_freq;
+        if (error) return 0;
     }
 }
 
-static bool _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 *symbol_length_list, u32 depth) {
-    if (!tree) return true;
+static void _huffman_tree_to_lengths_at_depth(Huffman_Tree *tree, u32 count, u8 *symbol_length_list, u32 depth) {
+    check(tree);
+    if (error) return;
 
     if (tree->is_leaf) {
-        try(tree->symbol < count);
+        check(tree->symbol < count);
         symbol_length_list[tree->symbol] = depth;
     } else {
-        try(_huffman_tree_to_lengths_at_depth(tree->a, count, symbol_length_list, depth + 1));
-        try(_huffman_tree_to_lengths_at_depth(tree->b, count, symbol_length_list, depth + 1));
+        _huffman_tree_to_lengths_at_depth(tree->a, count, symbol_length_list, depth + 1);
+        _huffman_tree_to_lengths_at_depth(tree->b, count, symbol_length_list, depth + 1);
     }
-    return ok();
 }
 
 // Convert a huffman tree to a list of symbol lengths
 // NOTE: the list should be zero initialized and the correct length
-static bool huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_length_list) {
+static void huffman_tree_to_lengths(Huffman_Tree *tree, u32 count, u8 *symbol_length_list) {
     // No tree means no nodes, so no bit lengths
-    if (!tree) return ok();
+    if (!tree) return;
 
     // Special case, 1 node -> should still have bit length of 1, instead of 0
     if (tree->is_leaf) {
         symbol_length_list[tree->symbol] = 1;
-        return ok();
+        return;
     }
 
     // Encode recursively
-    return _huffman_tree_to_lengths_at_depth(tree, count, symbol_length_list, 0);
+    _huffman_tree_to_lengths_at_depth(tree, count, symbol_length_list, 0);
 }
 
-static bool huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list, u32 max_len) {
+static void huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list, u32 max_len) {
     Memory *tmp = mem_new();
     Huffman_Tree *tree = huffman_tree_from_length_limited(tmp, count, freq_list, max_len);
-    if (!tree) {
-        mem_free(tmp);
-        return ok();
-    }
 
     // Construct list of bit lengths
-    bool ret = huffman_tree_to_lengths(tree, count, len_list);
+    huffman_tree_to_lengths(tree, count, len_list);
     mem_free(tmp);
-    return ret;
 }
 
 static void huffman_tree_test(Memory *mem) {
@@ -201,10 +199,9 @@ static void huffman_tree_test(Memory *mem) {
 
     {
         Huffman_Tree *tree = huffman_tree_from(mem, array_count(freq_list), freq_list, 0);
-        check(tree);
 
         u8 len_list[256] = {};
-        check(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
+        huffman_tree_to_lengths(tree, array_count(len_list), len_list);
 
         if (0) {
             // Debug printing
@@ -224,10 +221,9 @@ static void huffman_tree_test(Memory *mem) {
 
     {
         Huffman_Tree *tree = huffman_tree_from_length_limited(mem, array_count(freq_list), freq_list, 3);
-        check(tree);
 
         u8 len_list[256] = {};
-        check(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
+        huffman_tree_to_lengths(tree, array_count(len_list), len_list);
 
         if (0) {
             print("Len:");
@@ -246,7 +242,7 @@ static void huffman_tree_test(Memory *mem) {
 }
 
 // Length limit huffman code
-static bool huffman_reduce(u32 count, u8 *len, u32 limit) {
+static void huffman_reduce(u32 count, u8 *len, u32 limit) {
     for (;;) {
         // Find longest bit length
         u8 max = 0;
@@ -255,7 +251,7 @@ static bool huffman_reduce(u32 count, u8 *len, u32 limit) {
         }
 
         // Done
-        if (max <= limit) return ok();
+        if (max <= limit) return;
 
         // Find next longest bit length
         u8 next = 0;
@@ -264,7 +260,7 @@ static bool huffman_reduce(u32 count, u8 *len, u32 limit) {
             if (len[i] + 1 >= max) continue;
             next = len[i];
         }
-        try(next > 0);
+        check_or(next > 0) return;
 
         // first max -> max - 1
         for (u32 i = 0; i < count; ++i) {

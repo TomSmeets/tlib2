@@ -15,15 +15,19 @@ static void *os_alloc(size_t size) {
 }
 
 WASM_IMPORT(wasm_exit) void wasm_exit(void);
-static void os_exit(i32 status) {
-    wasm_exit();
+WASM_IMPORT(wasm_fail) void wasm_fail(char *message, u32 len);
+static void os_exit(void) {
+    if (error) {
+        wasm_fail(error, str_len(error));
+    } else {
+        wasm_exit();
+    }
     __builtin_trap();
 }
 
-WASM_IMPORT(wasm_fail) void wasm_fail(char *message, u32 len);
 static void os_fail(char *message) {
-    wasm_fail(message, str_len(message));
-    __builtin_trap();
+    error = message;
+    os_exit();
 }
 
 static File *wasm_file(u32 fd) {
@@ -123,8 +127,8 @@ static u64 os_rand(void) {
 }
 
 WASM_IMPORT(wasm_system) i32 wasm_system(char *code, u32 len);
-static i32 os_system(char *command) {
-    return wasm_system(command, str_len(command));
+static void os_system(char *command) {
+    check(wasm_system(command, str_len(command)) == 0);
 }
 
 static Process *os_exec(char **argv) {

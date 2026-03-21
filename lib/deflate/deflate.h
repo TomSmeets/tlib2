@@ -114,7 +114,7 @@ static Buffer deflate_read(Memory *mem, Buffer input_buf) {
 static Buffer deflate_write_stored(Memory *mem, Buffer input) {
     size_t stored_size = deflate_calculate_stored_block_size(input.size);
     Stream *stored_stream = stream_new(mem);
-    check(stream_reserve(stored_stream, stored_size));
+    stream_reserve(stored_stream, stored_size);
     if (error) return buf_null();
 
     size_t input_offset = 0;
@@ -147,7 +147,7 @@ static Buffer deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_H
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockFixed);
-    check(deflate_lz_encode(mem, code, llcode, input, stream, frequency_info));
+    deflate_lz_encode(mem, code, llcode, input, stream, frequency_info);
     if (error) return buf_null();
     return stream_to_buffer(stream);
 }
@@ -156,8 +156,8 @@ static Buffer deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockDynamic);
-    check(deflate_huffman_dynamic_write(mem, output_code, stream));
-    check(deflate_lz_recode(mem, llcode, input_code, input, output_code, stream));
+    deflate_huffman_dynamic_write(mem, output_code, stream);
+    deflate_lz_recode(mem, llcode, input_code, input, output_code, stream);
     return stream_to_buffer(stream);
 }
 

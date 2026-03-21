@@ -20,13 +20,13 @@ typedef struct {
 
 static Huffman_Code *huffman_code_from(Memory *mem, u32 count, u8 *symbol_length) {
     Huffman_Code *table = mem_struct(mem, Huffman_Code);
-    try(count <= 288);
+    check_or(count <= 288) return 0;
 
     // Count number of symbols per bit length
     for (u32 symbol = 0; symbol < count; ++symbol) {
         u8 len = symbol_length[symbol];
         if (len == 0) continue;
-        try(len <= 15);
+        check_or(len <= 15) return 0;
         table->counts[len - 1]++;
     }
 

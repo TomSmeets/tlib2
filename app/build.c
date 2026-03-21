@@ -6,15 +6,15 @@
 #include "fmt.h"
 #include "snake/snake_build.h"
 
-static bool build_tl(Arg *arg) {
-    if (!arg_match(arg, "tl", "Build tl cli tool")) return ok();
+static void build_tl(Arg *arg) {
+    if (!arg_match(arg, "tl", "Build tl cli tool")) return;
     os_system("mkdir -p out/tl");
     build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
     os_exit();
 }
 
-static bool snake_build(Arg *arg) {
-    if (!arg_match(arg, "snake", "Build Snake")) return ok();
+static void snake_build(Arg *arg) {
+    if (!arg_match(arg, "snake", "Build Snake")) return;
     bool quick = arg_match(arg, "quick", "Skip other platforms");
     bool release = arg_match(arg, "release", "Build in release mode");
     bool run = arg_match(arg, "run", "Run snake directly with hot reload");
@@ -37,11 +37,10 @@ static bool snake_build(Arg *arg) {
     build_js(build, "app/snake/snake.js");
     build_css(build, "app/snake/snake.css");
     build_html(build, "app/snake/snake.html");
-    try(build_build(build));
-
+    build_build(build);
+    if (error) os_exit();
     if (run) os_system("out/snake/snake.elf");
     os_exit();
-    return ok();
 }
 
 static void build_test(Arg *arg) {
@@ -49,7 +48,7 @@ static void build_test(Arg *arg) {
     bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
-    check(build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test"));
+    build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test");
     if (error) os_exit();
     if (build) os_exit();
 

@@ -72,18 +72,18 @@ static bool stream_eof(Stream *stream) {
 }
 
 // Grow backing buffer so that it fits at least 'needed' data
-static bool stream_reserve(Stream *stream, size_t reserve) {
+static void stream_reserve(Stream *stream, size_t reserve) {
     // This must always be true
-    try(stream->size <= stream->capacity);
+    check_or(stream->size <= stream->capacity) return;
 
     // Computed needed capacity
     size_t capacity_needed = stream->cursor + reserve;
 
     // Check if we dont need to grow
-    if (capacity_needed <= stream->capacity) return true;
+    if (capacity_needed <= stream->capacity) return;
 
     // Check if reallocating is possible
-    try(stream->mem);
+    check_or(stream->mem) return;
 
     // Compute new capacity, growing in powers of two
     size_t new_capacity = MAX(stream->capacity, 16);
@@ -94,13 +94,13 @@ static bool stream_reserve(Stream *stream, size_t reserve) {
     mem_copy(new_data, stream->buffer, stream->size);
     stream->capacity = new_capacity;
     stream->buffer = new_data;
-    return true;
 }
 
 // Write an aligned byte from the stream
 static void stream_write_u8(Stream *stream, u8 data) {
     stream->bit_ix = 0;
-    if (!stream_reserve(stream, 1)) return;
+    stream_reserve(stream, 1);
+    if (error) return;
     stream->buffer[stream->cursor++] = data;
     if (stream->size < stream->cursor) stream->size = stream->cursor;
 }
@@ -108,7 +108,7 @@ static void stream_write_u8(Stream *stream, u8 data) {
 // Read an aligned byte from the stream
 static u8 stream_read_u8(Stream *stream) {
     stream->bit_ix = 0;
-    if (stream_eof(stream)) return 0;
+    check_or(!stream_eof(stream)) return 0;
     return stream->buffer[stream->cursor++];
 }
 
@@ -121,7 +121,7 @@ static Buffer stream_read_buffer(Stream *stream, size_t size) {
     if (size > stream_remaining(stream)) size = stream_remaining(stream);
     u8 *start = stream->buffer + stream->cursor;
     stream->cursor += size;
-    return (Buffer){start, size};
+    return buf_from(start, size);
 }
 
 // Write a single bit from the stream
@@ -218,40 +218,37 @@ static void stream_write_u32(Stream *stream, u32 data) {
     stream_write_u8(stream, (data >> (3 * 8)) & 0xff);
 }
 
-static bool stream_read_bytes(Stream *stream, size_t count, u8 *data) {
-    if (stream->cursor + count > stream->size) return false;
+static void stream_read_bytes(Stream *stream, size_t count, u8 *data) {
+    check_or(stream->cursor + count <= stream->size) return;
     for (size_t i = 0; i < count; ++i) {
         data[i] = stream_read_u8(stream);
     }
-    return true;
 }
 
-static bool stream_write_bytes(Stream *stream, size_t count, u8 *data) {
-    if (!stream_reserve(stream, count)) return false;
+static void stream_write_bytes(Stream *stream, size_t count, u8 *data) {
+    stream_reserve(stream, count);
     for (size_t i = 0; i < count; ++i) {
         stream_write_u8(stream, data[i]);
     }
-    return true;
 }
 
-static bool stream_write_buffer(Stream *stream, Buffer buffer) {
-    return stream_write_bytes(stream, buffer.size, buffer.data);
+static void stream_write_buffer(Stream *stream, Buffer buffer) {
+    stream_write_bytes(stream, buffer.size, buffer.data);
 }
 
-static bool stream_read_intobuffer(Stream *stream, Buffer buffer) {
-    return stream_read_bytes(stream, buffer.size, buffer.data);
+static void stream_read_intobuffer(Stream *stream, Buffer buffer) {
+    stream_read_bytes(stream, buffer.size, buffer.data);
 }
 
-static bool stream_from_file(Stream *stream, File *input) {
+static void stream_from_file(Stream *stream, File *input) {
     u8 buffer[1024];
     for (;;) {
         size_t requested = sizeof(buffer);
         size_t used = 0;
-        try(os_read(input, buffer, requested, &used));
+        check_or(os_read(input, buffer, requested, &used)) return;
         stream_write_bytes(stream, used, buffer);
         if (used < requested) break;
     }
-    return ok();
 }
 
 static bool stream_to_file(Stream *stream, File *output) {

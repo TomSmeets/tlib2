@@ -48,15 +48,11 @@ static Deflate_Huffman *deflate_huffman_dynamic_create(Memory *mem, Deflate_Enco
     u8 length_bits[array_count(info->length_freq)] = {};
     u8 distance_bits[array_count(info->distance_freq)] = {};
 
-    try(huffman_tree_freq_to_lengths(array_count(info->length_freq), info->length_freq, length_bits, 15));
-    try(huffman_tree_freq_to_lengths(array_count(info->distance_freq), info->distance_freq, distance_bits, 15));
+    huffman_tree_freq_to_lengths(array_count(info->length_freq), info->length_freq, length_bits, 15);
+    huffman_tree_freq_to_lengths(array_count(info->distance_freq), info->distance_freq, distance_bits, 15);
 
     Huffman_Code *length_code = huffman_code_from(mem, array_count(length_bits), length_bits);
-    try(length_code);
-
     Huffman_Code *distance_code = huffman_code_from(mem, array_count(distance_bits), distance_bits);
-    try(distance_code);
-
     Deflate_Huffman *table = mem_struct(mem, Deflate_Huffman);
     table->length = length_code;
     table->distance = distance_code;
@@ -67,14 +63,15 @@ static Deflate_Huffman *deflate_huffman_dynamic_create(Memory *mem, Deflate_Enco
 static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input) {
     u32 length_count = stream_read_bits(input, 5) + 257;
     // NOTE: codes 287 and 288 are invalid
-    try(length_count <= 286);
+    check(length_count <= 286);
 
     u32 distance_count = stream_read_bits(input, 5) + 1;
-    try(distance_count <= 30);
+    check(distance_count <= 30);
 
     // CL codes
     u32 code_count = stream_read_bits(input, 4) + 4; // Number of length codes
-    try(code_count <= 19);
+    check(code_count <= 19);
+    if (error) return 0;
 
     u8 code_index[19] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
     u8 code_lengths[19] = {0};
@@ -88,7 +85,8 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
     u8 lengths[286 + 30];
     while (count < length_count + distance_count) {
         u32 symbol = huffman_code_read(code_tree, input);
-        try(symbol < 19);
+        check_or(symbol < 19) return 0;
+
         u8 repeat = 1;
         u8 length = symbol;
 
@@ -119,13 +117,13 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
     return huffman;
 }
 
-static bool deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, Stream *output) {
+static void deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, Stream *output) {
     u32 length_count = 286;
-    try(length_count >= 257 && length_count <= 286);
+    check_or(length_count >= 257 && length_count <= 286) return;
     stream_write_bits(output, 5, length_count - 257);
 
     u32 distance_count = 30;
-    try(distance_count >= 1 && distance_count <= 30);
+    check_or(distance_count >= 1 && distance_count <= 30) return;
     stream_write_bits(output, 5, distance_count - 1);
 
     // CL codes
@@ -135,9 +133,9 @@ static bool deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, St
     for (u32 i = 0; i < distance_count; ++i) code_freq[code->distance->symbol_len[i]]++;
 
     u8 code_len[19] = {};
-    try(huffman_tree_freq_to_lengths(array_count(code_freq), code_freq, code_len, 7));
+    huffman_tree_freq_to_lengths(array_count(code_freq), code_freq, code_len, 7);
     Huffman_Code *code_tree = huffman_code_from(mem, array_count(code_len), code_len);
-    try(code_tree);
+    check_or(code_freq) return;
 
     // Count codes
     u8 code_index[19] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
@@ -148,7 +146,7 @@ static bool deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, St
         code_count--;
     }
 
-    try(code_count >= 4 && code_count <= 19);
+    check_or(code_count >= 4 && code_count <= 19) return;
     stream_write_bits(output, 4, code_count - 4);
 
     for (u32 i = 0; i < code_count; ++i) {
@@ -162,5 +160,4 @@ static bool deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, St
     for (u32 i = 0; i < distance_count; ++i) {
         huffman_code_write(code_tree, output, code->distance->symbol_len[i]);
     }
-    return ok();
 }

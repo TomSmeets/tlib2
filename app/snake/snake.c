@@ -272,7 +272,7 @@ void os_main(u32 argc, char **argv) {
     while (1) {
         Input in = pix_input(snake->pix);
         if (in.type == InputEvent_None) break;
-        if (in.type == InputEvent_Quit) os_exit(0);
+        if (in.type == InputEvent_Quit) os_exit();
         if (in.type == InputEvent_KeyDown) {
             v2i dir = {};
             if (in.key_down == Key_W || in.key_down == Key_Up) dir.y = -1;

@@ -4,7 +4,7 @@
 #include "base64.h"
 #include "crc.h"
 #include "deflate.h"
-#include "error0.h"
+#include "error.h"
 #include "fmt.h"
 #include "mem.h"
 #include "stream.h"
@@ -43,7 +43,10 @@ static Buffer gzip_read(Memory *mem, Buffer input_buf) {
     }
 
     Buffer deflate = stream_read_buffer(&input, stream_remaining(&input) - 8);
+    if (error) return buf_null();
+
     Buffer ret = deflate_read(mem, deflate);
+    if (error) return buf_null();
 
     u32 crc_gzip = stream_read_u32(&input);
     u32 size_gzip = stream_read_u32(&input);
@@ -64,8 +67,7 @@ static Buffer gzip_write(Memory *mem, Buffer input) {
     stream_write_u8(output, 0);       // xfl
     stream_write_u8(output, 0);       // OS
     Buffer deflated_buffer = deflate_write(mem, input);
-    if (error) return buf_null();
-    check(stream_write_buffer(output, deflated_buffer));
+    stream_write_buffer(output, deflated_buffer);
     stream_write_u32(output, crc_compute(input));
     stream_write_u32(output, input.size);
     u32 crc_comp = crc_compute(input);

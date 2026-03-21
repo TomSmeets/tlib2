@@ -32,7 +32,7 @@ static void *os_alloc(size_t size) {
 
 // Exit current application
 // - Does not return
-static void os_exit(i32 status) {
+static void os_exit() {
     if (error) {
         MessageBoxA(NULL, error, "Error", MB_ICONERROR | MB_OK);
         ExitProcess(1);

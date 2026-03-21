@@ -20,7 +20,7 @@ static Buffer buf_find_longest_match(Buffer data, size_t start, size_t max_dista
         // max length
         if (len >= 258) break;
     }
-    return (Buffer){data.data + match_index, match_size};
+    return buf_from(data.data + match_index, match_size);
 }
 
 static void deflate_llcode_length_write(Stream *out, Deflate_Huffman *tree, Deflate_LLCode *code, u32 length, Deflate_Encode_Info *info) {
@@ -40,7 +40,7 @@ static void deflate_llcode_length_write(Stream *out, Deflate_Huffman *tree, Defl
     check(!"Not Possible");
 }
 
-static bool deflate_llcode_distance_write(Stream *out, Deflate_Huffman *tree, Deflate_LLCode *code, u32 distance, Deflate_Encode_Info *info) {
+static void deflate_llcode_distance_write(Stream *out, Deflate_Huffman *tree, Deflate_LLCode *code, u32 distance, Deflate_Encode_Info *info) {
     for (u32 i = 0; i < array_count(code->distance_bits); ++i) {
         u32 start = code->distance_offset[i];
         u32 bits = code->distance_bits[i];
@@ -50,15 +50,15 @@ static bool deflate_llcode_distance_write(Stream *out, Deflate_Huffman *tree, De
             if (info) info->distance_freq[symbol]++;
             huffman_code_write(tree->distance, out, symbol);
             stream_write_bits(out, bits, distance - start);
-            return ok();
+            return;
         }
     }
-    try(false);
+    check(!"Not Possible");
 }
 
 // Compress the input data using LZ77 and encode it with the provided huffman code
 // The symbol frequencies in the optional argument 'info' are incremented if present
-static bool
+static void
 deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer input, Stream *output_stream, Deflate_Encode_Info *info) {
     // Add values
     for (size_t i = 0; i < input.size; ++i) {
@@ -75,7 +75,7 @@ deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer
             u32 max_len = 258;
             if (match_len > max_len) match_len = max_len;
             deflate_llcode_length_write(output_stream, code, ll, match_len, info);
-            try(deflate_llcode_distance_write(output_stream, code, ll, match_distance, info));
+            deflate_llcode_distance_write(output_stream, code, ll, match_distance, info);
             // print("Match: ", match_distance, " ", match_len);
             i += match_len - 1;
         }
@@ -84,10 +84,9 @@ deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer
     // End of block marker
     huffman_code_write(code->length, output_stream, 256);
     if (info) info->length_freq[256]++;
-    return ok();
 }
 
-static bool
+static void
 deflate_lz_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Stream *output) {
     Stream input_stream = stream_from(input);
     stream_read_bits(&input_stream, 3);
@@ -98,11 +97,11 @@ deflate_lz_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_co
 
         if (symbol == 256) break;
         if (symbol < 256) continue;
-        try(symbol < 288);
+        check_or(symbol < 288) return;
 
         // Construct length symbol
         u32 length_symbol = symbol - 257;
-        try(length_symbol < array_count(llcode->length_bits));
+        check_or(length_symbol < array_count(llcode->length_bits)) return;
 
         // Copy length bits
         u32 length_bits = llcode->length_bits[length_symbol];
@@ -113,9 +112,8 @@ deflate_lz_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_co
         huffman_code_write(output_code->distance, output, distance_symbol);
 
         // Copy distance bits
-        try(distance_symbol < array_count(llcode->distance_bits));
+        check_or(distance_symbol < array_count(llcode->distance_bits)) return;
         u32 distance_bits = llcode->distance_bits[distance_symbol];
         for (u32 i = 0; i < distance_bits; ++i) stream_write_bit(output, stream_read_bit(&input_stream));
     }
-    return ok();
 }

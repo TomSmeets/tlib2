@@ -1,7 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // os_linux.h - Linux syscalls
 #pragma once
-#include "error0.h"
+#include "error.h"
 #include "linux.h"
 #include "os_api.h"
 #include "str.h"

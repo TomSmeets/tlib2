@@ -64,7 +64,7 @@ static Command build_compile_command(Build_Platform platform, Build_Mode mode, c
     return cmd;
 }
 
-static bool build_compile(Build_Platform platform, Build_Mode mode, char *input, char *output) {
+static void build_compile(Build_Platform platform, Build_Mode mode, char *input, char *output) {
     Command cmd = build_compile_command(platform, mode, input, output);
 
     // Verbose logging
@@ -73,11 +73,10 @@ static bool build_compile(Build_Platform platform, Build_Mode mode, char *input,
 
     // Run command
     i32 ret = os_wait(os_exec(cmd.argv));
-    try(ret == 0);
-    return ok();
+    check(ret == 0);
 }
 
-static bool build_lsp(Build_Platform platform, char *output) {
+static void build_lsp(Build_Platform platform, char *output) {
     Memory *mem = mem_new();
     Command cmd = build_compile_command(platform, Mode_Debug, "main.c", "out/main.elf");
 
@@ -93,13 +92,12 @@ static bool build_lsp(Build_Platform platform, char *output) {
     fmt(fmt, "}]");
     char *out = fmt_end(fmt);
     os_write_file("compile_commands.json", str_buf(out));
-    return ok();
+    mem_free(mem);
 }
 
 // Generate self contained html page containing wasm module
-static bool generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
+static void generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
     Memory *mem = mem_new();
-
     Fmt *f = fmt_new(mem);
     fmt(f, "<!DOCTYPE html>\n");
     fmt(f, "<head>\n");
@@ -114,10 +112,7 @@ static bool generate_html(char *output_path, char *css_path, char **js_path_list
         fmt(f, os_read_file_string(mem, js_path_list[i]));
     }
     fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
-    Buffer buf = {};
-    try(os_read_file(mem, wasm_path, &buf));
-    fmt_buf(f, base64_encode(mem, buf));
-    mem_free(mem);
+    fmt_buf(f, base64_encode(mem, os_read_file(mem, wasm_path)));
     fmt(f, "\"));\n");
     fmt(f, "</script>\n");
 
@@ -126,7 +121,7 @@ static bool generate_html(char *output_path, char *css_path, char **js_path_list
     fmt(f, os_read_file_string(mem, html_path));
     fmt(f, "</body>\n");
     os_write_file(output_path, str_buf(fmt_end(f)));
-    return ok();
+    mem_free(mem);
 }
 
 typedef struct {
@@ -180,7 +175,7 @@ static void build_html(Build *build, char *path) {
     build->html_files[build->html_count++] = path;
 }
 
-static bool build_build(Build *build) {
+static void build_build(Build *build) {
     Build_Mode mode = build->release ? Mode_Release : Mode_Debug;
     Memory *mem = build->mem;
 
@@ -191,7 +186,7 @@ static bool build_build(Build *build) {
     char *out_html = fstr(mem, out_path, "/", build->output_name, ".html");
 
     os_system(fstr(mem, "mkdir -p ", out_path));
-    if (error) return 0;
+    if (error) return;
 
     if (build->windows) build_compile(Platform_Windows, mode, build->source_file, out_exe);
     if (build->linux) build_compile(Platform_Linux, mode, build->source_file, out_elf);
@@ -217,10 +212,7 @@ static bool build_build(Build *build) {
 
         // Load embedded wasm file
         fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
-        Buffer buf = {};
-        try(os_read_file(mem, out_wasm, &buf));
-        fmt_buf(f, base64_encode(mem, buf));
-        mem_free(mem);
+        fmt_buf(f, base64_encode(mem, os_read_file(mem, out_wasm)));
         fmt(f, "\"));\n");
         fmt(f, "</script>\n");
 
@@ -233,5 +225,4 @@ static bool build_build(Build *build) {
         os_write_file(out_html, str_buf(fmt_end(f)));
         if (!build->wasm) os_remove(out_wasm);
     }
-    return ok();
 }
