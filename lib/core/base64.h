@@ -1,23 +1,19 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // base64.h - Readable Base64 encoding and decoding
 #pragma once
-#include "error.h"
 #include "mem.h"
 #include "type.h"
 
 // Convert a byte to the correct base64 char
 // - Considers only the bottom 6 bits
 static u8 base64_from_bits(u8 c) {
-    // Only consider lower 6  bits
     c &= 63;
-
     if (c < 26) return c - 0 + 'A';
     if (c < 52) return c - 26 + 'a';
     if (c < 62) return c - 52 + '0';
     if (c == 62) return '+';
     if (c == 63) return '/';
-
-    // invalid
+    // Unreachable
     return 0;
 }
 
@@ -31,6 +27,7 @@ static u8 base64_to_bits(u8 c) {
     if (c == '/') return 63;
 
     // invalid
+    check(!"Not a valid base64 character");
     return 0;
 }
 
@@ -119,28 +116,21 @@ static Buffer base64_decode(Memory *mem, Buffer input) {
 }
 
 // ==== Testing ====
-static bool base64_test_encode(Buffer input, char *expect) {
-    bool ok = true;
-    Memory *mem = mem_new();
-
-    char *output = (char *)base64_encode(mem, input).data;
-    ok = str_eq(output, expect);
-
-    Buffer reverse = base64_decode(mem, str_buf(output));
-    ok = ok && buf_eq(input, reverse);
-
-    mem_free(mem);
-    return ok;
+static void base64_test_encode(Memory *mem, Buffer input, char *output_str) {
+    Buffer output = str_buf(output_str);
+    Buffer input_enc   = base64_encode(mem, input);
+    Buffer output_dec  = base64_decode(mem, output);
+    check(buf_eq(input_enc, output));
+    check(buf_eq(output_dec, input));
 }
 
-static bool base64_test(void) {
-    try(base64_test_encode(str_buf("Hello World!"), "SGVsbG8gV29ybGQh"));
-    try(base64_test_encode(str_buf(""), ""));
-    try(base64_test_encode(str_buf("a"), "YQ=="));
-    try(base64_test_encode(str_buf("aa"), "YWE="));
-    try(base64_test_encode(str_buf("aaa"), "YWFh"));
-    try(base64_test_encode(str_buf("aaaa"), "YWFhYQ=="));
-    try(base64_test_encode(BUFFER(u8, 0, 0, 0, 0), "AAAAAA=="));
-    try(base64_test_encode(BUFFER(u8, 1, 2, 3, 4, 5, 6), "AQIDBAUG"));
-    return ok();
+static void base64_test(Memory *mem) {
+    base64_test_encode(mem, str_buf("Hello World!"), "SGVsbG8gV29ybGQh");
+    base64_test_encode(mem, str_buf(""), "");
+    base64_test_encode(mem, str_buf("a"), "YQ==");
+    base64_test_encode(mem, str_buf("aa"), "YWE=");
+    base64_test_encode(mem, str_buf("aaa"), "YWFh");
+    base64_test_encode(mem, str_buf("aaaa"), "YWFhYQ==");
+    base64_test_encode(mem, BUFFER(u8, 0, 0, 0, 0), "AAAAAA==");
+    base64_test_encode(mem, BUFFER(u8, 1, 2, 3, 4, 5, 6), "AQIDBAUG");
 }

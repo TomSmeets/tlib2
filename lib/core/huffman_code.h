@@ -111,25 +111,24 @@ static bool huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) 
     return ok();
 }
 
-static bool huffman_code_test(void) {
+static void huffman_code_test(Memory *mem) {
     u8 len[] = {3, 0, 4, 5, 0, 0, 1, 3, 5, 3};
     u32 code[] = {0b100, 0, 0b1110, 0b11110, 0, 0, 0b0, 0b101, 0b11111, 0b110};
 
-    Memory *mem = mem_new();
     Huffman_Code *table = huffman_code_from(mem, array_count(len), len);
 
-    try(table);
-    try(table->counts[1 - 1] == 1);
-    try(table->counts[3 - 1] == 3);
-    try(table->counts[4 - 1] == 1);
-    try(table->counts[5 - 1] == 2);
+    check(table);
+    check(table->counts[1 - 1] == 1);
+    check(table->counts[3 - 1] == 3);
+    check(table->counts[4 - 1] == 1);
+    check(table->counts[5 - 1] == 2);
 
     // Total count == symbol count
     u32 sum = 0;
     for (u32 i = 0; i < array_count(table->counts); ++i) {
         sum += table->counts[i];
     }
-    try(sum == 7);
+    check(sum == 7);
 
     Stream *stream = stream_new(mem);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
@@ -144,29 +143,27 @@ static bool huffman_code_test(void) {
         if (len[sym] == 0) continue;
 
         u32 sym_parse = huffman_code_read(table, stream);
-        try(sym_parse != -1);
-        try(sym_parse == sym);
+        check(sym_parse != -1);
+        check(sym_parse == sym);
 
         u32 sym_parse2 = huffman_code_read(table, stream);
-        try(sym_parse2 != -1);
-        try(sym_parse2 == sym);
+        check(sym_parse2 != -1);
+        check(sym_parse2 == sym);
     }
-    try(stream_eof(stream));
+    check(stream_eof(stream));
 
     // Test writing codes
     stream_seek(stream, 0);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
         if (len[sym] == 0) continue;
-        try(huffman_code_write(table, stream, sym));
-        try(huffman_code_write(table, stream, sym));
+        check(huffman_code_write(table, stream, sym));
+        check(huffman_code_write(table, stream, sym));
     }
     stream_seek(stream, 0);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
         if (len[sym] == 0) continue;
-        try(huffman_code_read(table, stream) == sym);
-        try(huffman_code_read(table, stream) == sym);
+        check(huffman_code_read(table, stream) == sym);
+        check(huffman_code_read(table, stream) == sym);
     }
-    try(stream_eof(stream));
-
-    return ok();
+    check(stream_eof(stream));
 }

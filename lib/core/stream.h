@@ -259,49 +259,47 @@ static bool stream_to_file(Stream *stream, File *output) {
 }
 
 // Testing
-static bool stream_test(void) {
-    Memory *mem = mem_new();
-
+static void stream_test(Memory *mem) {
     // Basic test
     Stream *stream = stream_new(mem);
     stream_write_u8(stream, 1);
     stream_write_u8(stream, 2);
     stream_write_u8(stream, 3);
-    try(stream->size == 3);
-    try(stream->cursor == stream->size);
-    try(stream->size <= stream->capacity);
-    try(stream->buffer[0] == 1);
-    try(stream->buffer[1] == 2);
-    try(stream->buffer[2] == 3);
+    check(stream->size == 3);
+    check(stream->cursor == stream->size);
+    check(stream->size <= stream->capacity);
+    check(stream->buffer[0] == 1);
+    check(stream->buffer[1] == 2);
+    check(stream->buffer[2] == 3);
 
     // Reading back data
     stream_seek(stream, 0);
-    try(stream_read_u8(stream) == 1);
-    try(stream_read_u8(stream) == 2);
-    try(stream_read_u8(stream) == 3);
-    try(stream_eof(stream));
+    check(stream_read_u8(stream) == 1);
+    check(stream_read_u8(stream) == 2);
+    check(stream_read_u8(stream) == 3);
+    check(stream_eof(stream));
 
     size_t cur = stream_cursor(stream);
-    try(cur == 3);
+    check(cur == 3);
 
     stream_write_u32(stream, 0x12345678);
-    try(stream_cursor(stream) == 7);
+    check(stream_cursor(stream) == 7);
 
     stream_seek(stream, cur);
-    try(stream_read_u8(stream) == 0x78);
-    try(stream_read_u8(stream) == 0x56);
-    try(stream_read_u8(stream) == 0x34);
-    try(stream_read_u8(stream) == 0x12);
-    try(stream_eof(stream));
+    check(stream_read_u8(stream) == 0x78);
+    check(stream_read_u8(stream) == 0x56);
+    check(stream_read_u8(stream) == 0x34);
+    check(stream_read_u8(stream) == 0x12);
+    check(stream_eof(stream));
 
     stream_clear(stream);
-    try(stream_eof(stream));
-    try(stream->cursor == 0);
-    try(stream->bit_ix == 0);
+    check(stream_eof(stream));
+    check(stream->cursor == 0);
+    check(stream->bit_ix == 0);
 
     stream_write_bit(stream, 1);
-    try(stream->cursor == 1);
-    try(stream->bit_ix == 1);
+    check(stream->cursor == 1);
+    check(stream->bit_ix == 1);
 
     stream_write_bit(stream, 0);
     stream_write_bit(stream, 1);
@@ -310,34 +308,34 @@ static bool stream_test(void) {
     stream_write_bit(stream, 0);
     stream_write_bit(stream, 0);
     stream_write_bit(stream, 1);
-    try(stream->cursor == 1);
-    try(stream->bit_ix == 0);
+    check(stream->cursor == 1);
+    check(stream->bit_ix == 0);
 
     // Extra
     stream_write_bit(stream, 1);
     stream_write_bit(stream, 1);
 
     stream_seek(stream, 0);
-    try(stream_read_u8(stream) == 0b10001101);
-    try(stream_read_u8(stream) == 0b00000011);
-    try(stream_eof(stream));
+    check(stream_read_u8(stream) == 0b10001101);
+    check(stream_read_u8(stream) == 0b00000011);
+    check(stream_eof(stream));
 
     stream_seek(stream, 0);
-    try(stream_read_bit(stream) == 1);
-    try(stream_read_bit(stream) == 0);
-    try(stream_read_bit(stream) == 1);
-    try(stream_read_bit(stream) == 1);
-    try(stream_read_bit(stream) == 0);
-    try(stream_read_bit(stream) == 0);
-    try(stream_read_bit(stream) == 0);
-    try(stream_read_bit(stream) == 1);
-    try(stream_read_bit(stream) == 1);
-    try(stream_read_bit(stream) == 1);
-    try(stream_eof(stream));
+    check(stream_read_bit(stream) == 1);
+    check(stream_read_bit(stream) == 0);
+    check(stream_read_bit(stream) == 1);
+    check(stream_read_bit(stream) == 1);
+    check(stream_read_bit(stream) == 0);
+    check(stream_read_bit(stream) == 0);
+    check(stream_read_bit(stream) == 0);
+    check(stream_read_bit(stream) == 1);
+    check(stream_read_bit(stream) == 1);
+    check(stream_read_bit(stream) == 1);
+    check(stream_eof(stream));
     stream_seek(stream, 0);
 
-    try(stream_read_bits(stream, 10) == 0b1110001101);
-    try(stream_eof(stream));
+    check(stream_read_bits(stream, 10) == 0b1110001101);
+    check(stream_eof(stream));
 
     // Write bits
     stream_clear(stream);
@@ -346,53 +344,53 @@ static bool stream_test(void) {
     stream_write_bits(stream, 7, 0b11111111);
     stream_write_bits(stream, 7, 0b10101010);
     stream_seek(stream, 0);
-    try(stream_read_bits(stream, 7) == 0b01111111);
-    try(stream_read_bits(stream, 7) == 0b00000000);
-    try(stream_read_bits(stream, 7) == 0b01111111);
-    try(stream_read_bits(stream, 7) == 0b00101010);
-    try(stream_eof(stream));
-    try(stream->cursor == 4);
-    try(stream->size == 4);
-    try(stream->bit_ix == 4);
+    check(stream_read_bits(stream, 7) == 0b01111111);
+    check(stream_read_bits(stream, 7) == 0b00000000);
+    check(stream_read_bits(stream, 7) == 0b01111111);
+    check(stream_read_bits(stream, 7) == 0b00101010);
+    check(stream_eof(stream));
+    check(stream->cursor == 4);
+    check(stream->size == 4);
+    check(stream->bit_ix == 4);
 
     // Another test
     stream_clear(stream);
 
     u32 data[] = {0b11000001111100001111000111001101};
     Stream bits = stream_from(buf_from(data, sizeof(data)));
-    try(stream_read_bits(&bits, 1) == 0b1);
-    try(stream_read_bits(&bits, 1) == 0b0);
-    try(stream_read_bits(&bits, 2) == 0b11);
-    try(stream_read_bits(&bits, 2) == 0b00);
-    try(stream_read_bits(&bits, 3) == 0b111);
-    try(stream_read_bits(&bits, 3) == 0b000);
-    try(stream_read_bits(&bits, 4) == 0b1111);
-    try(stream_read_bits(&bits, 4) == 0b0000);
-    try(stream_read_bits(&bits, 5) == 0b11111);
-    try(stream_read_bits(&bits, 5) == 0b00000);
-    try(stream_read_bits(&bits, 2) == 0b11);
-    try(bits.bit_ix == 0);
-    try(bits.cursor == 4);
+    check(stream_read_bits(&bits, 1) == 0b1);
+    check(stream_read_bits(&bits, 1) == 0b0);
+    check(stream_read_bits(&bits, 2) == 0b11);
+    check(stream_read_bits(&bits, 2) == 0b00);
+    check(stream_read_bits(&bits, 3) == 0b111);
+    check(stream_read_bits(&bits, 3) == 0b000);
+    check(stream_read_bits(&bits, 4) == 0b1111);
+    check(stream_read_bits(&bits, 4) == 0b0000);
+    check(stream_read_bits(&bits, 5) == 0b11111);
+    check(stream_read_bits(&bits, 5) == 0b00000);
+    check(stream_read_bits(&bits, 2) == 0b11);
+    check(bits.bit_ix == 0);
+    check(bits.cursor == 4);
 
     stream_seek(&bits, 0);
-    try(stream_read_bits(&bits, 7) == 0b1001101);
-    try(stream_read_bits(&bits, 7) == 0b1100011);
-    try(bits.bit_ix == 6);
+    check(stream_read_bits(&bits, 7) == 0b1001101);
+    check(stream_read_bits(&bits, 7) == 0b1100011);
+    check(bits.bit_ix == 6);
 
     // Should skip the 2 bits
-    try(stream_read_u8(&bits) == 0b11110000);
-    try(bits.bit_ix == 0);
+    check(stream_read_u8(&bits) == 0b11110000);
+    check(bits.bit_ix == 0);
 
-    try(stream_read_bits(&bits, 1) == 1);
-    try(stream_read_bits(&bits, 1) == 0);
-
-    stream_seek(&bits, 0);
-    try(stream_read_bits(&bits, 32) == 0b11000001111100001111000111001101);
-    try(stream_eof(&bits));
+    check(stream_read_bits(&bits, 1) == 1);
+    check(stream_read_bits(&bits, 1) == 0);
 
     stream_seek(&bits, 0);
-    try(stream_read_u32(&bits) == 0b11000001111100001111000111001101);
-    try(stream_eof(&bits));
+    check(stream_read_bits(&bits, 32) == 0b11000001111100001111000111001101);
+    check(stream_eof(&bits));
+
+    stream_seek(&bits, 0);
+    check(stream_read_u32(&bits) == 0b11000001111100001111000111001101);
+    check(stream_eof(&bits));
 
     stream_clear(&bits);
     stream_write_bits(&bits, 4, 0b0000);
@@ -401,11 +399,10 @@ static bool stream_test(void) {
     stream_write_bits(&bits, 1, 0b0);
 
     stream_seek(&bits, 0);
-    try(stream_read_bits(&bits, 4) == 0b0000);
-    try(stream_read_bits(&bits, 4) == 0b1111);
-    try(stream_read_bits(&bits, 1) == 0b1);
-    try(stream_read_bits(&bits, 1) == 0b0);
-    return 1;
+    check(stream_read_bits(&bits, 4) == 0b0000);
+    check(stream_read_bits(&bits, 4) == 0b1111);
+    check(stream_read_bits(&bits, 1) == 0b1);
+    check(stream_read_bits(&bits, 1) == 0b0);
 }
 
 // NOTE: make fmt also use stream?

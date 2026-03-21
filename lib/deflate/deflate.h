@@ -26,13 +26,14 @@ static size_t deflate_calculate_stored_block_size(size_t input_size) {
     return stored_size;
 }
 
-static bool deflate_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
+static Buffer deflate_read(Memory *mem, Buffer input_buf) {
     Stream input_ = stream_from(input_buf);
     Stream *input = &input_;
 
     Stream *output = stream_new(mem);
     for (;;) {
-        try(stream_eof(input) == false);
+        check(stream_eof(input) == false);
+        if(error) return buf_null();
 
         // Read block header
         bool is_last = stream_read_bits(input, 1);
@@ -42,7 +43,9 @@ static bool deflate_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
             // This block is stored directly, no special encoding
             u16 size = stream_read_u16(input);
             u16 size_check = stream_read_u16(input);
-            try(size == (size_check ^ 0xffff));
+
+            check(size == (size_check ^ 0xffff));
+            if(error) return buf_null();
 
             for (size_t i = 0; i < size; ++i) {
                 stream_write_u8(output, stream_read_u8(input));
@@ -61,14 +64,18 @@ static bool deflate_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
             if (type == Deflate_BlockDynamic) tree = deflate_huffman_dynamic_read(mem, input);
 
             // Tree should be valid
-            try(tree);
+            check(tree);
 
             while (1) {
+                check(!(stream_eof(input) && input->bit_ix == 0));
+                if(error) return buf_null();
+
                 // Read encoded length-symbol using the huffman tree
                 u32 symbol = huffman_code_read(tree->length, input);
 
                 // Symbol must be valid (return 0 otherwise)
-                try(symbol < 288);
+                check(symbol < 288);
+                if(error) return buf_null();
 
                 // End of block marker
                 if (symbol == 256) break;
@@ -101,8 +108,7 @@ static bool deflate_read(Memory *mem, Buffer input_buf, Buffer *output_buf) {
         // Continue reading until the last block
         if (is_last) break;
     }
-    *output_buf = stream_to_buffer(output);
-    return ok();
+    return stream_to_buffer(output);
 }
 
 static bool deflate_write_stored(Memory *mem, Buffer input, Buffer *output) {
@@ -158,7 +164,8 @@ deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *inpu
     return ok();
 }
 
-static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
+static Buffer deflate_write(Memory *mem, Buffer input) {
+    Buffer result = {};
     bool enable_stored = 1;
     bool enable_dynamic = 1;
     bool enable_fixed = 1;
@@ -175,75 +182,64 @@ static bool deflate_write(Memory *mem, Buffer input, Buffer *result) {
 
     // Length/Distnace Symbol to offset/bit_count mapping
     Deflate_LLCode *llcode = deflate_llcode_new(mem);
-    *result = (Buffer){};
 
     // Encode using fixed huffman code and also collect frequency info
     Deflate_Huffman *fixed_code = deflate_huffman_fixed(mem);
-    try(fixed_code);
+    check(fixed_code);
+    if(error) return buf_null();
 
     Deflate_Encode_Info frequency_info = {};
     Buffer fixed_output = {};
-    try(deflate_write_fixed(mem, llcode, fixed_code, input, &fixed_output, &frequency_info));
-    if (enable_fixed) *result = fixed_output;
+    check(deflate_write_fixed(mem, llcode, fixed_code, input, &fixed_output, &frequency_info));
+    if(error) return buf_null();
+    if (enable_fixed) result = fixed_output;
 
     if (enable_dynamic) {
         // Re encode with the new huffman table
         Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
-        try(dynamic_code);
+        check(dynamic_code);
+    if(error) return buf_null();
 
         Buffer dynamic_output = {};
-        try(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
-        if (result->size == 0 || result->size > dynamic_output.size) *result = dynamic_output;
+        check(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
+        if(error) return buf_null();
+        if (result.size == 0 || result.size > dynamic_output.size) result = dynamic_output;
     }
 
-    if (enable_stored && (result->size == 0 || result->size > deflate_calculate_stored_block_size(input.size))) {
+    if (enable_stored && (result.size == 0 || result.size > deflate_calculate_stored_block_size(input.size))) {
         Buffer stored_output = {};
-        try(deflate_write_stored(mem, input, &stored_output));
-        *result = stored_output;
+        check(deflate_write_stored(mem, input, &stored_output));
+        result = stored_output;
     }
 
-    return ok();
+    if(error) return buf_null();
+
+    return result;
 }
 
 // Run a deflate/inflate testcase with a given input
-static bool deflate_test_buf(Memory *mem, Buffer input) {
-    // print("Input:\n", input);
-
-    Buffer compressed = {};
-    try(deflate_write(mem, input, &compressed));
-    // print("Compressed:\n", compressed);
-
-    Buffer decompressed = {};
-    try(deflate_read(mem, compressed, &decompressed));
-    // print("Decompressed:\n", decompressed);
-
-    try(buf_eq(decompressed, input));
-    return ok();
+static void deflate_test_buf(Memory *mem, Buffer input) {
+    Buffer compressed = deflate_write(mem, input);
+    Buffer decompressed = deflate_read(mem, compressed);
+    buf_eq(decompressed, input);
 }
 
-static bool deflate_test(void) {
-    {
-        Memory *mem = mem_new();
-        try(deflate_test_buf(mem, str_buf("heeeeeeeeeeeeello hello")));
-        try(deflate_test_buf(mem, str_buf("Hello World!")));
-        try(deflate_test_buf(mem, str_buf("1234567")));
-        try(deflate_test_buf(mem, str_buf("")));
-        try(deflate_test_buf(mem, str_buf("0")));
-        try(deflate_test_buf(mem, str_buf("0000000000000000")));
-        try(deflate_test_buf(mem, str_buf("0000000000000001")));
-        try(deflate_test_buf(mem, str_buf("1000000000000001")));
-        mem_free(mem);
-    }
+static void deflate_test(Memory *mem) {
+    deflate_test_buf(mem, str_buf("heeeeeeeeeeeeello hello"));
+    deflate_test_buf(mem, str_buf("Hello World!"));
+    deflate_test_buf(mem, str_buf("1234567"));
+    deflate_test_buf(mem, str_buf(""));
+    deflate_test_buf(mem, str_buf("0"));
+    deflate_test_buf(mem, str_buf("0000000000000000"));
+    deflate_test_buf(mem, str_buf("0000000000000001"));
+    deflate_test_buf(mem, str_buf("1000000000000001"));
 
     Rand rng = {};
     for (u32 i = 0; i < 8; ++i) {
-        Memory *mem = mem_new();
         size_t input_size = 1 << (i * 2);
         Buffer input = {mem_alloc_zero(mem, input_size), input_size};
-        try(deflate_test_buf(mem, input));
+        deflate_test_buf(mem, input);
         rand_bytes(&rng, input);
-        try(deflate_test_buf(mem, input));
-        mem_free(mem);
+        deflate_test_buf(mem, input);
     }
-    return ok();
 }

@@ -4,6 +4,7 @@
 #include "linux.h"
 #include "os_api.h"
 #include "str.h"
+#include "error0.h"
 #include "type.h"
 
 // The main function, to exit call os_exit()
@@ -17,7 +18,8 @@ int main(i32 argc, char **argv) {
 // - returns null on failure
 static void *os_alloc(size_t size) {
     void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (!ptr || ptr == MAP_FAILED) return 0;
+    check(ptr);
+    check(ptr != MAP_FAILED);
     return ptr;
 }
 

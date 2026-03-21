@@ -4,7 +4,6 @@
 #include "base64.h"
 #include "crc.h"
 #include "deflate.h"
-#include "error2.h"
 #include "fmt.h"
 #include "gzip.h"
 #include "hot.h"
@@ -17,21 +16,43 @@
     print("Running " #name);                                                                                                                         \
     try(name)
 
-bool test_test(void) {
-    TEST(base64_test());
-    TEST(fmt_test());
-    TEST(arg_test());
-    TEST(crc_test());
-    TEST(stream_test());
-    TEST(huffman_code_test());
-    TEST(huffman_tree_test());
-    TEST(deflate_test());
-    TEST(gzip_test());
-    return ok();
+static void test_test(Memory *mem) {
+    base64_test(mem);
+    fmt_test(mem);
+    arg_test();
+    crc_test();
+    stream_test(mem);
+    huffman_code_test(mem);
+    huffman_tree_test(mem);
+    deflate_test(mem);
+    gzip_test(mem);
 }
 
 void os_main(u32 argc, char **argv) {
-    if (!test_test()) error_exit();
-    print("Success!");
-    os_exit(0);
+    Memory *mem = mem_new();
+
+    // Run tests
+    base64_test(mem);
+    fmt_test(mem);
+    arg_test();
+    crc_test();
+    stream_test(mem);
+    huffman_code_test(mem);
+    huffman_tree_test(mem);
+    deflate_test(mem);
+    gzip_test(mem);
+
+    // Release memory
+    mem_free(mem);
+
+    // Check result
+    if (error) {
+        for (u32 i = 0; i < error; ++i) {
+            print(error_stack[i].file, ":", error_stack[i].line, ":", error_stack[i].function, ": Error ", error_stack[i].expr, " failed");
+        }
+        os_exit(1);
+    } else {
+        print("Success!");
+        os_exit(0);
+    }
 }

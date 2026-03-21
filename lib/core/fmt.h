@@ -336,9 +336,7 @@ static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
 // could add a vararg fmt type
 
 // Test
-static bool fmt_test(void) {
-    Memory *mem = mem_new();
-
+static void fmt_test(Memory *mem) {
     {
         Fmt *fmt = fmt_new(mem);
         fmt_s(fmt, "Hello");
@@ -347,25 +345,20 @@ static bool fmt_test(void) {
         fmt_u(fmt, 1234);
         fmt_s(fmt, "\n");
         char *output = fmt_end(fmt);
-        try(str_eq(output, "Hello World: 1234\n"));
+        check(str_eq(output, "Hello World: 1234\n"));
     }
 
     {
-        Fmt *f = fmt_new(mem);
-        fmt(f, "Hello", " ", "World: ", 1234, EOL);
-        char *output = fmt_end(f);
-        try(str_eq(output, "Hello World: 1234\n"));
+        Fmt *fmt = fmt_new(mem);
+        fmt(fmt, "Hello", " ", "World: ", 1234, EOL);
+        char *output = fmt_end(fmt);
+        check(str_eq(output, "Hello World: 1234\n"));
     }
-    {
-        char *output = fstr(mem, "Hello", " ", "World: ", 1234, EOL);
-        try(str_eq(output, "Hello World: 1234\n"));
-    }
+
+    check(str_eq(fstr(mem, "Hello", " ", "World: ", 1234, EOL), "Hello World: 1234\n"));
 
     // Awesome! who needs python :P
     u32 x = 1234;
     print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
     // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
-
-    mem_free(mem);
-    return ok();
 }

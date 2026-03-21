@@ -76,12 +76,11 @@ static void arg_help_opt(Arg *arg) {
     os_exit(1);
 }
 
-static bool arg_test(void) {
+static void arg_test(void) {
     char *argv[] = {"main", "test", "xyz"};
     Arg arg = arg_new(array_count(argv), argv);
-    try(arg_match(&arg, "hello", "Show Hello Message") == false);
-    try(arg_match(&arg, "world", "Something with the world") == false);
-    try(arg_match(&arg, "test", "Testing") == true);
-    try(arg_match(&arg, "xyz", "Testing") == true);
-    return ok();
+    check(arg_match(&arg, "hello", "Show Hello Message") == false);
+    check(arg_match(&arg, "world", "Something with the world") == false);
+    check(arg_match(&arg, "test", "Testing") == true);
+    check(arg_match(&arg, "xyz", "Testing") == true);
 }

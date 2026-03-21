@@ -22,9 +22,7 @@ struct Pix {
 WASM_IMPORT(pix_wasm_start_input) void pix_wasm_start_input(Pix *pix);
 
 // Create a new Pix renderer with a given title and window size
-static Pix *pix_new(char *title, v2i window_size) {
-    Memory *mem = mem_new();
-
+static Pix *pix_new(Memory *mem, char *title, v2i window_size) {
     Pix *pix = mem_struct(mem, Pix);
     pix->mem = mem;
     pix_wasm_start_input(pix);
@@ -33,9 +31,7 @@ static Pix *pix_new(char *title, v2i window_size) {
 }
 
 // Destroy window and cleanup renderer
-static void pix_free(Pix *pix) {
-    mem_free(pix->mem);
-}
+static void pix_quit(Pix *pix) { }
 
 // Poll input event
 // - Keep polling until InputEvent_None

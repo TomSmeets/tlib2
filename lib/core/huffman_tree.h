@@ -177,7 +177,7 @@ static bool huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list
     return ret;
 }
 
-static bool huffman_tree_test(void) {
+static void huffman_tree_test(Memory *mem) {
     char *input = "aaaaaaaabbbbcccdde";
     u32 freq_list[256] = {};
 
@@ -192,21 +192,19 @@ static bool huffman_tree_test(void) {
         }
     }
 
-    try(freq_list['a'] == 8);
-    try(freq_list['b'] == 4);
-    try(freq_list['c'] == 3);
-    try(freq_list['d'] == 2);
-    try(freq_list['e'] == 1);
-    try(freq_list['x'] == 0);
-
-    Memory *mem = mem_new();
+    check(freq_list['a'] == 8);
+    check(freq_list['b'] == 4);
+    check(freq_list['c'] == 3);
+    check(freq_list['d'] == 2);
+    check(freq_list['e'] == 1);
+    check(freq_list['x'] == 0);
 
     {
         Huffman_Tree *tree = huffman_tree_from(mem, array_count(freq_list), freq_list, 0);
-        try(tree);
+        check(tree);
 
         u8 len_list[256] = {};
-        try(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
+        check(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
 
         if (0) {
             // Debug printing
@@ -216,20 +214,20 @@ static bool huffman_tree_test(void) {
                 print(i, ": ", len_list[i]);
             }
         }
-        try(len_list['a'] == 1);
-        try(len_list['b'] == 2);
-        try(len_list['c'] == 3);
-        try(len_list['d'] == 4);
-        try(len_list['e'] == 4);
-        try(len_list['x'] == 0);
+        check(len_list['a'] == 1);
+        check(len_list['b'] == 2);
+        check(len_list['c'] == 3);
+        check(len_list['d'] == 4);
+        check(len_list['e'] == 4);
+        check(len_list['x'] == 0);
     }
 
     {
         Huffman_Tree *tree = huffman_tree_from_length_limited(mem, array_count(freq_list), freq_list, 3);
-        try(tree);
+        check(tree);
 
         u8 len_list[256] = {};
-        try(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
+        check(huffman_tree_to_lengths(tree, array_count(len_list), len_list));
 
         if (0) {
             print("Len:");
@@ -238,15 +236,13 @@ static bool huffman_tree_test(void) {
                 print(i, ": ", len_list[i]);
             }
         }
-        try(len_list['a'] == 1);
-        try(len_list['b'] == 3);
-        try(len_list['c'] == 3);
-        try(len_list['d'] == 3);
-        try(len_list['e'] == 3);
-        try(len_list['x'] == 0);
+        check(len_list['a'] == 1);
+        check(len_list['b'] == 3);
+        check(len_list['c'] == 3);
+        check(len_list['d'] == 3);
+        check(len_list['e'] == 3);
+        check(len_list['x'] == 0);
     }
-
-    return ok();
 }
 
 // Length limit huffman code

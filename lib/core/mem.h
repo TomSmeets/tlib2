@@ -57,7 +57,6 @@ static void *mem_alloc_uninit(Memory *mem, size_t size) {
         // We need to allocate a new chunk.
         size_t header_size = size_align_up(sizeof(Memory_Chunk), align);
         Buffer buf = chunk_alloc(header_size + size);
-
         Memory_Chunk *chunk = (Memory_Chunk *)buf.data;
         chunk->size = buf.size;
         chunk->next = mem->chunk;
@@ -74,13 +73,14 @@ static void *mem_alloc_uninit(Memory *mem, size_t size) {
     void *alloc_start = mem->mem_start;
     mem->mem_start += size;
     assert(mem->mem_start <= mem->mem_end);
+
     return alloc_start;
 }
 
 // Allocate exactly 'size' bytes of zero initialized memory
 static void *mem_alloc_zero(Memory *mem, size_t size) {
     void *ptr = mem_alloc_uninit(mem, size);
-    mem_zero(ptr, size);
+    if (ptr) mem_zero(ptr, size);
     return ptr;
 }
 

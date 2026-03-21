@@ -1,6 +1,7 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // pix_api.h - Simple 2d game engine (Interface)
 #pragma once
+#include "mem.h"
 #include "input.h"
 
 #define PIX_AUDIO_RATE 48000
@@ -8,7 +9,7 @@
 typedef struct Pix Pix;
 
 // Create a new Pix renderer with a given title and window size
-static Pix *pix_new(char *title, v2i window_size);
+static Pix *pix_new(Memory *mem, char *title, v2i window_size);
 
 // Destroy window and cleanup renderer
 static void pix_free(Pix *pix);
