@@ -73,7 +73,7 @@ static void arg_help(Arg *arg) {
 static void arg_help_opt(Arg *arg) {
     if (arg->arg_ix >= arg->arg_count) return;
     arg_help(arg);
-    os_exit(1);
+    os_fail("");
 }
 
 static void arg_test(void) {

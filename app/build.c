@@ -10,7 +10,7 @@ static bool build_tl(Arg *arg) {
     if (!arg_match(arg, "tl", "Build tl cli tool")) return ok();
     os_system("mkdir -p out/tl");
     build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
-    os_exit(0);
+    os_exit();
 }
 
 static bool snake_build(Arg *arg) {
@@ -39,8 +39,8 @@ static bool snake_build(Arg *arg) {
     build_html(build, "app/snake/snake.html");
     try(build_build(build));
 
-    if (run) try(os_system("out/snake/snake.elf") == 0);
-    os_exit(0);
+    if (run) os_system("out/snake/snake.elf");
+    os_exit();
     return ok();
 }
 
@@ -49,17 +49,20 @@ static void build_test(Arg *arg) {
     bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
-    if (!build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test")) os_exit(1);
-    if (build) os_exit(0);
+    check(build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test"));
+    if (error) os_exit();
+    if (build) os_exit();
 
     if (gdb) {
-        os_exit(os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test"));
+        os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test");
     } else {
-        os_exit(os_system("out/test"));
+        os_system("out/test");
     }
+    os_exit();
 }
 static void build_fuzz(Arg *arg) {
-    os_exit(os_system("clang -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz"));
+    os_system("clang -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz");
+    os_exit();
 }
 
 static void generate_lsp(Arg *arg) {
@@ -98,20 +101,18 @@ void os_main(u32 argc, char **argv) {
     Arg arg = {argc, argv, 1};
 
     if (arg_match(&arg, "format", "Format all code")) {
-        os_exit(os_system("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin"));
-        return;
+        os_system("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin");
+        os_exit();
     }
 
     if (arg_match(&arg, "test", "Run Automated Tests")) {
         build_test(&arg);
-        os_exit(0);
-        return;
+        os_exit();
     }
 
     if (arg_match(&arg, "fuzz", "Run Fuzzy tests")) {
         build_fuzz(&arg);
-        os_exit(0);
-        return;
+        os_exit();
     }
 
     snake_build(&arg);
@@ -119,10 +120,9 @@ void os_main(u32 argc, char **argv) {
 
     if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompletion")) {
         generate_lsp(&arg);
-        os_exit(0);
-        return;
+        os_exit();
     }
 
     arg_help(&arg);
-    os_exit(1);
+    os_exit();
 }

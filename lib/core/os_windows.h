@@ -33,15 +33,20 @@ static void *os_alloc(size_t size) {
 // Exit current application
 // - Does not return
 static void os_exit(i32 status) {
-    ExitProcess(status);
+    if(error) {
+        MessageBoxA(NULL, error, "Error", MB_ICONERROR | MB_OK);
+        ExitProcess(1);
+    } else {
+        ExitProcess(0);
+    }
     __builtin_trap();
 }
 
 // Exit with an error message (error dialog)
 // - Does not return
 static void os_fail(char *message) {
-    MessageBoxA(NULL, message, "Error", MB_ICONERROR | MB_OK);
-    os_exit(1);
+    error = message;
+    os_exit();
 }
 
 // ==================================
@@ -258,8 +263,8 @@ static u64 os_rand(void) {
 }
 
 // ==== System Commands ====
-static i32 os_system(char *command) {
-    return system(command);
+static void os_system(char *command) {
+    check(system(command) == 0);
 }
 
 // Execute a system command, returns the exit code

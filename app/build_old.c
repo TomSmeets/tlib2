@@ -101,13 +101,13 @@ static void cmd_dwarf(Cli *cli) {
     File *file = os_open(path, FileMode_Read);
     Elf *elf = elf_load(mem, file);
     dwarf_load(mem, elf, file);
-    os_exit(0);
+    os_exit();
 }
 
 static void cmd_format(Cli *cli) {
     if (!cli_command(cli, "format", "Format tlib")) return;
-    i32 ret = os_system("clang-format --verbose -i app/* src/*");
-    os_exit(ret);
+    os_system("clang-format --verbose -i app/* src/*");
+    os_exit();
 }
 
 void os_main(u32 argc, char **argv) {

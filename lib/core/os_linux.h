@@ -18,24 +18,28 @@ int main(i32 argc, char **argv) {
 // - returns null on failure
 static void *os_alloc(size_t size) {
     void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    check(ptr);
-    check(ptr != MAP_FAILED);
+    check(ptr && ptr != MAP_FAILED);
+    if (error) return 0;
     return ptr;
 }
 
 // Exit current application
 // - Does not return
-static void os_exit(i32 status) {
-    linux_exit_group(status);
+static void os_exit(void) {
+    if(error) {
+        linux_write(2, error, str_len(error));
+        linux_exit_group(1);
+    } else {
+        linux_exit_group(0);
+    }
     __builtin_trap();
 }
 
 // Exit with an error message (error dialog)
 // - Does not return
 static void os_fail(char *message) {
-    linux_write(2, message, str_len(message));
-    __builtin_trap();
-    os_exit(1);
+    error = message;
+    os_exit();
 }
 
 // ==================================
@@ -229,8 +233,8 @@ static u64 os_rand(void) {
 //              Process
 // ==================================
 
-static i32 os_system(char *command) {
-    return system(command) != 0;
+static void os_system(char *command) {
+    check(system(command) == 0);
 }
 
 // Execute a system command, returns the exit code
@@ -240,7 +244,7 @@ static Process *os_exec(char **argv) {
     // pid == 0 -> We are the child process
     if (pid == 0) {
         execvp(argv[0], argv);
-        os_exit(127);
+        linux_exit_group(127);
     }
 
     // pid == -1 -> failed

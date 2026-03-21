@@ -199,7 +199,7 @@ static void cli_cmdhelp(Cli *cli) {
         fmt_s(ferr, flag->info);
         fmt_s(ferr, "\n");
     }
-    os_exit(1);
+    os_fail("");
 }
 
 static void cli_help(Cli *cli) {
@@ -217,7 +217,7 @@ static void cli_help(Cli *cli) {
         fmt_s(ferr, cmd->info);
         fmt_s(ferr, "\n");
     }
-    os_exit(1);
+    os_fail("");
 }
 
 static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv) {

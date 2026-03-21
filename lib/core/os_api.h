@@ -14,7 +14,7 @@ static void *os_alloc(size_t size);
 
 // Exit current application
 // - Does not return
-static void os_exit(i32 status) __attribute__((__noreturn__));
+static void os_exit(void) __attribute__((__noreturn__));
 
 // Exit with an error message (error dialog)
 // - Does not return
@@ -129,7 +129,7 @@ static u64 os_rand(void);
 typedef struct Process Process;
 
 // Execute a shell command, returns the exit code
-static i32 os_system(char *command);
+static void os_system(char *command);
 
 // Execute a process, returns the exit code
 // - argv is a null terminated list of strings

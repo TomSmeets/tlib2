@@ -12,22 +12,6 @@
 #include "os.h"
 #include "stream.h"
 
-#define TEST(name)                                                                                                                                   \
-    print("Running " #name);                                                                                                                         \
-    try(name)
-
-static void test_test(Memory *mem) {
-    base64_test(mem);
-    fmt_test(mem);
-    arg_test();
-    crc_test();
-    stream_test(mem);
-    huffman_code_test(mem);
-    huffman_tree_test(mem);
-    deflate_test(mem);
-    gzip_test(mem);
-}
-
 void os_main(u32 argc, char **argv) {
     Memory *mem = mem_new();
 
@@ -42,15 +26,6 @@ void os_main(u32 argc, char **argv) {
     deflate_test(mem);
     gzip_test(mem);
 
-    // Release memory
-    mem_free(mem);
-
-    // Check result
-    if (error) {
-        print(error);
-        os_exit(1);
-    } else {
-        print("Success!");
-        os_exit(0);
-    }
+    if(!error) print("Success!");
+    os_exit();
 }

@@ -74,12 +74,13 @@ void os_main(u32 argc, char **argv) {
         entry_method = 0;
 
         // Run build command
-        i32 ret = os_system(build_command);
+        os_system(build_command);
 
         // Load the new application
-        if (ret == 0) {
+        if (!error) {
             entry_method = hot_load(hot, output_path, entry_name);
         }
+        error = 0;
     }
 
     if (entry_method) {
