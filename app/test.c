@@ -16,6 +16,9 @@ void os_main(u32 argc, char **argv) {
     Memory *mem = mem_new();
 
     // Run tests
+    mem_test();
+    if(error) os_exit();
+
     base64_test(mem);
     fmt_test(mem);
     arg_test();
@@ -26,6 +29,8 @@ void os_main(u32 argc, char **argv) {
     deflate_test(mem);
     gzip_test(mem);
 
-    if (!error) print("Success!");
+    if(error) os_exit();
+
+    print("Success!");
     os_exit();
 }

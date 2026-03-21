@@ -249,6 +249,10 @@ static void *linux_mmap(void *addr, u64 len, i32 prot, i32 flags, i32 fd, i64 of
     return (void *)linux_syscall6(0x09, (i64)addr, len, prot, flags, fd, offset);
 }
 
+static void linux_munmap(void *addr, u64 len) {
+    linux_syscall2(0x0b, (i64)addr, len);
+}
+
 // ==== Sleep ====
 static i32 linux_nanosleep(const struct linux_timespec *duration, struct linux_timespec *remaining) {
     return linux_syscall2(0x23, (i64)duration, (i64)remaining);

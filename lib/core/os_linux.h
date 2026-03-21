@@ -19,7 +19,6 @@ int main(i32 argc, char **argv) {
 static void *os_alloc(size_t size) {
     void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     check(ptr && ptr != MAP_FAILED);
-    if (error) return 0;
     return ptr;
 }
 

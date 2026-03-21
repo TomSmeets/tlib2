@@ -60,7 +60,7 @@ static void build_test(Arg *arg) {
     os_exit();
 }
 static void build_fuzz(Arg *arg) {
-    os_system("clang -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz");
+    os_system("clang -std=c23 -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz && out/fuzz");
     os_exit();
 }
 
