@@ -31,7 +31,8 @@ static Pix *pix_new(Memory *mem, char *title, v2i window_size) {
 }
 
 // Destroy window and cleanup renderer
-static void pix_quit(Pix *pix) { }
+static void pix_quit(Pix *pix) {
+}
 
 // Poll input event
 // - Keep polling until InputEvent_None

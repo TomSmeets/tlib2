@@ -33,7 +33,7 @@ static Buffer deflate_read(Memory *mem, Buffer input_buf) {
     Stream *output = stream_new(mem);
     for (;;) {
         check(stream_eof(input) == false);
-        if(error) return buf_null();
+        if (error) return buf_null();
 
         // Read block header
         bool is_last = stream_read_bits(input, 1);
@@ -45,7 +45,7 @@ static Buffer deflate_read(Memory *mem, Buffer input_buf) {
             u16 size_check = stream_read_u16(input);
 
             check(size == (size_check ^ 0xffff));
-            if(error) return buf_null();
+            if (error) return buf_null();
 
             for (size_t i = 0; i < size; ++i) {
                 stream_write_u8(output, stream_read_u8(input));
@@ -68,14 +68,14 @@ static Buffer deflate_read(Memory *mem, Buffer input_buf) {
 
             while (1) {
                 check(!(stream_eof(input) && input->bit_ix == 0));
-                if(error) return buf_null();
+                if (error) return buf_null();
 
                 // Read encoded length-symbol using the huffman tree
                 u32 symbol = huffman_code_read(tree->length, input);
 
                 // Symbol must be valid (return 0 otherwise)
                 check(symbol < 288);
-                if(error) return buf_null();
+                if (error) return buf_null();
 
                 // End of block marker
                 if (symbol == 256) break;
@@ -115,7 +115,7 @@ static Buffer deflate_write_stored(Memory *mem, Buffer input) {
     size_t stored_size = deflate_calculate_stored_block_size(input.size);
     Stream *stored_stream = stream_new(mem);
     check(stream_reserve(stored_stream, stored_size));
-    if(error) return buf_null();
+    if (error) return buf_null();
 
     size_t input_offset = 0;
     for (;;) {
@@ -143,13 +143,12 @@ typedef struct {
     Deflate_Huffman *encoding;
 } Deflate_Result;
 
-static Buffer
-deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Deflate_Encode_Info *frequency_info) {
+static Buffer deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Deflate_Encode_Info *frequency_info) {
     Stream *stream = stream_new(mem);
     stream_write_bits(stream, 1, 1);
     stream_write_bits(stream, 2, Deflate_BlockFixed);
     check(deflate_lz_encode(mem, code, llcode, input, stream, frequency_info));
-    if(error) return buf_null();
+    if (error) return buf_null();
     return stream_to_buffer(stream);
 }
 
@@ -186,7 +185,7 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
     // Encode using fixed huffman code and also collect frequency info
     Deflate_Huffman *fixed_code = deflate_huffman_fixed(mem);
     check(fixed_code);
-    if(error) return buf_null();
+    if (error) return buf_null();
 
     Deflate_Encode_Info frequency_info = {};
     Buffer fixed_output = deflate_write_fixed(mem, llcode, fixed_code, input, &frequency_info);
@@ -197,11 +196,11 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
         // Re encode with the new huffman table
         Deflate_Huffman *dynamic_code = deflate_huffman_dynamic_create(mem, &frequency_info);
         check(dynamic_code);
-    if(error) return buf_null();
+        if (error) return buf_null();
 
         Buffer dynamic_output = {};
         check(deflate_write_dynamic(mem, llcode, fixed_code, fixed_output, dynamic_code, &dynamic_output));
-        if(error) return buf_null();
+        if (error) return buf_null();
         if (result.size == 0 || result.size > dynamic_output.size) result = dynamic_output;
     }
 
@@ -209,7 +208,7 @@ static Buffer deflate_write(Memory *mem, Buffer input) {
         result = deflate_write_stored(mem, input);
     }
 
-    if(error) return buf_null();
+    if (error) return buf_null();
 
     return result;
 }

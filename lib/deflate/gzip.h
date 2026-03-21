@@ -51,7 +51,7 @@ static Buffer gzip_read(Memory *mem, Buffer input_buf) {
     check(size_gzip == ret.size);
     check(crc_gzip == crc_real);
     check(stream_eof(&input));
-    if(error) return buf_null();
+    if (error) return buf_null();
     return ret;
 }
 

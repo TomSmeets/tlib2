@@ -49,7 +49,7 @@ static void build_test(Arg *arg) {
     bool build = arg_match(arg, "build", "Build only");
     arg_help_opt(arg);
 
-    if(!build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test")) os_exit(1);
+    if (!build_compile(Platform_Linux, Mode_Debug, "app/test.c", "out/test")) os_exit(1);
     if (build) os_exit(0);
 
     if (gdb) {
@@ -116,7 +116,6 @@ void os_main(u32 argc, char **argv) {
 
     snake_build(&arg);
     build_tl(&arg);
-
 
     if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompletion")) {
         generate_lsp(&arg);

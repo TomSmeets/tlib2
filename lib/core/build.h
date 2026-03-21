@@ -155,7 +155,6 @@ typedef struct {
     char *html_files[64];
 } Build;
 
-
 static Build *build_new(Memory *mem, char *source_file, char *output_name) {
     Build *build = mem_struct(mem, Build);
     build->mem = mem;
@@ -185,16 +184,15 @@ static bool build_build(Build *build) {
     Build_Mode mode = build->release ? Mode_Release : Mode_Debug;
     Memory *mem = build->mem;
 
-    char *out_path = fstr(mem,  "out/", build->output_name);
-    char *out_exe =  fstr(mem, out_path, "/", build->output_name, ".exe");
-    char *out_elf =  fstr(mem, out_path, "/", build->output_name, ".elf");
+    char *out_path = fstr(mem, "out/", build->output_name);
+    char *out_exe = fstr(mem, out_path, "/", build->output_name, ".exe");
+    char *out_elf = fstr(mem, out_path, "/", build->output_name, ".elf");
     char *out_wasm = fstr(mem, out_path, "/", build->output_name, ".wasm");
     char *out_html = fstr(mem, out_path, "/", build->output_name, ".html");
 
-    
     try(os_system(fstr(mem, "mkdir -p ", out_path)) == 0);
-    if (build->windows)             build_compile(Platform_Windows, mode, build->source_file, out_exe);
-    if (build->linux)               build_compile(Platform_Linux, mode, build->source_file, out_elf);
+    if (build->windows) build_compile(Platform_Windows, mode, build->source_file, out_exe);
+    if (build->linux) build_compile(Platform_Linux, mode, build->source_file, out_elf);
     if (build->wasm || build->html) build_compile(Platform_WASM, mode, build->source_file, out_wasm);
 
     if (build->html) {

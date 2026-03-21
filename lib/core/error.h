@@ -10,7 +10,7 @@ static char *error_message[16];
 typedef bool Result;
 
 // Exit current function with 0 when condition becomes false
-#define try(cond)                                                                                                                               \
+#define try(cond)                                                                                                                                    \
     if (!(cond)) return error_set(__FILE__ ":" TO_STRING(__LINE__) ": try(" #cond ") failed\n"), (void *)0
 
 // Clear errors and return 1

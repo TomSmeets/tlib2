@@ -1,6 +1,6 @@
 #pragma once
-#include "type.h"
 #include "buf.h"
+#include "type.h"
 
 typedef struct {
     char *line;

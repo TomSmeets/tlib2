@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // pix_api.h - Simple 2d game engine (Interface)
 #pragma once
-#include "mem.h"
 #include "input.h"
+#include "mem.h"
 
 #define PIX_AUDIO_RATE 48000
 

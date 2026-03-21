@@ -80,7 +80,7 @@ static Buffer base64_encode(Memory *mem, Buffer input) {
             output_data[j++] = '=';
         assert(j <= buffer_size);
     }
-    return (Buffer){output_data, buffer_size};
+    return buf_from(output_data, buffer_size);
 }
 
 // Decode base64 data
@@ -112,14 +112,14 @@ static Buffer base64_decode(Memory *mem, Buffer input) {
         if (j < output_count) output_data[j++] = chunk_value >> (8 * 1);
         if (j < output_count) output_data[j++] = chunk_value >> (8 * 0);
     }
-    return (Buffer){output_data, output_count};
+    return buf_from(output_data, output_count);
 }
 
 // ==== Testing ====
 static void base64_test_encode(Memory *mem, Buffer input, char *output_str) {
     Buffer output = str_buf(output_str);
-    Buffer input_enc   = base64_encode(mem, input);
-    Buffer output_dec  = base64_decode(mem, output);
+    Buffer input_enc = base64_encode(mem, input);
+    Buffer output_dec = base64_decode(mem, output);
     check(buf_eq(input_enc, output));
     check(buf_eq(output_dec, input));
 }

@@ -33,13 +33,13 @@ bool os_main2(u32 argc, char **argv) {
         arg_help_opt(&arg);
 
         Buffer input = os_read_full(mem, os_stdin());
-        if(error) return 0;
+        if (error) return 0;
 
         Buffer output = {};
         if (encode) output = base64_encode(mem, input);
         if (decode) output = base64_decode(mem, input);
         check(output.data);
-        if(error) return 0;
+        if (error) return 0;
 
         os_write_full(os_stdout(), output);
         return ok();
@@ -53,13 +53,13 @@ bool os_main2(u32 argc, char **argv) {
 
         Buffer input = os_read_full(mem, os_stdin());
         check(input.size);
-        if(error) return 0;
+        if (error) return 0;
 
         Buffer output = {};
         if (compress) output = gzip_write(mem, input);
         if (decompress) output = gzip_read(mem, input);
         check(output.size);
-        if(error) return 0;
+        if (error) return 0;
 
         os_write_full(os_stdout(), output);
         return ok();
@@ -89,7 +89,7 @@ bool os_main2(u32 argc, char **argv) {
 void os_main(u32 argc, char **argv) {
     os_main2(argc, argv);
 
-    if(error) {
+    if (error) {
         fmt(ferr, error, "\n");
         os_exit(1);
     }
