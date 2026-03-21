@@ -2,10 +2,6 @@
 // type.h - Basic constant size type definitions
 #pragma once
 
-// Helper macros
-#define offset_of(type, field) __builtin_offsetof(type, field)
-#define array_count(a) (sizeof(a) / sizeof(a[0]))
-
 // Base types
 typedef __UINT8_TYPE__ u8;
 typedef __UINT16_TYPE__ u16;
@@ -25,7 +21,7 @@ static_assert(sizeof(i16) == 2);
 static_assert(sizeof(i32) == 4);
 static_assert(sizeof(i64) == 8);
 
-// Biggest allocation size (unsigned)
+// Allocation size (unsigned)
 typedef __SIZE_TYPE__ size_t;
 static_assert(sizeof(size_t) == sizeof(void *));
 
@@ -37,7 +33,7 @@ static_assert(sizeof(size_t) == sizeof(void *));
 typedef __INTPTR_TYPE__ intptr_t;
 static_assert(sizeof(intptr_t) == sizeof(void *));
 
-// Floats
+// Floating point value
 typedef float f32;
 typedef double f64;
 static_assert(sizeof(f32) == 4);
@@ -69,7 +65,9 @@ static_assert(sizeof(bool) == 1);
 
 #define U32_MAX 0xffffffff
 
-#define TYPEDEF_STRUCT(NAME) typedef struct NAME NAME
+// Helper macros
+#define offset_of(type, field) __builtin_offsetof(type, field)
+#define array_count(a) (sizeof(a) / sizeof(a[0]))
 
 // OS Detection
 // Linux
