@@ -11,7 +11,10 @@
 // - This function is called in an infinite loop
 // - not defined as static to support hot reloading
 int main(i32 argc, char **argv) {
-    for (;;) os_main(argc, argv);
+    for (;;) {
+        os_main(argc, argv);
+        if(error) os_exit();
+    }
 }
 
 // Allocate a new chunk of memory
@@ -23,7 +26,6 @@ static void *os_alloc(size_t size) {
 }
 
 // Exit current application
-// - Does not return
 static void os_exit(void) {
     if (error) {
         linux_write(2, error, str_len(error));
@@ -32,13 +34,6 @@ static void os_exit(void) {
         linux_exit_group(0);
     }
     __builtin_trap();
-}
-
-// Exit with an error message (error dialog)
-// - Does not return
-static void os_fail(char *message) {
-    error = message;
-    os_exit();
 }
 
 // ==================================
@@ -224,7 +219,7 @@ static void os_sleep(time_t duration) {
 static u64 os_rand(void) {
     u64 seed = 0;
     i64 ret = linux_getrandom(&seed, sizeof(seed), 0);
-    assert(ret == sizeof(seed), "linux getrandom failed");
+    assert(ret == sizeof(seed));
     return seed;
 }
 

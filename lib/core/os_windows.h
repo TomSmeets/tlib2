@@ -42,13 +42,6 @@ static void os_exit() {
     __builtin_trap();
 }
 
-// Exit with an error message (error dialog)
-// - Does not return
-static void os_fail(char *message) {
-    error = message;
-    os_exit();
-}
-
 // ==================================
 //      File and Stream handling
 // ==================================
@@ -220,8 +213,8 @@ static void *os_dlbase(void *ptr) {
 
 // ==== Time ====
 static time_t os_time(void) {
-    static u64 freq;
-    static time_t offset;
+    static thread_local u64 freq;
+    static thread_local time_t offset;
 
     // Get perf counter
     LARGE_INTEGER big_count;
@@ -233,7 +226,7 @@ static time_t os_time(void) {
         LARGE_INTEGER big_freq;
         assert(QueryPerformanceFrequency(&big_freq));
         freq = (u64)big_freq.QuadPart / 1000 / 1000;
-        assert(freq > 0, "Invalid performance frequency");
+        assert(freq > 0);
 
         // Initialize offset to match system time
         FILETIME ft;

@@ -8,7 +8,7 @@
 
 static Buffer os_read_full(Memory *mem, File *file) {
     Stream *input = stream_new(mem);
-    check(stream_from_file(input, file));
+    stream_from_file(input, file);
     return stream_to_buffer(input);
 }
 
@@ -73,7 +73,7 @@ void os_main(u32 argc, char **argv) {
         arg_help_opt(&arg);
 
         Stream *input = stream_new(mem);
-        check(stream_from_file(input, os_stdin()));
+        stream_from_file(input, os_stdin());
 
         u32 base = hex ? 16 : 2;
         u32 width = wide ? 16 : 4;

@@ -13,6 +13,10 @@ void os_main(u32 argc, char **argv) { }
 int LLVMFuzzerTestOneInput(u8 *data, size_t size) {
     Buffer input = {data, size};
     Memory *mem = mem_new();
+
+    Buffer output = base64_decode(mem, input);
+    error = 0;
+
     check(buf_eq(base64_decode(mem, base64_encode(mem, input)), input));
     deflate_test_buf(mem, input);
     gzip_test_buf(mem, input);

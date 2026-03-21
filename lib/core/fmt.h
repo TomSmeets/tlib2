@@ -34,24 +34,28 @@ typedef struct {
 // Standard formatters
 static Fmt *fmt_stdout(void) {
     // TODO: get rid of this
-    static u8 buffer[1024];
-    static Fmt fmt = {
+    static thread_local u8 buffer[1024];
+    static thread_local Fmt fmt = {
         .size = sizeof(buffer),
-        .data = buffer,
         .flush_on_newline = 1,
     };
-    if (!fmt.file) fmt.file = os_stdout();
+    if (!fmt.file) {
+        fmt.data = buffer;
+        fmt.file = os_stdout();
+    }
     return &fmt;
 }
 
 static Fmt *fmt_stderr(void) {
-    static u8 buffer[1024];
-    static Fmt fmt = {
+    static thread_local u8 buffer[1024];
+    static thread_local Fmt fmt = {
         .size = sizeof(buffer),
-        .data = buffer,
         .flush_on_newline = 1,
     };
-    if (!fmt.file) fmt.file = os_stderr();
+    if (!fmt.file) {
+        fmt.data = buffer;
+        fmt.file = os_stderr();
+    }
     return &fmt;
 }
 
@@ -142,12 +146,6 @@ static char *fmt_end(Fmt *fmt) {
     return (char *)fmt->data;
 }
 
-static void fmt_ss(Fmt *fmt, char *arg1, char *arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_s(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-
 static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
     u32 digit_count = 0;
     u8 digit_list[64];
@@ -208,24 +206,6 @@ static void fmt_pad_line(Fmt *fmt, size_t line_len, u8 pad_char) {
     }
 }
 
-// Combinations
-static void fmt_su(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_u(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-static void fmt_si(Fmt *fmt, char *arg1, i64 arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_i(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-
-static void fmt_sx(Fmt *fmt, char *arg1, u64 arg2, char *arg3) {
-    fmt_s(fmt, arg1);
-    fmt_x(fmt, arg2);
-    fmt_s(fmt, arg3);
-}
-
 static bool chr_is_printable(u32 c) {
     return c >= 0x20 && c <= 0x7e;
 }
@@ -282,8 +262,6 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
     fmt_hexdump_x(fmt, data, 16, 8);
 }
 
-// Use generic!
-// TODO: add fmt_options() so fmt(..., (Opt){.blah}, ...) changes options
 // also add fmt_pad(x) -> helper for creating the opt type
 // clang-format off
 #define fmt1(F, x)                  \
@@ -311,12 +289,14 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 #define fmt11(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt10(F, __VA_ARGS__))
 #define fmt12(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt11(F, __VA_ARGS__))
 #define fmt(F, ...) fmt12(F, __VA_ARGS__)
+
 #define fstr(mem, ...)                                                                                                                               \
     ({                                                                                                                                               \
         Fmt *f = fmt_new(mem);                                                                                                                       \
         fmt12(f, __VA_ARGS__);                                                                                                                       \
         fmt_end(f);                                                                                                                                  \
     })
+
 #define print(...) fmt(fout, __VA_ARGS__, "\n")
 // TODO: no more 'file' in fmt, just format string
 // print() will get tmp mem and free again
@@ -359,4 +339,97 @@ static void fmt_test(Memory *mem) {
     // u32 x = 1234;
     // print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
     // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
+}
+
+
+
+typedef struct {
+    Memory *mem;
+    u32 count;
+    Buffer chunks[64];
+} Fmt2;
+
+static Fmt2 *fmt2_new(Memory *mem) {
+    Fmt2 *fmt = mem_struct(mem, Fmt2);
+    fmt->mem = mem;
+    return fmt;
+}
+
+static Buffer fmt2_end(Fmt2 *fmt) {
+    if (fmt->count == 0) return buf_null();
+    if (fmt->count == 1) return fmt->chunks[0];
+
+    // Get total size
+    u32 len = 0;
+    for(u32 i = 0; i < fmt->count; ++i) {
+        len += fmt->chunks[i].size;
+    }
+
+    // Reserve space for output buffer
+    u8 *data = mem_alloc_uninit(fmt->mem, len + 1);
+    Buffer result = buf_from(data, len);
+
+    // Fill output buffer
+    u32 offset = 0;
+    for (u32 i = 0; i < fmt->count; ++i) {
+        mem_copy(data + offset, fmt->chunks[i].data, fmt->chunks[i].size);
+    }
+    assert(offset == len);
+
+    // Null terminate
+    data[len] = 0;
+
+    // Store result
+    fmt->count = 1;
+    fmt->chunks[0] = result;
+    return result;
+}
+
+static void fmt2_buf(Fmt2 *fmt, Buffer buf) {
+    if(fmt->count == array_count(fmt->chunks)) fmt2_end(fmt);
+    fmt->chunks[fmt->count++] = buf;
+}
+
+static void fmt2_str(Fmt2 *fmt, char *str) {
+    fmt2_buf(fmt, str_buf(str));
+}
+
+static char *fmt2_u64_ex(Memory *mem, bool sign, u32 base, u64 value) {
+    u32 count = 0;
+    char buffer[64];
+
+    i64 value_signed = value;
+    if (sign && value_signed < 0) {
+        buffer[count++] = '-';
+        value = -value_signed;
+    }
+
+    do {
+        u32 rem = value % base;
+        buffer[count++] = rem + '0';
+        value /= base;
+    } while (value > 0);
+
+    char *res = mem_alloc_uninit(mem, count + 1);
+    for (u32 i = 0; i < count; ++i) {
+        res[i] = buffer[count - i - 1];
+    }
+    res[count] = 0;
+    return res;
+}
+
+static char *fmt2_u32(Memory *mem, u32 value) {
+    return fmt2_u64_ex(mem, 0, 10, value);
+}
+
+static char *fmt2_i32(Memory *mem, i32 value) {
+    return fmt2_u64_ex(mem, 1, 10, value);
+}
+
+static char *fmt2_u64(Memory *mem, u64 value) {
+    return fmt2_u64_ex(mem, 0, 10, value);
+}
+
+static char *fmt2_i64(Memory *mem, i64 value) {
+    return fmt2_u64_ex(mem, 1, 10, value);
 }

@@ -8,8 +8,9 @@
 #include "parse.h"
 #include "tlib.h"
 
-static Memory *mem;
-static Hot *hot;
+
+static thread_local Memory *mem;
+static thread_local Hot *hot;
 
 // Generate a table
 // file | info | deps

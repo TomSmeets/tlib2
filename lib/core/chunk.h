@@ -17,8 +17,8 @@ struct Chunk_Freelist {
 #define CHUNK_CLASS_MAX (40)
 #define CHUNK_SIZE_MIN ((size_t)1 << CHUNK_CLASS_MIN)
 #define CHUNK_SIZE_MAX ((size_t)1 << CHUNK_CLASS_MAX)
-static Chunk_Freelist *chunk_cache[CHUNK_CLASS_MAX - CHUNK_CLASS_MIN];
-static size_t chunk_alloc_size;
+static thread_local Chunk_Freelist *chunk_cache[CHUNK_CLASS_MAX - CHUNK_CLASS_MIN];
+static thread_local size_t chunk_alloc_size;
 
 typedef struct {
     size_t size;
@@ -30,13 +30,13 @@ static u32 size_bits(size_t size) {
     if (size == 0) return 1;
     if (sizeof(size) == sizeof(u32)) return 32 - __builtin_clz(size - 1);
     if (sizeof(size) == sizeof(u64)) return 64 - __builtin_clzll(size - 1);
-    os_fail("Invalid size");
+    assert(!"Invalid size");
 }
 
 static Chunk_Class chunk_class(size_t size) {
     u32 bits = size_bits(size);
     if (bits < CHUNK_CLASS_MIN) bits = CHUNK_CLASS_MIN;
-    if (bits >= CHUNK_CLASS_MAX) os_fail("Invalid size");
+    assert(bits < CHUNK_CLASS_MAX);
 
     size_t chunk_size = (size_t)1 << bits;
     Chunk_Freelist **list = &chunk_cache[bits - CHUNK_CLASS_MIN];

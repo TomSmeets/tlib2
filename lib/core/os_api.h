@@ -9,16 +9,10 @@
 void os_main(u32 argc, char **argv);
 
 // Allocate a new chunk of memory
-// - returns null on failure
 static void *os_alloc(size_t size);
 
-// Exit current application
-// - Does not return
+// Exit current application (errors are reported if set)
 static void os_exit(void) __attribute__((__noreturn__));
-
-// Exit with an error message (error dialog)
-// - Does not return
-static void os_fail(char *message) __attribute__((__noreturn__));
 
 // ==================================
 //      File and Stream handling

@@ -79,20 +79,20 @@ static void generate_lsp(Arg *arg) {
 
     File *fd = os_open("compile_commands.json", FileMode_Create);
     u8 buffer[1024];
-    Fmt fmt = {.file = fd, .data = buffer, .size = sizeof(buffer)};
-    fmt_s(&fmt, "[");
-    fmt_s(&fmt, "{");
-    fmt_ss(&fmt, "\"directory\":\"", cwd, "\",");
-    fmt_s(&fmt, "\"command\":\"");
+    Fmt f = {.file = fd, .data = buffer, .size = sizeof(buffer)};
+    fmt(&f, "[");
+    fmt(&f, "{");
+    fmt(&f, "\"directory\":\"", cwd, "\",");
+    fmt(&f, "\"command\":\"");
     for (u32 i = 0; i < cmd.argc; ++i) {
-        fmt_s(&fmt, cmd.argv[i]);
-        fmt_s(&fmt, " ");
+        fmt(&f, cmd.argv[i]);
+        fmt(&f, " ");
     }
-    fmt_s(&fmt, "\",");
-    fmt_s(&fmt, "\"file\":\"main.c\"");
-    fmt_s(&fmt, "}");
-    fmt_s(&fmt, "]");
-    fmt_end(&fmt);
+    fmt(&f, "\",");
+    fmt(&f, "\"file\":\"main.c\"");
+    fmt(&f, "}");
+    fmt(&f, "]");
+    fmt_end(&f);
     os_close(fd);
 }
 

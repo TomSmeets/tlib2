@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static int counter = 0;
+static thread_local int counter = 0;
 
 void os_main(int argc, char **argv) {
     printf("Hello world: %d!\n", counter);

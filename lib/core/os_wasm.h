@@ -4,6 +4,7 @@
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
+#include "error.h"
 
 #define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
 
@@ -25,11 +26,6 @@ static void os_exit(void) {
     __builtin_trap();
 }
 
-static void os_fail(char *message) {
-    error = message;
-    os_exit();
-}
-
 static File *wasm_file(u32 fd) {
     return (File *)(intptr_t)fd;
 }
@@ -48,7 +44,7 @@ static File *os_stderr(void) { return wasm_file(3); }
 // clang-format on
 
 static bool os_read(File *file, void *data, size_t size, size_t *used) {
-    os_fail("Not implemented");
+    os_fail("Not Implemented");
 }
 
 WASM_IMPORT(wasm_write) bool wasm_write(u32 fd, void *data, size_t size);

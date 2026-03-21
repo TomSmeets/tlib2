@@ -52,20 +52,17 @@ static bool arg_match(Arg *arg, char *name, char *info) {
 
 // Write a help message with possible options
 static void arg_help(Arg *arg) {
-    Fmt *fmt = ferr;
-    fmt_s(fmt, "Usage: ");
+    Fmt *f = ferr;
+    fmt(f, "Usage: ");
     for (u32 i = 0; i < arg->arg_ix; ++i) {
-        fmt_s(fmt, arg->arg_list[i]);
-        fmt_s(fmt, " ");
+        fmt(f, arg->arg_list[i], " ");
     }
-    fmt_s(fmt, "[ACTION]");
-    fmt_s(fmt, "\n");
-    fmt_s(fmt, "\n");
+    fmt(f, "[ACTION]\n\n");
 
-    fmt_s(fmt, "Supported actions: \n");
+    fmt(f, "Supported actions: \n");
     for (u32 i = 0; i < arg->opt_count; ++i) {
-        fmt_ss(fmt, "    ", arg->opt_list[i][0], ": ");
-        fmt_ss(fmt, "", arg->opt_list[i][1], "\n");
+        fmt(f, "    ", arg->opt_list[i][0], ": ");
+        fmt(f, "", arg->opt_list[i][1], "\n");
     }
 }
 

@@ -117,7 +117,6 @@ static void mem_free(Memory *mem) {
     }
 }
 
-
 static void mem_test(void) {
     size_t original_size1 = chunk_alloc_size;
     Memory *tmp = mem_new();

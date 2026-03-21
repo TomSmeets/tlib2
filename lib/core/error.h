@@ -3,7 +3,11 @@
 #pragma once
 #include "type.h"
 
-thread_local static char *error;
+// Must be defined
+static void os_exit(void) __attribute__((__noreturn__));
+
+
+static thread_local char *error;
 
 // check() sets an error message if the condition fails but still continues execution
 // Errors can be checked with: if(error) ...
@@ -11,12 +15,15 @@ thread_local static char *error;
 // All functions should return some kind of default on error
 // Checking for the errors should be mostly optional
 // Errors should be able to be handled at some later time
-#define check(X) error_set((X), __FILE__ ":" TO_STRING(__LINE__) ": Error check(" #X ") failed\n")
-#define check_or(X) if (check(X))
+#define check_msg(X, MSG) error_set((X), __FILE__ ":" TO_STRING(__LINE__) ": " MSG " failed\n")
+
+#define check(X) check_msg(X, "check(" #X ")")
+#define check_or(X) if (check_msg(X, "check_or(" #X ")"))
+#define assert(X)   if (check_msg(X, "assert(" #X ")")) os_exit()
+#define os_fail(MSG)  check_msg(0, MSG), os_exit()
 
 static bool error_set(bool cond, char *message) {
-    if (error) return 1;
     if (cond) return 0;
-    error = message;
+    if (!error) error = message;
     return 1;
 }
