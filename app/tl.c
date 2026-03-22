@@ -2,9 +2,9 @@
 // tl.c - Cli utils using tlib
 #include "arg.h"
 #include "base64.h"
-#include "gzip.h"
-#include "elf.h"
 #include "dwarf.h"
+#include "elf.h"
+#include "gzip.h"
 #include "os.h"
 #include "stream.h"
 
@@ -91,9 +91,9 @@ void os_main(u32 argc, char **argv) {
         char *path = arg_next(&arg);
         File *file = os_open(path, FileMode_Read);
         Elf *elf = elf_load(mem, file);
-        if(error) os_exit();
-        print("entry: 0x", O(.base=16), elf->entry);
-        for(u32 i = 0; i < elf->section_count; ++i) {
+        if (error) os_exit();
+        print("entry: 0x", O(.base = 16), elf->entry);
+        for (u32 i = 0; i < elf->section_count; ++i) {
             print(i, " ", elf->sections[i].size, " ", elf->sections[i].name);
         }
 
