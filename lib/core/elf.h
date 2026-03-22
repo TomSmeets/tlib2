@@ -2,7 +2,6 @@
 // elf.h - Elf File parsing
 #pragma once
 #include "mem.h"
-#include "os.h"
 #include "os2.h"
 #include "str.h"
 #include "type.h"
@@ -16,6 +15,7 @@ typedef struct {
 } Elf_Section;
 
 typedef struct {
+    File *file;
     u64 entry;
     u32 section_count;
     Elf_Section *sections;
@@ -75,6 +75,7 @@ static Elf *elf_load(Memory *mem, File *file) {
     if (error) return 0;
 
     Elf *elf = mem_struct(mem, Elf);
+    elf->file = file;
     elf->entry = header.entry;
     elf->section_count = header.shnum;
     elf->sections = mem_array(mem, Elf_Section, elf->section_count);

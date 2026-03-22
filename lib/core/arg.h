@@ -28,6 +28,11 @@ static Arg arg_new(u32 argc, char **argv) {
     };
 }
 
+static char *arg_next(Arg *arg) {
+    if (arg->arg_ix >= arg->arg_count) return 0;
+    return arg->arg_list[arg->arg_ix++];
+}
+
 static bool arg_match(Arg *arg, char *name, char *info) {
     // Add documentation
     if (arg->opt_count < array_count(arg->opt_list)) {

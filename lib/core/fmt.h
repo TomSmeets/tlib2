@@ -270,6 +270,8 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
         size_t: fmt_u,              \
         u32: fmt_u,                 \
         i32: fmt_i,                 \
+        u16: fmt_u,                 \
+        i16: fmt_i,                 \
         u8: fmt_u,                  \
         i8: fmt_i,                  \
         char: fmt_c,                \

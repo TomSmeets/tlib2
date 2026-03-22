@@ -122,11 +122,11 @@ static void os_close(File *file) {
 // Seek to an absolute position in the current file
 // - Returns false on failure
 // - Files can be > 4GB
-static bool os_seek(File *file, size_t pos) {
+static void os_seek(File *file, size_t pos) {
     assert(file);
     LARGE_INTEGER offset;
     offset.QuadPart = pos;
-    return SetFilePointerEx(file, offset, 0, FILE_BEGIN);
+    check(SetFilePointerEx(file, offset, 0, FILE_BEGIN));
 }
 
 // Returns info in File_Info struct

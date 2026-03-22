@@ -1,7 +1,5 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // snake.c - A simple snake game
-#include "base64.h"
-#include "deflate.h"
 #include "fmt.h"
 #include "os.h"
 #include "pix.h"

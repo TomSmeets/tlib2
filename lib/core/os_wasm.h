@@ -61,7 +61,7 @@ static void os_close(File *file) {
     os_fail("Not implemented");
 }
 
-static bool os_seek(File *file, size_t pos) {
+static void os_seek(File *file, size_t pos) {
     os_fail("Not implemented");
 }
 

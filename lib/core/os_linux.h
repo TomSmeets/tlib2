@@ -72,6 +72,7 @@ static File *os_open(char *path, FileMode mode) {
     if (mode == FileMode_Write) ret = linux_open(path, O_RDWR, 0);
     if (mode == FileMode_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
     if (mode == FileMode_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
+    check(ret >= 0);
     return linux_file(ret);
 }
 
@@ -85,9 +86,9 @@ static void os_close(File *file) {
 // Seek to an absolute position in the current file
 // - Returns false on failure
 // - Files can be > 4GB
-static bool os_seek(File *file, size_t pos) {
+static void os_seek(File *file, size_t pos) {
     assert(file);
-    return linux_seek(linux_fd(file), pos, SEEK_SET) >= 0;
+    check(linux_seek(linux_fd(file), pos, SEEK_SET) >= 0);
 }
 
 // Returns info in File_Info struct

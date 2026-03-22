@@ -55,9 +55,9 @@ static File *os_open(char *path, FileMode mode);
 static void os_close(File *file);
 
 // Seek to an absolute position in the current file
-// - Returns false on failure
+// - Sets error on failure
 // - Files can be > 4GB
-static bool os_seek(File *file, size_t pos);
+static void os_seek(File *file, size_t pos);
 
 typedef enum {
     FileType_None,
