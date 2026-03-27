@@ -137,7 +137,7 @@ static void huffman_code_test(Memory *mem) {
         stream_write_bits_be(stream, len[sym], code[sym]);
     }
 
-    stream_seek(stream, 0);
+    stream_restart(stream);
 
     for (u32 sym = 0; sym < array_count(len); ++sym) {
         if (len[sym] == 0) continue;
@@ -153,7 +153,7 @@ static void huffman_code_test(Memory *mem) {
     check(stream_eof(stream));
 
     // Test writing codes
-    stream_seek(stream, 0);
+    stream_restart(stream);
     for (u32 sym = 0; sym < array_count(len); ++sym) {
         if (len[sym] == 0) continue;
         huffman_code_write(table, stream, sym);

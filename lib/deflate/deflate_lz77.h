@@ -88,7 +88,7 @@ deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer
 
 static void
 deflate_lz_recode(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code, Stream *output) {
-    Stream input_stream = stream_from(input);
+    Stream input_stream = stream_from_buffer(input);
     stream_read_bits(&input_stream, 3);
 
     for (;;) {

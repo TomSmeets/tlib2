@@ -22,8 +22,26 @@ static thread_local char *error;
     if (check_msg(X, "assert(" #X ")")) os_exit()
 #define os_fail(MSG) check_msg(0, MSG), os_exit()
 
+// Set the error flag if the condition becomes false
 static bool error_set(bool cond, char *message) {
+    // If condition is true then there is no error
     if (cond) return 0;
+
+    // Set the error message only if this is the first error
     if (!error) error = message;
+
+    // Return true if the condition fails
     return 1;
+}
+
+// Clear error flag (ignores the last error)
+static void error_clear(void) {
+    error = 0;
+}
+
+// Return the error flag and clear it
+static char *error_pop(void) {
+    char *ret = error;
+    error_clear();
+    return ret;
 }

@@ -10,7 +10,7 @@
 #include "stream.h"
 
 static Buffer gzip_read(Memory *mem, Buffer input_buf) {
-    Stream input = stream_from(input_buf);
+    Stream input = stream_from_buffer(input_buf);
     u16 magic = stream_read_u16(&input);
     check(magic == 0x8b1f);
     if (error) return buf_null();
@@ -71,7 +71,7 @@ static Buffer gzip_write(Memory *mem, Buffer input) {
     stream_write_u32(output, crc_compute(input));
     stream_write_u32(output, input.size);
     u32 crc_comp = crc_compute(input);
-    return stream_to_buffer(output);
+    return stream_as_buffer(output);
 }
 
 // Run a deflate/inflate testcase with a given input
@@ -91,6 +91,13 @@ static void gzip_test(Memory *mem) {
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
         Buffer output = gzip_read(mem, input);
         check(buf_eq(target, output));
+        if (error) return;
+    }
+
+    {
+        Buffer target = deflate_read(mem, str_buf("hello hello\n"));
+        // Make sure there was an error
+        check(error_pop());
         if (error) return;
     }
 

@@ -122,6 +122,13 @@ static void mem_free(Memory *mem) {
     }
 }
 
+// Copy data into a newly allocated buffer with a given size
+static u8 *mem_realloc(Memory *mem, u8 *old_data, size_t old_size, size_t new_size) {
+    u8 *new_data = mem_array(mem, u8, new_size);
+    mem_copy(new_data, old_data, old_size);
+    return new_data;
+}
+
 static void mem_test(void) {
     size_t original_size1 = chunk_alloc_size;
     Memory *tmp = mem_new();

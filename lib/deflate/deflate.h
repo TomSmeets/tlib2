@@ -27,7 +27,7 @@ static size_t deflate_calculate_stored_block_size(size_t input_size) {
 }
 
 static Buffer deflate_read(Memory *mem, Buffer input_buf) {
-    Stream input_ = stream_from(input_buf);
+    Stream input_ = stream_from_buffer(input_buf);
     Stream *input = &input_;
 
     Stream *output = stream_new(mem);
@@ -108,7 +108,7 @@ static Buffer deflate_read(Memory *mem, Buffer input_buf) {
         // Continue reading until the last block
         if (is_last) break;
     }
-    return stream_to_buffer(output);
+    return stream_as_buffer(output);
 }
 
 static Buffer deflate_write_stored(Memory *mem, Buffer input) {
@@ -128,7 +128,7 @@ static Buffer deflate_write_stored(Memory *mem, Buffer input) {
         input_offset += block_size;
         if (is_last) break;
     }
-    return stream_to_buffer(stored_stream);
+    return stream_as_buffer(stored_stream);
 }
 
 typedef struct {
@@ -149,7 +149,7 @@ static Buffer deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_H
     stream_write_bits(stream, 2, Deflate_BlockFixed);
     deflate_lz_encode(mem, code, llcode, input, stream, frequency_info);
     if (error) return buf_null();
-    return stream_to_buffer(stream);
+    return stream_as_buffer(stream);
 }
 
 static Buffer deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *input_code, Buffer input, Deflate_Huffman *output_code) {
@@ -158,7 +158,7 @@ static Buffer deflate_write_dynamic(Memory *mem, Deflate_LLCode *llcode, Deflate
     stream_write_bits(stream, 2, Deflate_BlockDynamic);
     deflate_huffman_dynamic_write(mem, output_code, stream);
     deflate_lz_recode(mem, llcode, input_code, input, output_code, stream);
-    return stream_to_buffer(stream);
+    return stream_as_buffer(stream);
 }
 
 static Buffer deflate_write(Memory *mem, Buffer input) {

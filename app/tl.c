@@ -10,8 +10,8 @@
 
 static Buffer os_read_full(Memory *mem, File *file) {
     Stream *input = stream_new(mem);
-    stream_from_file(input, file);
-    return stream_to_buffer(input);
+    stream_write_from_file(input, file);
+    return stream_as_buffer(input);
 }
 
 static void os_write_full(File *file, Buffer data) {
@@ -78,12 +78,10 @@ void os_main(u32 argc, char **argv) {
         if (!wide && !compact) wide = hex;
         arg_help_opt(&arg);
 
-        Stream *input = stream_new(mem);
-        stream_from_file(input, os_stdin());
-
+        Buffer input = os_read_full(mem, os_stdin());
         u32 base = hex ? 16 : 2;
         u32 width = wide ? 16 : 4;
-        fmt_hexdump_x(fout, stream_to_buffer(input), base, width);
+        fmt_hexdump_x(fout, input, base, width);
         os_exit();
     }
 
