@@ -11,6 +11,7 @@
 #include "huffman_tree.h"
 #include "os.h"
 #include "stream.h"
+#include "tlang/tlang.h"
 
 void os_main(u32 argc, char **argv) {
     Memory *mem = mem_new();
@@ -19,6 +20,7 @@ void os_main(u32 argc, char **argv) {
     mem_test();
     if (error) os_exit();
 
+    tlang_test(mem);
     base64_test(mem);
     fmt_test(mem);
     arg_test();

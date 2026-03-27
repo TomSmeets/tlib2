@@ -275,7 +275,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
         u8: fmt_u,                  \
         i8: fmt_i,                  \
         char: fmt_c,                \
-        Buffer: fmt_hexdump,        \
+        Buffer: fmt_buf,        \
         Fmt_Options: fmt_setopt     \
     )(F, x)
 // clang-format on
