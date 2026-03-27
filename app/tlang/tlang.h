@@ -6,7 +6,6 @@
 
 typedef enum {
     Ast_Type_None,
-
     Ast_Type_Number,
     Ast_Type_Label,
     Ast_Type_Operator,

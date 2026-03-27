@@ -43,6 +43,25 @@ static void snake_build(Arg *arg) {
     os_exit();
 }
 
+static void build_tlang(Arg *arg) {
+    if (!arg_match(arg, "tlang", "Build Tom's language")) return;
+    bool quick = arg_match(arg, "quick", "Skip other platforms");
+    bool release = arg_match(arg, "release", "Build in release mode");
+
+    // Show help message if unknown argument was passed
+    arg_help_opt(arg);
+
+    Memory *mem = mem_new();
+    Build *build = build_new(mem, "app/tlang/tlang.c", "tlang");
+    build->release = release;
+    build->linux = 1;
+    build->windows = 1;
+    build->wasm = 1;
+    build_build(build);
+    if (error) os_exit();
+    os_exit();
+}
+
 static void build_test(Arg *arg) {
     bool gdb = arg_match(arg, "gdb", "Start with gdb");
     bool build = arg_match(arg, "build", "Build only");
@@ -116,6 +135,7 @@ void os_main(u32 argc, char **argv) {
 
     snake_build(&arg);
     build_tl(&arg);
+    build_tlang(&arg);
 
     if (arg_match(&arg, "lsp", "Generate compile_commands.json for autocompletion")) {
         generate_lsp(&arg);
