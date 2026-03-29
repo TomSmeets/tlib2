@@ -43,10 +43,7 @@ static Buffer gzip_read(Memory *mem, Buffer input_buf) {
     }
 
     Buffer deflate = stream_read_buffer(&input, stream_remaining(&input) - 8);
-    if (error) return buf_null();
-
     Buffer ret = deflate_read(mem, deflate);
-    if (error) return buf_null();
 
     u32 crc_gzip = stream_read_u32(&input);
     u32 size_gzip = stream_read_u32(&input);
@@ -54,7 +51,6 @@ static Buffer gzip_read(Memory *mem, Buffer input_buf) {
     check(size_gzip == ret.size);
     check(crc_gzip == crc_real);
     check(stream_eof(&input));
-    if (error) return buf_null();
     return ret;
 }
 
@@ -91,14 +87,12 @@ static void gzip_test(Memory *mem) {
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
         Buffer output = gzip_read(mem, input);
         check(buf_eq(target, output));
-        if (error) return;
     }
 
-    {
+    if (!error) {
         Buffer target = deflate_read(mem, str_buf("hello hello\n"));
         // Make sure there was an error
         check(error_pop());
-        if (error) return;
     }
 
     {
@@ -106,7 +100,6 @@ static void gzip_test(Memory *mem) {
         Buffer input = gzip_write(mem, target);
         Buffer output = gzip_read(mem, input);
         check(buf_eq(target, output));
-        if (error) return;
     }
 
     {
@@ -115,7 +108,6 @@ static void gzip_test(Memory *mem) {
         Buffer input = base64_decode(mem, str_buf("H4sICHPOkWkAA2RhdGEAkyrZEH+34O18l1XTZlYrH1IEAFve5PUQAAAA"));
         Buffer output = gzip_read(mem, input);
         check(buf_eq(output, target));
-        if (error) return;
     }
 
     {
@@ -134,6 +126,5 @@ static void gzip_test(Memory *mem) {
         );
         Buffer output = gzip_read(mem, input);
         check(buf_eq(output, target));
-        if (error) return;
     }
 }

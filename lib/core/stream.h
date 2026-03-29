@@ -59,6 +59,13 @@ static Buffer stream_as_buffer(Stream *stream) {
     return (Buffer){stream->buffer, stream->size};
 }
 
+
+static Buffer stream_slice(Stream *stream, size_t start, size_t end) {
+    check(end <= stream->size);
+    check(start <= end);
+    if (error) return buf_null();
+    return buf_from(stream->buffer + start, end - start);
+}
 // =========================== Seeking =========================================
 
 // Return current cursor byte position
@@ -71,6 +78,10 @@ static void stream_seek(Stream *stream, size_t index) {
     // Cursor can be anywhere, even outside the current file
     stream->cursor = index;
     stream->bit_ix = 0;
+}
+
+static void stream_unread_u8(Stream *stream) {
+    if (stream->cursor > 0) stream->cursor--;
 }
 
 // Seek to the start of the stream
@@ -153,6 +164,12 @@ static u8 stream_read_u8(Stream *stream) {
 
     // Read byte
     return stream->buffer[stream->cursor++];
+}
+
+// Read an aligned byte from the stream
+static u8 stream_peek_u8(Stream *stream) {
+    check_or(!stream_eof(stream)) return 0;
+    return stream->buffer[stream->cursor];
 }
 
 // Return the next 'size' bytes as a buffer
