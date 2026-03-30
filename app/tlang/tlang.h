@@ -61,7 +61,6 @@ static Ast *tlang_lex(Memory *mem, Buffer input) {
 
         // Skip whitespace
         if (chr_is_space(chr)) continue;
-        ;
 
         // Create node
         Ast *node = mem_struct(mem, Ast);
@@ -155,16 +154,31 @@ static Ast *tlang_parse_expr(Parse *p) {
 static Ast *tlang_parse_statement(Parse *p) {
     Ast *label = tlang_parse_label(p);
     if (!label) return 0;
+
     Ast *op = tlang_parse_op(p, "=");
-    if (!op) return 0;
-    Ast *expr = tlang_parse_expr(p);
-    if (!expr) return 0;
+    if(op) {
+        // [label] = [expr]
+        Ast *expr = tlang_parse_expr(p);
+        if (!expr) return 0;
+        Ast *end = tlang_parse_op(p, ";");
+        if (!end) return 0;
+        op->child = label;
+        label->next = expr;
+        return op;
+    }
+
+    // [label] [expr..] ;
+    Ast *last_arg = 0;
+    for(;;) {
+        Ast *arg = tlang_parse_expr(p);
+        if(!arg) break;
+        LIST_APPEND(label->child, last_arg, arg, next);
+    }
+
     Ast *end = tlang_parse_op(p, ";");
     if (!end) return 0;
 
-    op->child = label;
-    label->next = expr;
-    return op;
+    return label;
 }
 
 static Ast *tlang_parse(Parse *p) {
@@ -277,3 +291,83 @@ static void tlang_test(Memory *mem) {
         print(s->name, " = ", s->value);
     }
 }
+
+
+// static void parse_whitespace(Stream *stream) {
+//     while (!stream_eof(stream)) {
+//         size_t cursor = stream_cursor(stream);
+//         u8 c = stream_read_u8(stream);
+//         if (chr_is_space(c)) continue;
+//         stream_seek(stream, cursor);
+//         break;
+//     }
+// }
+
+// static u8 parse_alphanum(Stream *stream) {
+//     u8 c = stream_read_u8(stream);
+//     check(chr_is_alpha(c) || chr_is_digit(c));
+//     return c;
+// }
+
+// static u8 parse_digit(Stream *stream) {
+//     u8 c = stream_read_u8(stream);
+//     check(chr_is_digit(c));
+//     return c;
+// }
+
+// static u8 parse_alpha(Stream *stream) {
+//     u8 c = stream_read_u8(stream);
+//     check(chr_is_digit(c));
+//     return c;
+// }
+
+
+
+// #define parse_many() if(!error) while(!error_pop())
+
+// static Buffer parse_word(Stream *str) {
+//     size_t start = stream_cursor(str);
+//     size_t end = start;
+//     parse_alpha(str);
+//     parse_many() {
+//         end = stream_cursor(str);
+//         parse_alphanum(str);
+//     }
+//     stream_seek(str, end);
+//     return stream_slice(str, start, end);
+// }
+
+// static Buffer parse_number(Stream *str) {
+//     size_t start = stream_cursor(str);
+//     size_t end = start;
+//     parse_digit(str);
+//     parse_many() {
+//         end = stream_cursor(str);
+//         parse_alphanum(str);
+//     }
+//     stream_seek(str, end);
+//     return stream_slice(str, start, end);
+// }
+
+// static void parse_literal(Stream *str, char *lit) {
+//     parse_many() {
+//         if(!*lit) return;
+//         check_or(stream_peek_u8(str) == *lit++) return;
+//         stream_read_u8(str);
+//     }
+// }
+
+
+// static void parse_mul(Stream *str) {
+//     size_t start = stream_cursor(str);
+//     parse_number(str);
+//     parse_literal(str, "*");
+//     parse_mul(str);
+// }
+
+// static void parse_plus(Stream *str) {
+//     size_t start = stream_cursor(str);
+//     parse_mul(str);
+//     parse_literal(str, "+");
+//     parse_plus(str);
+// }

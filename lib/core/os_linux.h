@@ -7,10 +7,13 @@
 #include "str.h"
 #include "type.h"
 
+static char **linux_argv;
+
 // The main function, to exit call os_exit()
 // - This function is called in an infinite loop
 // - not defined as static to support hot reloading
 int main(i32 argc, char **argv) {
+    linux_argv = argv;
     for (;;) {
         os_main(argc, argv);
         if (error) os_exit();

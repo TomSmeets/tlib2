@@ -124,6 +124,8 @@ static void mem_free(Memory *mem) {
 
 // Copy data into a newly allocated buffer with a given size
 static u8 *mem_realloc(Memory *mem, u8 *old_data, size_t old_size, size_t new_size) {
+    // Make sure at least the old data fits
+    check_or(new_size >= old_size) new_size = old_size;
     u8 *new_data = mem_array(mem, u8, new_size);
     mem_copy(new_data, old_data, old_size);
     return new_data;

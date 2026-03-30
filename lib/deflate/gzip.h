@@ -6,20 +6,20 @@
 #include "deflate.h"
 #include "error.h"
 #include "fmt.h"
+#include "read.h"
 #include "mem.h"
 #include "stream.h"
 
-static Buffer gzip_read(Memory *mem, Buffer input_buf) {
-    Stream input = stream_from_buffer(input_buf);
-    u16 magic = stream_read_u16(&input);
+static Buffer gzip_read_from(Memory *mem, Read *read) {
+    u16 magic = read_u16(read);
     check(magic == 0x8b1f);
     if (error) return buf_null();
 
     // Compression Method (8 = gzip)
-    u8 method = stream_read_u8(&input);
+    u8 method = read_u8(read);
     check(method == 0x8);
 
-    u8 flags = stream_read_u8(&input);
+    u8 flags = read_u8(read);
     bool ftext = (flags >> 0) & 1;
     bool fhcrc = (flags >> 1) & 1;
     bool fextra = (flags >> 2) & 1;
@@ -27,47 +27,50 @@ static Buffer gzip_read(Memory *mem, Buffer input_buf) {
     bool fcomment = (flags >> 4) & 1;
     check(fextra == 0);
 
-    u32 mtime = stream_read_u32(&input);
+    u32 mtime = read_u32(read);
 
     // XFL Compression info:
     // 2 -> Best compression
     // 4 -> Fast compression
-    u8 xfl = stream_read_u8(&input);
+    u8 xfl = read_u8(read);
 
-    u8 os = stream_read_u8(&input);
-    while (fname && stream_read_u8(&input));
-    while (fcomment && stream_read_u8(&input));
+    u8 os = read_u8(read);
+    while (fname && read_u8(read));
+    while (fcomment && read_u8(read));
 
     if (fhcrc) {
-        u16 crc = stream_read_u16(&input);
+        u16 crc = read_u16(read);
     }
 
-    Buffer deflate = stream_read_buffer(&input, stream_remaining(&input) - 8);
-    Buffer ret = deflate_read(mem, deflate);
+    Buffer result = deflate_read_from(mem, read);
 
-    u32 crc_gzip = stream_read_u32(&input);
-    u32 size_gzip = stream_read_u32(&input);
-    u32 crc_real = crc_compute(ret);
-    check(size_gzip == ret.size);
+    u32 crc_gzip = read_u32(read);
+    u32 size_gzip = read_u32(read);
+    u32 crc_real = crc_compute(result);
+    check(size_gzip == result.size);
     check(crc_gzip == crc_real);
-    check(stream_eof(&input));
-    return ret;
+    check(read_eof(read));
+    return result;
+}
+
+static Buffer gzip_read(Memory *mem, Buffer input) {
+    Read read = read_from(input);
+    return gzip_read_from(mem, &read);
 }
 
 static Buffer gzip_write(Memory *mem, Buffer input) {
-    Stream *output = stream_new(mem);
-    stream_write_u16(output, 0x8b1f); // Magic
-    stream_write_u8(output, 0x08);    // method
-    stream_write_u8(output, 0);       // flags
-    stream_write_u32(output, 0);      // mtime
-    stream_write_u8(output, 0);       // xfl
-    stream_write_u8(output, 0);       // OS
-    Buffer deflated_buffer = deflate_write(mem, input);
-    stream_write_buffer(output, deflated_buffer);
-    stream_write_u32(output, crc_compute(input));
-    stream_write_u32(output, input.size);
+    Write *output = write_new(mem);
+    write_u16(output, 0x8b1f); // Magic
+    write_u8(output, 0x08);    // method
+    write_u8(output, 0);       // flags
+    write_u32(output, 0);      // mtime
+    write_u8(output, 0);       // xfl
+    write_u8(output, 0);       // OS
+    write_buffer(output, deflate_write(mem, input));
+    write_u32(output, crc_compute(input));
+    write_u32(output, input.size);
     u32 crc_comp = crc_compute(input);
-    return stream_as_buffer(output);
+    return write_get_written(output);
 }
 
 // Run a deflate/inflate testcase with a given input

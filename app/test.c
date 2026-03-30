@@ -3,6 +3,7 @@
 #include "arg.h"
 #include "base64.h"
 #include "crc.h"
+#include "read.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"
@@ -20,6 +21,8 @@ void os_main(u32 argc, char **argv) {
     mem_test();
     if (error) os_exit();
 
+    test_read();
+    if(error) return;
     tlang_test(mem);
     base64_test(mem);
     fmt_test(mem);

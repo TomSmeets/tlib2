@@ -2,9 +2,11 @@
 // deflate_huffman.h - DEFLATE decompressor implementation
 #pragma once
 #include "huffman_code.h"
+#include "read.h"
 #include "huffman_tree.h"
 #include "mem.h"
 #include "stream.h"
+#include "write.h"
 #include "type.h"
 
 // Combination of length and distance symbol huffman codes
@@ -60,23 +62,23 @@ static Deflate_Huffman *deflate_huffman_dynamic_create(Memory *mem, Deflate_Enco
 }
 
 // Read the dynamic huffman table for block type 2 from the input stream
-static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input) {
-    u32 length_count = stream_read_bits(input, 5) + 257;
+static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Read *input) {
+    u32 length_count = read_bits(input, 5) + 257;
     // NOTE: codes 287 and 288 are invalid
     check(length_count <= 286);
 
-    u32 distance_count = stream_read_bits(input, 5) + 1;
+    u32 distance_count = read_bits(input, 5) + 1;
     check(distance_count <= 30);
 
     // CL codes
-    u32 code_count = stream_read_bits(input, 4) + 4; // Number of length codes
+    u32 code_count = read_bits(input, 4) + 4; // Number of length codes
     check(code_count <= 19);
     if (error) return 0;
 
     u8 code_index[19] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
     u8 code_lengths[19] = {0};
     for (u32 i = 0; i < code_count; ++i) {
-        code_lengths[code_index[i]] = stream_read_bits(input, 3);
+        code_lengths[code_index[i]] = read_bits(input, 3);
     }
 
     Huffman_Code *code_tree = huffman_code_from(mem, 19, code_lengths);
@@ -93,19 +95,19 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
         // Copy previous value 3 to 6 times
         if (symbol == 16) {
             length = lengths[count - 1];
-            repeat = stream_read_bits(input, 2) + 3;
+            repeat = read_bits(input, 2) + 3;
         }
 
         // Repeat 0 value 3 to 10 times
         if (symbol == 17) {
             length = 0;
-            repeat = stream_read_bits(input, 3) + 3;
+            repeat = read_bits(input, 3) + 3;
         }
 
         // Repeat 0 value 11 - 138 times
         if (symbol == 18) {
             length = 0;
-            repeat = stream_read_bits(input, 7) + 11;
+            repeat = read_bits(input, 7) + 11;
         }
 
         for (u8 i = 0; i < repeat; ++i) lengths[count++] = length;
@@ -117,14 +119,14 @@ static Deflate_Huffman *deflate_huffman_dynamic_read(Memory *mem, Stream *input)
     return huffman;
 }
 
-static void deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, Stream *output) {
+static void deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, Write *output) {
     u32 length_count = 286;
     check_or(length_count >= 257 && length_count <= 286) return;
-    stream_write_bits(output, 5, length_count - 257);
+    write_bits(output, 5, length_count - 257);
 
     u32 distance_count = 30;
     check_or(distance_count >= 1 && distance_count <= 30) return;
-    stream_write_bits(output, 5, distance_count - 1);
+    write_bits(output, 5, distance_count - 1);
 
     // CL codes
 
@@ -147,10 +149,10 @@ static void deflate_huffman_dynamic_write(Memory *mem, Deflate_Huffman *code, St
     }
 
     check_or(code_count >= 4 && code_count <= 19) return;
-    stream_write_bits(output, 4, code_count - 4);
+    write_bits(output, 4, code_count - 4);
 
     for (u32 i = 0; i < code_count; ++i) {
-        stream_write_bits(output, 3, code_len[code_index[i]]);
+        write_bits(output, 3, code_len[code_index[i]]);
     }
 
     for (u32 i = 0; i < length_count; ++i) {

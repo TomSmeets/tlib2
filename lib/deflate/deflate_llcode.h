@@ -2,6 +2,7 @@
 // deflate.h - DEFLATE decompressor implementation
 #pragma once
 #include "mem.h"
+#include "read.h"
 #include "stream.h"
 #include "type.h"
 
@@ -54,19 +55,19 @@ static Deflate_LLCode *deflate_llcode_new(Memory *mem) {
 }
 
 // Read construct an absolute length by reading the extra bits from the input stream based on the length_symbol
-static u32 deflate_llcode_length_read(Deflate_LLCode *code, Stream *input, u16 length_symbol) {
+static u32 deflate_llcode_length_read(Deflate_LLCode *code, Read *read, u16 length_symbol) {
     assert(length_symbol < 29);
-    u32 bits = code->length_bits[length_symbol];
+    u8 bits = code->length_bits[length_symbol];
     u32 offset = code->length_offset[length_symbol];
-    u32 data = stream_read_bits(input, bits);
+    u32 data = read_bits(read, bits);
     return offset + data;
 }
 
 // Read construct an absolute distance by reading the extra bits from the input stream based on the distance_symbol
-static u32 deflate_llcode_distance_read(Deflate_LLCode *code, Stream *input, u16 distance_symbol) {
+static u32 deflate_llcode_distance_read(Deflate_LLCode *code, Read *read, u16 distance_symbol) {
     assert(distance_symbol < 30);
-    u32 bits = code->distance_bits[distance_symbol];
+    u8 bits = code->distance_bits[distance_symbol];
     u32 offset = code->distance_offset[distance_symbol];
-    u32 data = stream_read_bits(input, bits);
+    u32 data = read_bits(read, bits);
     return offset + data;
 }

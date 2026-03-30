@@ -3,7 +3,9 @@
 #pragma once
 #include "fmt.h"
 #include "mem.h"
+#include "read.h"
 #include "stream.h"
+#include "write.h"
 
 // Canonical huffman code
 typedef struct {
@@ -20,13 +22,22 @@ typedef struct {
 
 static Huffman_Code *huffman_code_from(Memory *mem, u32 count, u8 *symbol_length) {
     Huffman_Code *table = mem_struct(mem, Huffman_Code);
-    check_or(count <= 288) return 0;
+
+    // Set error flag if too many symbols detected,
+    // and try our best to do something anyway
+    check_or(count <= 288) count = 288;
 
     // Count number of symbols per bit length
     for (u32 symbol = 0; symbol < count; ++symbol) {
         u8 len = symbol_length[symbol];
+
+        // Skip non-existing symbols
         if (len == 0) continue;
-        check_or(len <= 15) return 0;
+
+        // lengths > 15 are invalid
+        check_or(len <= 15) len = 15;
+
+        // Count number of symbols of this lengths
         table->counts[len - 1]++;
     }
 
@@ -61,7 +72,7 @@ static Huffman_Code *huffman_code_from(Memory *mem, u32 count, u8 *symbol_length
     return table;
 }
 
-static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
+static u32 huffman_code_read(Huffman_Code *table, Read *read) {
     // `Maximum deflate bit length is 15
 
     // First prefix code for the current bit length
@@ -76,7 +87,7 @@ static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
     // Iterate all bits
     for (u32 i = 0; i < 15; ++i) {
         // Read bit from stream
-        u32 bit = stream_read_bit(stream);
+        u32 bit = read_bit(read);
 
         // Prepend bit to the prefix code
         code = (code << 1) | bit;
@@ -95,75 +106,74 @@ static u32 huffman_code_read(Huffman_Code *table, Stream *stream) {
     }
 
     // invalid
-    return -1;
+    check(!"Invalid code");
+    return 0;
 }
 
 // Write a symbol into a bit stream
-static void huffman_code_write(Huffman_Code *table, Stream *stream, u32 symbol) {
-    check(symbol < array_count(table->symbol_len));
-    if (error) return;
+static void huffman_code_write(Huffman_Code *table, Write *write, u32 symbol) {
+    check_or(symbol < array_count(table->symbol_len)) return;
 
     u32 len = table->symbol_len[symbol];
     check(len > 0);
-    if (error) return;
 
     u32 code = table->symbol_code[symbol];
-    stream_write_bits_be(stream, len, code);
+    write_bits_be(write, len, code);
 }
 
 static void huffman_code_test(Memory *mem) {
     u8 len[] = {3, 0, 4, 5, 0, 0, 1, 3, 5, 3};
     u32 code[] = {0b100, 0, 0b1110, 0b11110, 0, 0, 0b0, 0b101, 0b11111, 0b110};
-
     Huffman_Code *table = huffman_code_from(mem, array_count(len), len);
 
-    check(table);
-    check(table->counts[1 - 1] == 1);
-    check(table->counts[3 - 1] == 3);
-    check(table->counts[4 - 1] == 1);
-    check(table->counts[5 - 1] == 2);
+    {
+        // Test huffman table creation
+        check(table->counts[1 - 1] == 1);
+        check(table->counts[3 - 1] == 3);
+        check(table->counts[4 - 1] == 1);
+        check(table->counts[5 - 1] == 2);
 
-    // Total count == symbol count
-    u32 sum = 0;
-    for (u32 i = 0; i < array_count(table->counts); ++i) {
-        sum += table->counts[i];
-    }
-    check(sum == 7);
-
-    Stream *stream = stream_new(mem);
-    for (u32 sym = 0; sym < array_count(len); ++sym) {
-        if (len[sym] == 0) continue;
-        stream_write_bits_be(stream, len[sym], code[sym]);
-        stream_write_bits_be(stream, len[sym], code[sym]);
+        // Total count == symbol count
+        u32 sum = 0;
+        for (u32 i = 0; i < array_count(table->counts); ++i) {
+            sum += table->counts[i];
+        }
+        check(sum == 7);
     }
 
-    stream_restart(stream);
+    {
+        // Test huffman_code_read
+        Write *write = write_new(mem);
+        for (u32 sym = 0; sym < array_count(len); ++sym) {
+            if (len[sym] == 0) continue;
+            write_bits_be(write, len[sym], code[sym]);
+            write_bits_be(write, len[sym], code[sym]);
+        }
 
-    for (u32 sym = 0; sym < array_count(len); ++sym) {
-        if (len[sym] == 0) continue;
-
-        u32 sym_parse = huffman_code_read(table, stream);
-        check(sym_parse != -1);
-        check(sym_parse == sym);
-
-        u32 sym_parse2 = huffman_code_read(table, stream);
-        check(sym_parse2 != -1);
-        check(sym_parse2 == sym);
+        Read read = read_from(write_get_written(write));
+        for (u32 sym = 0; sym < array_count(len); ++sym) {
+            if (len[sym] == 0) continue;
+            check(huffman_code_read(table, &read) == sym);
+            check(huffman_code_read(table, &read) == sym);
+        }
+        check(read_eof(&read));
     }
-    check(stream_eof(stream));
 
-    // Test writing codes
-    stream_restart(stream);
-    for (u32 sym = 0; sym < array_count(len); ++sym) {
-        if (len[sym] == 0) continue;
-        huffman_code_write(table, stream, sym);
-        huffman_code_write(table, stream, sym);
+    {
+        // Test huffman_code_write
+        Write *write = write_new(mem);
+        for (u32 sym = 0; sym < array_count(len); ++sym) {
+            if (len[sym] == 0) continue;
+            huffman_code_write(table, write, sym);
+            huffman_code_write(table, write, sym);
+        }
+
+        Read read = read_from(write_get_written(write));
+        for (u32 sym = 0; sym < array_count(len); ++sym) {
+            if (len[sym] == 0) continue;
+            check(huffman_code_read(table, &read) == sym);
+            check(huffman_code_read(table, &read) == sym);
+        }
+        check(read_eof(&read));
     }
-    stream_seek(stream, 0);
-    for (u32 sym = 0; sym < array_count(len); ++sym) {
-        if (len[sym] == 0) continue;
-        check(huffman_code_read(table, stream) == sym);
-        check(huffman_code_read(table, stream) == sym);
-    }
-    check(stream_eof(stream));
 }
