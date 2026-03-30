@@ -5,7 +5,6 @@
 #include "read.h"
 #include "huffman_tree.h"
 #include "mem.h"
-#include "stream.h"
 #include "write.h"
 #include "type.h"
 

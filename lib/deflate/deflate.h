@@ -11,7 +11,6 @@
 #include "os.h"
 #include "write.h"
 #include "rand.h"
-#include "stream.h"
 #include "type.h"
 
 // Deflate block types (2 bit value)
@@ -115,22 +114,22 @@ static Buffer deflate_read(Memory *mem, Buffer input) {
 
 static Buffer deflate_write_stored(Memory *mem, Buffer input) {
     size_t stored_size = deflate_calculate_stored_block_size(input.size);
-    Stream *stored_stream = stream_new(mem);
-    stream_reserve(stored_stream, stored_size);
+    Write *stored_write = write_new(mem);
+    write_reserve(stored_write, stored_size);
     if (error) return buf_null();
 
     size_t input_offset = 0;
     for (;;) {
         u16 block_size = MIN(input.size - input_offset, 0xffff);
         bool is_last = input_offset + block_size == input.size;
-        stream_write_u8(stored_stream, is_last);
-        stream_write_u16(stored_stream, block_size);
-        stream_write_u16(stored_stream, block_size ^ 0xffff);
-        stream_write_bytes(stored_stream, block_size, input.data + input_offset);
+        write_u8(stored_write, is_last);
+        write_u16(stored_write, block_size);
+        write_u16(stored_write, block_size ^ 0xffff);
+        write_buffer(stored_write, buf_slice(input, input_offset, block_size));
         input_offset += block_size;
         if (is_last) break;
     }
-    return stream_as_buffer(stored_stream);
+    return write_get_written(stored_write);
 }
 
 static Buffer deflate_write_fixed(Memory *mem, Deflate_LLCode *llcode, Deflate_Huffman *code, Buffer input, Deflate_Encode_Info *frequency_info) {

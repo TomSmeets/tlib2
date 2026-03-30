@@ -3,6 +3,8 @@
 #pragma once
 #include "error.h"
 #include "fmt.h"
+#include "read.h"
+#include "write.h"
 #include "mem.h"
 #include "os.h"
 
@@ -28,10 +30,13 @@ static void os_read_exact(File *file, Buffer buf) {
 }
 
 static void os_write_exact(File *file, Buffer buf) {
-    while (buf.size) {
-        size_t written = os_write(file, buf);
-        buf = buf_drop(buf, written);
-        if (error) break;
+    size_t written = 0;
+    while (written < buf.size) {
+        size_t increment = os_write(file, buf_drop(buf, written)) ;
+
+        // Some progress should have been made
+        check_or(increment > 0) return;
+        written += increment;
     }
 }
 
@@ -48,6 +53,17 @@ static Buffer os_read_file(Memory *mem, char *path) {
     os_read_exact(fd, buf_from(file_data, info.size));
     os_close(fd);
     return buf_from(file_data, info.size);
+}
+
+static Buffer os_read_all(Memory *mem, File *file) {
+    Buffer buffer = buf_stack(1024);
+    Write *write = write_new(mem);
+    for (;;) {
+        size_t bytes_read = os_read(file, buffer);
+        if (bytes_read == 0) break;
+        write_buffer(write, buf_take(buffer, bytes_read));
+    }
+    return write_get_written(write);
 }
 
 // Read 'size' bytes from file

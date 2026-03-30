@@ -27,7 +27,7 @@ static u8 base64_to_bits(u8 c) {
     if (c == '/') return 63;
 
     // invalid
-    check(!"Not a valid base64 character");
+    os_fail("Not a valid base64 character");
     return 0;
 }
 
@@ -87,6 +87,9 @@ static Buffer base64_encode(Memory *mem, Buffer input) {
 // Trailing '=' are optional
 // Returns zero terminated data
 static Buffer base64_decode(Memory *mem, Buffer input) {
+    // Remove whitespace chars
+    input = buf_trim_whitespace(input);
+
     size_t input_count = input.size;
     u8 *input_data = input.data;
 

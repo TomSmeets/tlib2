@@ -11,7 +11,6 @@
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "os.h"
-#include "stream.h"
 #include "tlang/tlang.h"
 
 void os_main(u32 argc, char **argv) {
@@ -22,13 +21,13 @@ void os_main(u32 argc, char **argv) {
     if (error) os_exit();
 
     test_read();
+    test_write();
     if(error) return;
     tlang_test(mem);
     base64_test(mem);
     fmt_test(mem);
     arg_test();
     crc_test();
-    stream_test(mem);
     huffman_code_test(mem);
     huffman_tree_test(mem);
     deflate_test(mem);

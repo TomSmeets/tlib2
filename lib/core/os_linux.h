@@ -57,6 +57,7 @@ static File *os_stderr(void) {
 static size_t os_read(File *file, Buffer buffer) {
     i64 ret = linux_read(linux_fd(file), buffer.data, buffer.size);
     check_or(ret >= 0) return 0;
+    check_or(ret <= buffer.size) ret = buffer.size;
     return ret;
 }
 

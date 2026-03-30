@@ -6,21 +6,6 @@
 #include "elf.h"
 #include "gzip.h"
 #include "os.h"
-#include "stream.h"
-
-static Buffer os_read_full(Memory *mem, File *file) {
-    Stream *input = stream_new(mem);
-    stream_write_from_file(input, file);
-    return stream_as_buffer(input);
-}
-
-static void os_write_full(File *file, Buffer data) {
-    while (data.size) {
-        size_t written = os_write(file, data);
-        data = buf_drop(data, written);
-        if (error) return;
-    }
-}
 
 void os_main(u32 argc, char **argv) {
     Memory *mem = mem_new();
@@ -37,16 +22,11 @@ void os_main(u32 argc, char **argv) {
         if (!encode) decode = 1;
         arg_help_opt(&arg);
 
-        Buffer input = os_read_full(mem, os_stdin());
-        if (error) os_exit();
-
+        Buffer input = os_read_all(mem, os_stdin());
         Buffer output = {};
         if (encode) output = base64_encode(mem, input);
         if (decode) output = base64_decode(mem, input);
-        check(output.data);
-        if (error) os_exit();
-
-        os_write_full(os_stdout(), output);
+        os_write_exact(os_stdout(), output);
         os_exit();
     }
 
@@ -56,16 +36,11 @@ void os_main(u32 argc, char **argv) {
         if (!compress) decompress = 1;
         arg_help_opt(&arg);
 
-        Buffer input = os_read_full(mem, os_stdin());
-        check(input.size);
-        if (error) os_exit();
-
+        Buffer input = os_read_all(mem, os_stdin());
         Buffer output = {};
         if (compress) output = gzip_write(mem, input);
         if (decompress) output = gzip_read(mem, input);
-        check(output.size);
-        if (error) os_exit();
-        os_write_full(os_stdout(), output);
+        os_write_exact(os_stdout(), output);
         os_exit();
     }
 
@@ -78,7 +53,7 @@ void os_main(u32 argc, char **argv) {
         if (!wide && !compact) wide = hex;
         arg_help_opt(&arg);
 
-        Buffer input = os_read_full(mem, os_stdin());
+        Buffer input = os_read_all(mem, os_stdin());
         u32 base = hex ? 16 : 2;
         u32 width = wide ? 16 : 4;
         fmt_hexdump_x(fout, input, base, width);
@@ -90,16 +65,16 @@ void os_main(u32 argc, char **argv) {
         File *file = os_open(path, FileMode_Read);
         Elf *elf = elf_load(mem, file);
         if (error) os_exit();
+
         print("entry: 0x", O(.base = 16), elf->entry);
         for (u32 i = 0; i < elf->section_count; ++i) {
             print(i, " ", elf->sections[i].size, " ", elf->sections[i].name);
         }
-
         dwarf_load(mem, elf);
 
         os_exit();
     }
 
     arg_help(&arg);
-    os_fail("");
+    os_fail("Invalid arguments");
 }

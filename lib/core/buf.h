@@ -123,3 +123,21 @@ static size_t buf_match_len(Buffer a, Buffer b) {
         if (a.data[i] != b.data[i]) return i;
     }
 }
+
+static bool chr_is_whitespace(u8 chr) {
+    return chr == ' ' || chr == '\n' || chr == '\t' || chr == '\r';
+}
+
+static Buffer buf_trim_whitespace(Buffer buffer) {
+    // Trim Start
+    while(buffer.size > 0 && chr_is_whitespace(buffer.data[0])) {
+        buffer.size --;
+        buffer.data ++;
+    }
+
+    // Trim end
+    while (buffer.size > 0 && chr_is_whitespace(buffer.data[buffer.size - 1])) {
+        buffer.size--;
+    }
+    return buffer;
+}

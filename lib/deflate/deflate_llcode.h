@@ -3,7 +3,6 @@
 #pragma once
 #include "mem.h"
 #include "read.h"
-#include "stream.h"
 #include "type.h"
 
 // Symbol to actual length / distance encoding

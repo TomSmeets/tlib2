@@ -1,7 +1,6 @@
 #pragma once
 #include "fmt.h"
 #include "mem.h"
-#include "stream.h"
 #include "type.h"
 
 typedef enum {

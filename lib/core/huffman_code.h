@@ -4,7 +4,6 @@
 #include "fmt.h"
 #include "mem.h"
 #include "read.h"
-#include "stream.h"
 #include "write.h"
 
 // Canonical huffman code
