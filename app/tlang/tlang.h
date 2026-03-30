@@ -2,6 +2,7 @@
 #include "fmt.h"
 #include "mem.h"
 #include "type.h"
+#include "list.h"
 
 typedef enum {
     Ast_Type_None,
@@ -40,7 +41,7 @@ static bool chr_is_digit(u8 chr) {
     if (chr >= '0' && chr <= '9') return 1;
     return 0;
 }
-#define LIST_APPEND(START, END, ITEM, NEXT)                                                                                                          \
+#define LIST_APPEND_NEXT(START, END, ITEM, NEXT)                                                                                                          \
     ({                                                                                                                                               \
         if (!(START)) (START) = (ITEM);                                                                                                              \
         if ((END)) (END)->NEXT = (ITEM);                                                                                                             \
@@ -77,7 +78,7 @@ static Ast *tlang_lex(Memory *mem, Buffer input) {
             node->type = Ast_Type_Operator;
         }
         node->text = buf_from(start, cursor - start);
-        LIST_APPEND(list_start, list_end, node, next_token);
+        LIST_APPEND_NEXT(list_start, list_end, node, next_token);
     }
     return list_start;
 }
@@ -171,7 +172,7 @@ static Ast *tlang_parse_statement(Parse *p) {
     for (;;) {
         Ast *arg = tlang_parse_expr(p);
         if (!arg) break;
-        LIST_APPEND(label->child, last_arg, arg, next);
+        LIST_APPEND(label->child, last_arg, arg);
     }
 
     Ast *end = tlang_parse_op(p, ";");
@@ -186,7 +187,7 @@ static Ast *tlang_parse(Parse *p) {
     for (;;) {
         Ast *stm = tlang_parse_statement(p);
         if (!stm) break;
-        LIST_APPEND(block_start, block_end, stm, next);
+        LIST_APPEND(block_start, block_end, stm);
     }
     check(p->token == 0);
     return block_start;

@@ -7,140 +7,178 @@
 // Help text is generated automatically
 #pragma once
 #include "fmt.h"
+#include "cli_arg.h"
 #include "list.h"
 #include "mem.h"
 
 typedef struct Cli Cli;
 
 // Create a new command line argument parser
-static Cli *cli_new(Memory *mem, u32 argc, char **argv);
+static Cli *cli_new(Memory *mem, char **argv);
 
 // Match a sub command
-static bool cli_command(Cli *cli, char *command, char *info);
+// - Returns true if this subcommand should be executed
+static void cli_command(Cli *cli, char *command, char *info);
 
-// Match a sub command
+// Check a flag of the current cli command
 static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info);
+
+// Match any value
+static char *cli_value(Cli *cli, char *name, char *info);
+
+// Collect remaining arguments into an array
+static char **cli_remaining(Cli *cli, char *name, char *info);
+
+// Check if the current command was matched correctly
+static bool cli_check(Cli *cli);
 
 // Show help message if no command was matched
 static void cli_help(Cli *cli);
 
-// Collect remaining arguments into a new argv array
-static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv);
+static void test_cli(void) {
+    Memory *mem = mem_new();
+
+    Cli *cli = cli_new(mem, (char *[]){"hello", "-xy", "--world", "-z", 0});
+    cli_command(cli, "test", "");
+    check(cli_flag(cli, "-x", "--xx", "") == 0);
+    check(cli_check(cli) == 0);
+
+    cli_command(cli, "hello", "");
+    check(cli_flag(cli, "-x", "--xx", "") == 1);
+    check(cli_flag(cli, "-y", "--yy", "") == 1);
+    check(cli_flag(cli, "-z", "--zz", "") == 0);
+    check(cli_flag(cli, "-w", "--world", "") == 1);
+    check(cli_check(cli) == 1);
+
+     cli_command(cli, "world", "");
+    check(cli_flag(cli, "-x", "--xx", "") == 0);
+    check(cli_check(cli) ==0);
+}
 
 // ==== Implementation ====
-typedef struct Cli_Command Cli_Command;
-typedef struct Cli_Flag Cli_Flag;
-typedef struct Cli_Value Cli_Value;
-typedef struct Cli_Arg Cli_Arg;
-
-// Cli subcommand documentation
-struct Cli_Command {
-    char *name;
-    char *info;
-    Cli_Command *next;
-
-    Cli_Flag *flags, *flags_last;
-    Cli_Value *values, *values_last;
-};
 
 // Cli flag documentation
+typedef struct Cli_Flag Cli_Flag;
 struct Cli_Flag {
     char *name_short;
     char *name_long;
     char *info;
+    Cli_Arg *match;
     Cli_Flag *next;
 };
 
 // Cli input value documentation
+typedef struct Cli_Value Cli_Value;
 struct Cli_Value {
     char *name;
     char *info;
+    Cli_Arg *match;
     Cli_Value *next;
 };
 
-// Command line argument
-struct Cli_Arg {
+// Cli subcommand documentation
+typedef struct Cli_Command Cli_Command;
+struct Cli_Command {
     char *name;
-    bool is_used;
-    bool is_flag;
-    Cli_Arg *next;
+    char *info;
+    Cli_Arg *match;
+    Cli_Flag *flag_first, *flag_last;
+    Cli_Value *value_first, *value_last;
+    Cli_Command *next;
 };
 
 struct Cli {
-    bool has_match;
-    char *program_name;
-    Cli_Arg *args;
-
-    // Memory used for allocating doc nodes
     Memory *mem;
+    char *program_name;
+    Cli_Arg *argv;
 
-    // Generated documentation
-    Cli_Command *doc, *doc_last;
+    // Documentation
+    Cli_Command *command_first, *command_last;
 };
 
-// Create a new command line argument parser
-static Cli *cli_new(Memory *mem, u32 argc, char **argv) {
+static Cli *cli_new(Memory *mem, char **argv) {
+    // There should be at least one argument
+    assert(argv[0]);
+
     Cli *cli = mem_struct(mem, Cli);
     cli->mem = mem;
     cli->program_name = argv[0];
-
-    bool match_flags = true;
-    Cli_Arg *arg_last = 0;
-    for (u32 i = 1; i < argc; ++i) {
-        char *arg_name = argv[i];
-
-        if (match_flags && str_eq(arg_name, "--")) {
-            match_flags = false;
-            continue;
-        }
-
-        Cli_Arg *arg = mem_struct(mem, Cli_Arg);
-        arg->name = arg_name;
-        arg->is_flag = match_flags && arg->name[0] == '-';
-        LIST_APPEND(cli->args, arg_last, arg);
-    }
-
-    Cli_Command *no_subcommand = mem_struct(mem, Cli_Command);
-    cli->doc = cli->doc_last = no_subcommand;
+    cli->argv = cli_arg_split(mem, argv + 1);
     return cli;
 }
 
-// Find first non-flag argument (the subcommand)
-static Cli_Arg *_cli_find_subcommand(Cli *cli) {
-    Cli_Arg *arg = cli->args;
-    while (arg && arg->is_flag) arg = arg->next;
-    return arg;
+static void cli_command(Cli *cli, char *name, char *info) {
+    Cli_Command *cmd = mem_struct(cli->mem, Cli_Command);
+    cmd->name = name;
+    cmd->info = info;
+    LIST_APPEND(cli->command_first, cli->command_last, cmd);
+
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
+        if(arg->is_used) continue;
+        if(arg->is_flag_long) continue;
+        if(arg->is_flag_short) continue;
+        if(str_eq(arg->name, name)) {
+            cmd->match = arg;
+            arg->is_used = 1;
+        }
+        break;
+    }
 }
 
-// Match a sub command
-static bool cli_command(Cli *cli, char *command, char *info) {
-    // Update help text
-    Cli_Command *doc = mem_struct(cli->mem, Cli_Command);
-    doc->name = command;
-    doc->info = info;
-    LIST_APPEND(cli->doc, cli->doc_last, doc);
+static bool cli_check(Cli *cli) {
+    // Return false if command dit not match
+    if(!cli->command_last->match) return false;
 
-    // Check if the argument matches
-    Cli_Arg *arg = _cli_find_subcommand(cli);
-    if (!arg) return false;
-    if (!str_eq(arg->name, command)) return false;
+    // Return false if not all arguments are used
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
+        if(!arg->is_used) return false;
+    }
 
-    // Match!
-    arg->is_used = true;
-    cli->has_match = true;
+    // Command was valid
     return true;
 }
 
+static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info) {
+    if (name_short) assert(name_short[0] == '-' && name_short[1] != '-');
+    if (name_long) assert(name_long[0] == '-' && name_long[1] == '-' && name_long[2] != '-');
+    Cli_Command *cmd = cli->command_last;
+
+    Cli_Flag *doc = mem_struct(cli->mem, Cli_Flag);
+    doc->name_short = name_short;
+    doc->name_long = name_long;
+    doc->info = info;
+    LIST_APPEND(cmd->flag_first, cmd->flag_last, doc);
+
+    // Skip check if the command is not valid
+    if(!cmd->match) return 0;
+
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
+        if (arg->is_used) continue;
+        bool match_short = arg->is_flag_short && str_eq(arg->name, name_short);
+        bool match_long = arg->is_flag_long && str_eq(arg->name, name_long);
+        if (!match_short && !match_long) continue;
+        arg->is_used = true;
+        doc->match = arg;
+    }
+
+    return doc->match;
+}
+
 static char *cli_value(Cli *cli, char *name, char *info) {
-    Cli_Command *cmd = cli->doc_last;
+    Cli_Command *cmd = cli->command_last;
+
     Cli_Value *doc = mem_struct(cli->mem, Cli_Value);
     doc->name = name;
     doc->info = info;
-    LIST_APPEND(cmd->values, cmd->values_last, doc);
+    LIST_APPEND(cmd->value_first, cmd->value_last, doc);
 
-    for (Cli_Arg *arg = cli->args; arg; arg = arg->next) {
+    // Skip check if the command is not valid
+    if(cmd->match) return 0;
+
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
-        if (arg->is_flag) continue;
+        if (arg->is_flag_long) continue;
+        if (arg->is_flag_short) continue;
         arg->is_used = true;
         return arg->name;
     }
@@ -148,59 +186,78 @@ static char *cli_value(Cli *cli, char *name, char *info) {
     return 0;
 }
 
-static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info) {
-    Cli_Command *cmd = cli->doc_last;
-    Cli_Flag *doc = mem_struct(cli->mem, Cli_Flag);
-    doc->name_short = name_short;
-    doc->name_long = name_long;
-    doc->info = info;
-    LIST_APPEND(cmd->flags, cmd->flags_last, doc);
+static void cli_help(Cli *cli) {
+    // Find matched command
+    Cli_Command *cmd = cli->command_first;
+    while (cmd && !cmd->match) cmd = cmd->next;
 
-    for (Cli_Arg *arg = cli->args; arg; arg = arg->next) {
-        if (arg->is_used) continue;
-        if (!arg->is_flag) continue;
-        bool match_short = str_eq(arg->name, name_short);
-        bool match_long = str_eq(arg->name, name_long);
-        if (!match_short && !match_long) continue;
-        arg->is_used = true;
-        return true;
-    }
-
-    return false;
-}
-
-static void cli_cmdhelp(Cli *cli) {
-    Cli_Command *cmd = cli->doc_last;
-    fmt_s(ferr, "Usage: ");
-    fmt_s(ferr, cli->program_name);
-    fmt_s(ferr, " ");
-    fmt_s(ferr, cmd->name);
-    for (Cli_Value *val = cmd->values; val; val = val->next) {
-        fmt_s(ferr, " ");
-        fmt_s(ferr, val->name);
-    }
-    fmt_s(ferr, "\n");
-    for (Cli_Value *val = cmd->values; val; val = val->next) {
-        fmt_s(ferr, "    ");
-        fmt_s(ferr, val->name);
-        fmt_s(ferr, " | ");
-        fmt_s(ferr, val->info);
-        fmt_s(ferr, "\n");
-    }
-    for (Cli_Flag *flag = cmd->flags; flag; flag = flag->next) {
-        fmt_s(ferr, "    ");
-        if (flag->name_short) {
-            fmt_s(ferr, flag->name_short);
-            fmt_s(ferr, ", ");
+    if(!cmd) {
+        fmt_s(ferr, "Usage: ");
+        fmt_s(ferr, cli->program_name);
+        fmt_s(ferr, " <COMMAND> [VALUES...] [FLAGS...]\n");
+        for (Cli_Command *cmd = cli->command_first; cmd; cmd = cmd->next) {
+            fmt_s(ferr, "  ");
+            fmt_s(ferr, cli->program_name);
+            fmt_s(ferr, " ");
+            fmt_s(ferr, cmd->name);
+            fmt_pad_line(ferr, 20, ' ');
+            fmt_s(ferr, " | ");
+            fmt_s(ferr, cmd->info);
+            fmt_s(ferr, "\n");
         }
-        fmt_s(ferr, flag->name_long);
-        fmt_pad_line(ferr, 20, ' ');
-        fmt_s(ferr, " | ");
-        fmt_s(ferr, flag->info);
-        fmt_s(ferr, "\n");
+        return;
     }
-    os_fail("");
+
+    bool show_help = 0;
+
+    // Check if all arguments are used
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
+        if(arg->is_used) continue;
+        show_help = 1;
+        break;
+    }
+
+    // No problem
+    if(show_help) {
+        fmt(ferr, "Error:\n");
+        for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
+            if(arg->is_used) continue;
+            if (arg->is_flag_long || arg->is_flag_short) {
+                fmt(ferr, "  Invalid option: '", arg->name, "'\n");
+            } else {
+                fmt(ferr, "  Invalid argument: '", arg->name, "'\n");
+            }
+        }
+        fmt(ferr, "\n");
+
+        fmt(ferr, "Usage: ", cli->program_name, " ", cmd->name, " ");
+        for (Cli_Value *val = cmd->value_first; val; val = val->next) {
+            fmt(ferr, " ", val->name);
+        }
+        fmt(ferr, "\n");
+        for (Cli_Value *val = cmd->value_first; val; val = val->next) {
+            fmt_s(ferr, "    ");
+            fmt_s(ferr, val->name);
+            fmt_s(ferr, " | ");
+            fmt_s(ferr, val->info);
+            fmt_s(ferr, "\n");
+        }
+        for (Cli_Flag *flag = cmd->flag_first; flag; flag = flag->next) {
+            fmt_s(ferr, "    ");
+            if (flag->name_short) {
+                fmt_s(ferr, flag->name_short);
+                fmt_s(ferr, ", ");
+            }
+            fmt_s(ferr, flag->name_long);
+            fmt_pad_line(ferr, 20, ' ');
+            fmt_s(ferr, " | ");
+            fmt_s(ferr, flag->info);
+            fmt_s(ferr, "\n");
+        }
+    }
+    
 }
+#if 0
 
 static void cli_help(Cli *cli) {
     if (cli->has_match) return;
@@ -217,7 +274,6 @@ static void cli_help(Cli *cli) {
         fmt_s(ferr, cmd->info);
         fmt_s(ferr, "\n");
     }
-    os_fail("");
 }
 
 static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv) {
@@ -230,3 +286,5 @@ static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv) {
     }
     return i;
 }
+
+#endif

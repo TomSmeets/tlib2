@@ -3,6 +3,7 @@
 #include "arg.h"
 #include "base64.h"
 #include "crc.h"
+#include "cli.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"
@@ -29,6 +30,8 @@ void os_main(u32 argc, char **argv) {
     TEST(base64_test());
     TEST(fmt_test());
     TEST(arg_test());
+    TEST(test_cli_arg());
+    TEST(test_cli());
     TEST(crc_test());
     TEST(huffman_code_test());
     TEST(huffman_tree_test());

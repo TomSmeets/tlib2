@@ -13,7 +13,9 @@ static u8 base64_from_bits(u8 c) {
     if (c < 62) return c - 52 + '0';
     if (c == 62) return '+';
     if (c == 63) return '/';
+
     // Unreachable
+    os_fail("Unreachable");
     return 0;
 }
 
@@ -134,7 +136,7 @@ static void base64_test(void) {
     base64_test_encode(mem, str_buf("a"), "YQ==");
     base64_test_encode(mem, str_buf("aa"), "YWE=");
     base64_test_encode(mem, str_buf("aaa"), "YWFh");
-    base64_test_encode(mem, str_buf("aaaaa"), "YWFhYQ==");
+    base64_test_encode(mem, str_buf("aaaa"), "YWFhYQ==");
     base64_test_encode(mem, BUFFER(u8, 0, 0, 0, 0), "AAAAAA==");
     base64_test_encode(mem, BUFFER(u8, 1, 2, 3, 4, 5, 6), "AQIDBAUG");
     mem_free(mem);

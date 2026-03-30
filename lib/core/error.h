@@ -25,25 +25,27 @@ static thread_local char *error;
 #define ANSI_RESET ""
 #endif
 
-#define check_msg(X, MSG) error_set((X), ANSI_BOLD __FILE__ ":" TO_STRING(__LINE__) ": " ANSI_RED "Error: " ANSI_RESET ANSI_BOLD MSG ANSI_RESET "\n")
+#define check_msg(X, MSG) _error_check((X), ANSI_BOLD __FILE__ ":" TO_STRING(__LINE__) ": " ANSI_RED "Error: " ANSI_RESET ANSI_BOLD MSG ANSI_RESET "\n")
 
 #define check(X) check_msg(X, "check(" #X ") failed")
-#define check_or(X) if (check_msg(X, "check_or(" #X ") failed"))
+#define check_or(X) if (!check(X))
 #define assert(X)                                                                                                                                    \
-    if (check_msg(X, "assert(" #X ") failed")) os_exit()
+    if (!check_msg(X, "assert(" #X ") failed")) os_exit()
 #define os_fail(MSG) check_msg(0, MSG), os_exit()
 
-// Set the error flag if the condition becomes false
-static bool error_set(bool cond, char *message) {
-    // If condition is true then there is no error
-    if (cond) return 0;
-
-    // Set the error message only if this is the first error
-    if (!error) error = message;
-
-    // Return true if the condition fails
-    return 1;
+static void _error_set(char *message) {
+    error = message;
 }
+
+// Set the error flag if the condition becomes false
+static bool _error_check(bool cond, char *message) {
+    // Set the error message only if this is the first error
+    if (!cond && !error) _error_set(message);
+
+    // Return value of condition directly
+    return cond;
+}
+
 
 // Clear error flag (ignores the last error)
 static void error_clear(void) {
