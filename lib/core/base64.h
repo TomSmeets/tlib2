@@ -127,13 +127,15 @@ static void base64_test_encode(Memory *mem, Buffer input, char *output_str) {
     check(buf_eq(output_dec, input));
 }
 
-static void base64_test(Memory *mem) {
+static void base64_test(void) {
+    Memory *mem = mem_new();
     base64_test_encode(mem, str_buf("Hello World!"), "SGVsbG8gV29ybGQh");
     base64_test_encode(mem, str_buf(""), "");
     base64_test_encode(mem, str_buf("a"), "YQ==");
     base64_test_encode(mem, str_buf("aa"), "YWE=");
     base64_test_encode(mem, str_buf("aaa"), "YWFh");
-    base64_test_encode(mem, str_buf("aaaa"), "YWFhYQ==");
+    base64_test_encode(mem, str_buf("aaaaa"), "YWFhYQ==");
     base64_test_encode(mem, BUFFER(u8, 0, 0, 0, 0), "AAAAAA==");
     base64_test_encode(mem, BUFFER(u8, 1, 2, 3, 4, 5, 6), "AQIDBAUG");
+    mem_free(mem);
 }

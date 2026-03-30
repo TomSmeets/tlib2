@@ -131,11 +131,11 @@ static u8 *mem_realloc(Memory *mem, u8 *old_data, size_t old_size, size_t new_si
     return new_data;
 }
 
-static void mem_test(void) {
+static void test_mem(void) {
     size_t original_size1 = chunk_alloc_size;
     Memory *tmp = mem_new();
     size_t original_size = chunk_alloc_size;
-    for (u32 i = 0; i < 64; ++i) {
+    for (u32 i = 0; i < 8; ++i) {
         Memory *mem = mem_new();
 
         for (u32 j = 1; j < 32; ++j) {

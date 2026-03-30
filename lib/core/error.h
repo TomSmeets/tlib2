@@ -14,7 +14,18 @@ static thread_local char *error;
 // All functions should return some kind of default on error
 // Checking for the errors should be mostly optional
 // Errors should be able to be handled at some later time
-#define check_msg(X, MSG) error_set((X), __FILE__ ":" TO_STRING(__LINE__) ": " MSG "\n")
+
+#if OS_LINUX
+#define ANSI_BOLD "\e[1m"
+#define ANSI_RED "\e[31m"
+#define ANSI_RESET "\e[0m"
+#else
+#define ANSI_BOLD ""
+#define ANSI_RED ""
+#define ANSI_RESET ""
+#endif
+
+#define check_msg(X, MSG) error_set((X), ANSI_BOLD __FILE__ ":" TO_STRING(__LINE__) ": " ANSI_RED "Error: " ANSI_RESET ANSI_BOLD MSG ANSI_RESET "\n")
 
 #define check(X) check_msg(X, "check(" #X ") failed")
 #define check_or(X) if (check_msg(X, "check_or(" #X ") failed"))
@@ -28,7 +39,6 @@ static bool error_set(bool cond, char *message) {
     if (cond) return 0;
 
     // Set the error message only if this is the first error
-    if (!message) message = "";
     if (!error) error = message;
 
     // Return true if the condition fails

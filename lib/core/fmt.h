@@ -316,7 +316,8 @@ static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
 }
 
 // Test
-static void fmt_test(Memory *mem) {
+static void fmt_test(void) {
+    Memory *mem = mem_new();
     {
         Fmt *fmt = fmt_new(mem);
         fmt_s(fmt, "Hello");
@@ -341,6 +342,7 @@ static void fmt_test(Memory *mem) {
     // u32 x = 1234;
     // print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
     // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
+    mem_free(mem);
 }
 
 typedef struct {

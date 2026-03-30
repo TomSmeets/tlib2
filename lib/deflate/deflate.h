@@ -205,7 +205,8 @@ static void deflate_test_buf(Memory *mem, Buffer input) {
     check(buf_eq(decompressed, input));
 }
 
-static void deflate_test(Memory *mem) {
+static void deflate_test(void) {
+    Memory *mem = mem_new();
     deflate_test_buf(mem, str_buf("heeeeeeeeeeeeello hello"));
     deflate_test_buf(mem, str_buf("Hello World!"));
     deflate_test_buf(mem, str_buf("1234567"));
@@ -223,4 +224,5 @@ static void deflate_test(Memory *mem) {
         rand_bytes(&rng, input);
         deflate_test_buf(mem, input);
     }
+    mem_free(mem);
 }

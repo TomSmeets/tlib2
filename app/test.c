@@ -13,28 +13,27 @@
 #include "read.h"
 #include "tlang/tlang.h"
 
+#define TEST(FCN, ...)                                                                                                                               \
+    ({                                                                                                                                               \
+        print("Running " #FCN "...");                                                                                                              \
+        FCN;                                                                                                                            \
+        if (error) os_exit();\
+    })
+
 void os_main(u32 argc, char **argv) {
-    Memory *mem = mem_new();
-
     // Run tests
-    mem_test();
-    if (error) os_exit();
-
-    test_read();
-    test_write();
-    if (error) return;
-    tlang_test(mem);
-    base64_test(mem);
-    fmt_test(mem);
-    arg_test();
-    crc_test();
-    huffman_code_test(mem);
-    huffman_tree_test(mem);
-    deflate_test(mem);
-    gzip_test(mem);
-
-    if (error) os_exit();
-
-    print("Success!");
+    TEST(test_mem());
+    TEST(test_read());
+    TEST(test_write());
+    TEST(tlang_test());
+    TEST(base64_test());
+    TEST(fmt_test());
+    TEST(arg_test());
+    TEST(crc_test());
+    TEST(huffman_code_test());
+    TEST(huffman_tree_test());
+    TEST(deflate_test());
+    TEST(gzip_test());
+    if (!error) print("Success!");
     os_exit();
 }

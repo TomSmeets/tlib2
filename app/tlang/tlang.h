@@ -275,20 +275,21 @@ static Stack *tlang_eval_block(Memory *mem, Ast *ast) {
     return stack;
 }
 
-static void tlang_test(Memory *mem) {
+static void tlang_test(void) {
+    Memory *mem = mem_new();
     Ast *ast = tlang_lex(mem, str_buf("x = 1*2*3;\ny=4*5*6;z=x+y;w=x*y;"));
-
-    for (Ast *tok = ast; tok; tok = tok->next_token) {
-        print("Tok: ", " type ", tok->type, " text ", tok->text);
-    }
+    // for (Ast *tok = ast; tok; tok = tok->next_token) {
+    //     print("Tok: ", " type ", tok->type, " text ", tok->text);
+    // }
 
     Parse p = {.token = ast};
     ast = tlang_parse(&p);
     tlang_fmt(fout, ast, 0);
     Stack *env = tlang_eval_block(mem, ast);
-    for (Stack *s = env; s; s = s->next) {
-        print(s->name, " = ", s->value);
-    }
+    // for (Stack *s = env; s; s = s->next) {
+    //     print(s->name, " = ", s->value);
+    // }
+    mem_free(mem);
 }
 
 // static void parse_whitespace(Stream *stream) {

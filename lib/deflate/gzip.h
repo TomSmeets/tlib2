@@ -75,15 +75,12 @@ static Buffer gzip_write(Memory *mem, Buffer input) {
 // Run a deflate/inflate testcase with a given input
 static void gzip_test_buf(Memory *mem, Buffer input) {
     Buffer compressed = gzip_write(mem, input);
-    if (error) return;
-
     Buffer decompressed = gzip_read(mem, compressed);
-    if (error) return;
-
     check(buf_eq(decompressed, input));
 }
 
-static void gzip_test(Memory *mem) {
+static void gzip_test(void) {
+    Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");
         Buffer input = base64_decode(mem, str_buf("H4sIAAAAAAAAA8tIzcnJV8gAk+X5RTkpUDaY5AIAmdZcBR4AAAA="));
@@ -129,4 +126,5 @@ static void gzip_test(Memory *mem) {
         Buffer output = gzip_read(mem, input);
         check(buf_eq(output, target));
     }
+    mem_free(mem);
 }

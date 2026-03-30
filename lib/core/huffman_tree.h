@@ -175,7 +175,8 @@ static void huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list
     mem_free(tmp);
 }
 
-static void huffman_tree_test(Memory *mem) {
+static void huffman_tree_test(void) {
+    Memory *mem = mem_new();
     char *input = "aaaaaaaabbbbcccdde";
     u32 freq_list[256] = {};
 
@@ -239,6 +240,7 @@ static void huffman_tree_test(Memory *mem) {
         check(len_list['e'] == 3);
         check(len_list['x'] == 0);
     }
+    mem_free(mem);
 }
 
 // Length limit huffman code
