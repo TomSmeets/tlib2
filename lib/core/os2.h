@@ -3,10 +3,10 @@
 #pragma once
 #include "error.h"
 #include "fmt.h"
-#include "read.h"
-#include "write.h"
 #include "mem.h"
 #include "os.h"
+#include "read.h"
+#include "write.h"
 
 #if OS_LINUX
 static char *os_cwd(Memory *mem) {
@@ -32,7 +32,7 @@ static void os_read_exact(File *file, Buffer buf) {
 static void os_write_exact(File *file, Buffer buf) {
     size_t written = 0;
     while (written < buf.size) {
-        size_t increment = os_write(file, buf_drop(buf, written)) ;
+        size_t increment = os_write(file, buf_drop(buf, written));
 
         // Some progress should have been made
         check_or(increment > 0) return;

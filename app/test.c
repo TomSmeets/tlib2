@@ -3,7 +3,6 @@
 #include "arg.h"
 #include "base64.h"
 #include "crc.h"
-#include "read.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"
@@ -11,6 +10,7 @@
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "os.h"
+#include "read.h"
 #include "tlang/tlang.h"
 
 void os_main(u32 argc, char **argv) {
@@ -22,7 +22,7 @@ void os_main(u32 argc, char **argv) {
 
     test_read();
     test_write();
-    if(error) return;
+    if (error) return;
     tlang_test(mem);
     base64_test(mem);
     fmt_test(mem);

@@ -2,11 +2,11 @@
 // deflate_huffman.h - DEFLATE decompressor implementation
 #pragma once
 #include "huffman_code.h"
-#include "read.h"
 #include "huffman_tree.h"
 #include "mem.h"
-#include "write.h"
+#include "read.h"
 #include "type.h"
+#include "write.h"
 
 // Combination of length and distance symbol huffman codes
 typedef struct {

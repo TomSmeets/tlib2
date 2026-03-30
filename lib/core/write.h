@@ -17,7 +17,7 @@ typedef struct {
 
 // Create a new writer that writes to the destination buffer
 static Write write_from(Buffer buffer) {
-    return (Write) { .buffer = buffer };
+    return (Write){.buffer = buffer};
 }
 
 // Create a new dynamic writer that dynamically allocates memory
@@ -33,7 +33,7 @@ static Buffer write_get_written(Write *write) {
 }
 
 // Re-allocate buffer to the new size
-static Buffer buf_realloc(Memory*mem, Buffer buf, size_t new_size) {
+static Buffer buf_realloc(Memory *mem, Buffer buf, size_t new_size) {
     buf.data = mem_realloc(mem, buf.data, buf.size, new_size);
     buf.size = new_size;
     return buf;
@@ -79,7 +79,7 @@ static void write_bit(Write *write, u8 bit) {
 
     // Append bit
     u8 *byte = write_get_last_byte(write);
-    if(byte) *byte |= (bit & 1) << write->bit_ix;
+    if (byte) *byte |= (bit & 1) << write->bit_ix;
 
     // Advance to next bit
     write->bit_ix++;
@@ -107,7 +107,6 @@ static void write_u16(Write *write, u16 data) {
     write_u8(write, (data >> (0 * 8)) & 0xff);
     write_u8(write, (data >> (1 * 8)) & 0xff);
 }
-
 
 // Write two bytes as a little endian u32 from the stream
 static void write_u32(Write *write, u32 data) {
@@ -144,8 +143,8 @@ static void write_bits_be(Write *write, u8 count, u32 bits) {
 // Repeat previously written data (As used in LZ77)
 static void write_repeat(Write *write, size_t distance, size_t length) {
     // Already reserve space for the new data (not required, but a bit faster)
-    if(length > distance) write_reserve(write, length - distance);
-    
+    if (length > distance) write_reserve(write, length - distance);
+
     // Check distance validity
     check_or(write->bytes_written >= distance) return;
 

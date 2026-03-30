@@ -6,8 +6,8 @@
 #include "deflate.h"
 #include "error.h"
 #include "fmt.h"
-#include "read.h"
 #include "mem.h"
+#include "read.h"
 
 static Buffer gzip_read_from(Memory *mem, Read *read) {
     u16 magic = read_u16(read);

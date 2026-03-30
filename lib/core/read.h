@@ -1,10 +1,10 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // read.h - Reader
 #pragma once
-#include "type.h"
-#include "error.h"
 #include "buf.h"
+#include "error.h"
 #include "str.h"
+#include "type.h"
 
 typedef struct {
     // Buffer to read from
@@ -102,7 +102,6 @@ static u32 read_bits(Read *read, u32 count) {
     }
     return ret;
 }
-
 
 // =========== Testing =======
 static void test_read(void) {

@@ -4,14 +4,14 @@
 #include "deflate_huffman.h"
 #include "deflate_llcode.h"
 #include "deflate_lz77.h"
-#include "read.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "mem.h"
 #include "os.h"
-#include "write.h"
 #include "rand.h"
+#include "read.h"
 #include "type.h"
+#include "write.h"
 
 // Deflate block types (2 bit value)
 typedef enum {

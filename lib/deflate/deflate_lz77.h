@@ -58,8 +58,7 @@ static void deflate_llcode_distance_write(Write *out, Deflate_Huffman *tree, Def
 
 // Compress the input data using LZ77 and encode it with the provided huffman code
 // The symbol frequencies in the optional argument 'info' are incremented if present
-static void
-deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer input, Write *write, Deflate_Encode_Info *info) {
+static void deflate_lz_encode(Memory *mem, Deflate_Huffman *code, Deflate_LLCode *ll, Buffer input, Write *write, Deflate_Encode_Info *info) {
     // Add values
     for (size_t i = 0; i < input.size; ++i) {
         Buffer match = buf_find_longest_match(input, i, 1 << 15);

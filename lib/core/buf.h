@@ -130,9 +130,9 @@ static bool chr_is_whitespace(u8 chr) {
 
 static Buffer buf_trim_whitespace(Buffer buffer) {
     // Trim Start
-    while(buffer.size > 0 && chr_is_whitespace(buffer.data[0])) {
-        buffer.size --;
-        buffer.data ++;
+    while (buffer.size > 0 && chr_is_whitespace(buffer.data[0])) {
+        buffer.size--;
+        buffer.data++;
     }
 
     // Trim end

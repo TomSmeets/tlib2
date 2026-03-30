@@ -155,7 +155,7 @@ static Ast *tlang_parse_statement(Parse *p) {
     if (!label) return 0;
 
     Ast *op = tlang_parse_op(p, "=");
-    if(op) {
+    if (op) {
         // [label] = [expr]
         Ast *expr = tlang_parse_expr(p);
         if (!expr) return 0;
@@ -168,9 +168,9 @@ static Ast *tlang_parse_statement(Parse *p) {
 
     // [label] [expr..] ;
     Ast *last_arg = 0;
-    for(;;) {
+    for (;;) {
         Ast *arg = tlang_parse_expr(p);
-        if(!arg) break;
+        if (!arg) break;
         LIST_APPEND(label->child, last_arg, arg, next);
     }
 
@@ -291,7 +291,6 @@ static void tlang_test(Memory *mem) {
     }
 }
 
-
 // static void parse_whitespace(Stream *stream) {
 //     while (!stream_eof(stream)) {
 //         size_t cursor = stream_cursor(stream);
@@ -319,8 +318,6 @@ static void tlang_test(Memory *mem) {
 //     check(chr_is_digit(c));
 //     return c;
 // }
-
-
 
 // #define parse_many() if(!error) while(!error_pop())
 
@@ -355,7 +352,6 @@ static void tlang_test(Memory *mem) {
 //         stream_read_u8(str);
 //     }
 // }
-
 
 // static void parse_mul(Stream *str) {
 //     size_t start = stream_cursor(str);
