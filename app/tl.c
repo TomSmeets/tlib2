@@ -6,75 +6,83 @@
 #include "elf.h"
 #include "gzip.h"
 #include "os.h"
+#include "cli.h"
 
-void os_main(u32 argc, char **argv) {
-    Memory *mem = mem_new();
-    Arg arg = arg_new(argc, argv);
+static void tl_cmd_hello(Cli *cli) {
+    cli_command(cli, "hello", "Print Hello World");
+    if(!cli_check(cli)) return;
+    print("Hello World!");
+}
 
-    if (arg_match(&arg, "hello", "Print Hello World")) {
-        print("Hello World!");
-        os_exit();
-    }
+static void tl_cmd_base64(Cli *cli, Memory *mem) {
+    cli_command(cli, "base64", "Encode / Decode base64");
+    bool encode = cli_flag(cli, "-e", "--encode", "Encode Base64 data");
+    bool decode = cli_flag(cli, "-d", "--decode", "Decode Base64 data");
+    if(!encode && !decode) encode = 1;
+    if(!cli_check(cli)) return;
 
-    if (arg_match(&arg, "base64", "Encode / Decode base64")) {
-        bool encode = arg_match(&arg, "encode", "Encode Base64 data");
-        bool decode = arg_match(&arg, "decode", "Decode Base64 data");
-        if (!encode) decode = 1;
-        arg_help_opt(&arg);
+    Buffer input = os_read_all(mem, os_stdin());
+    Buffer output = {};
+    if (encode) output = base64_encode(mem, input);
+    if (decode) output = base64_decode(mem, input);
+    os_write_exact(os_stdout(), output);
+}
 
-        Buffer input = os_read_all(mem, os_stdin());
-        Buffer output = {};
-        if (encode) output = base64_encode(mem, input);
-        if (decode) output = base64_decode(mem, input);
-        os_write_exact(os_stdout(), output);
-        os_exit();
-    }
+static void tl_cmd_gzip(Cli *cli, Memory *mem) {
+    cli_command(cli, "gzip", "Read / Write Gzip files");
+    bool compress   = cli_flag(cli, "-c", "--compress", "Compress data to a GZip file");
+    bool decompress = cli_flag(cli, "-d", "--decompress", "Decompress a GZip file");
+    if (!compress && !decompress) compress = 1;
+    if (!cli_check(cli)) return;
 
-    if (arg_match(&arg, "gzip", "Read / Write Gzip")) {
-        bool compress = arg_match(&arg, "compress", "Encode Base64 data");
-        bool decompress = arg_match(&arg, "decompress", "Decode Base64 data");
-        if (!compress) decompress = 1;
-        arg_help_opt(&arg);
+    Buffer input = os_read_all(mem, os_stdin());
+    Buffer output = {};
+    if (compress) output = gzip_write(mem, input);
+    if (decompress) output = gzip_read(mem, input);
+    os_write_exact(os_stdout(), output);
+}
 
-        Buffer input = os_read_all(mem, os_stdin());
-        Buffer output = {};
-        if (compress) output = gzip_write(mem, input);
-        if (decompress) output = gzip_read(mem, input);
-        os_write_exact(os_stdout(), output);
-        os_exit();
-    }
+static void tl_cmd_dump(Cli *cli, Memory *mem) {
+    cli_command(cli, "dump", "Hexdump");
+    bool bin = cli_flag(cli, "-b", "--bin", "Base 2");
+    bool hex = cli_flag(cli, "-h", "--hex", "Base 16");
+    bool wide = cli_flag(cli, "-w", "--wide", "Wide output (16 bytes per row)");
+    bool compact = cli_flag(cli, "-c", "--compact", "Compact output (4 bytes per row)");
+    if (!bin && !hex) hex = 1;
+    if (!wide && !compact) wide = hex;
+    if (!cli_check(cli)) return;
 
-    if (arg_match(&arg, "dump", "Hexdump")) {
-        bool bin = arg_match(&arg, "bin", "Base 2");
-        bool hex = arg_match(&arg, "hex", "Base 16");
-        bool wide = arg_match(&arg, "wide", "Wide");
-        bool compact = arg_match(&arg, "compact", "Less wide");
-        if (!bin && !hex) hex = 1;
-        if (!wide && !compact) wide = hex;
-        arg_help_opt(&arg);
+    Buffer input = os_read_all(mem, os_stdin());
+    u32 base = hex ? 16 : 2;
+    u32 width = wide ? 16 : 4;
+    fmt_hexdump_x(fout, input, base, width);
+}
 
-        Buffer input = os_read_all(mem, os_stdin());
-        u32 base = hex ? 16 : 2;
-        u32 width = wide ? 16 : 4;
-        fmt_hexdump_x(fout, input, base, width);
-        os_exit();
-    }
+static void tl_cmd_elf(Cli *cli, Memory *mem) {
+        cli_command(cli, "elf", "Elf and dwarf reader");
+        char *path = cli_value(cli, "<Input>", "Input File");
+        if(!cli_check(cli)) return;
 
-    if (arg_match(&arg, "elf", "ELF")) {
-        char *path = arg_next(&arg);
         File *file = os_open(path, FileMode_Read);
         Elf *elf = elf_load(mem, file);
-        if (error) os_exit();
+        if (error) return;
 
         print("entry: 0x", O(.base = 16), elf->entry);
         for (u32 i = 0; i < elf->section_count; ++i) {
             print(i, " ", elf->sections[i].size, " ", elf->sections[i].name);
         }
         dwarf_load(mem, elf);
+}
 
-        os_exit();
-    }
-
-    arg_help(&arg);
-    os_fail("Invalid arguments");
+void os_main(u32 argc, char **argv) {
+    Memory *mem = mem_new();
+    Arg arg = arg_new(argc, argv);
+    Cli *cli = cli_new(mem, argv);
+    tl_cmd_hello(cli);
+    tl_cmd_base64(cli, mem);
+    tl_cmd_gzip(cli, mem);
+    tl_cmd_dump(cli, mem);
+    tl_cmd_elf(cli, mem);
+    cli_help(cli);
+    os_exit();
 }

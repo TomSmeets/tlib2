@@ -90,6 +90,7 @@ struct Cli_Command {
 struct Cli {
     Memory *mem;
     char *program_name;
+    bool has_error;
     Cli_Arg *argv;
 
     // Documentation
@@ -134,6 +135,13 @@ static bool cli_check(Cli *cli) {
         if (!arg->is_used) return false;
     }
 
+    // Return false if not required values
+    for (Cli_Value *value = cli->command_last->value_first; value; value = value->next) {
+        if (value->match) continue;
+        if (value->name[0] == '[') continue;
+        return false;
+    }
+
     // Command was valid
     return true;
 }
@@ -164,6 +172,13 @@ static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info) {
     return doc->match;
 }
 
+static void cli_require(Cli *cli, bool condition) {
+    if(!condition) return;
+
+    Cli_Command *cmd = cli->command_last;
+    if(cmd->match) cli->has_error = 1;
+}
+
 static char *cli_value(Cli *cli, char *name, char *info) {
     Cli_Command *cmd = cli->command_last;
 
@@ -173,13 +188,14 @@ static char *cli_value(Cli *cli, char *name, char *info) {
     LIST_APPEND(cmd->value_first, cmd->value_last, doc);
 
     // Skip check if the command is not valid
-    if (cmd->match) return 0;
+    if (!cmd->match) return 0;
 
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
         if (arg->is_flag_long) continue;
         if (arg->is_flag_short) continue;
         arg->is_used = true;
+        doc->match = arg;
         return arg->name;
     }
 
@@ -208,7 +224,7 @@ static void cli_help(Cli *cli) {
         return;
     }
 
-    bool show_help = 0;
+    bool show_help = cli->has_error;
 
     // Check if all arguments are used
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
@@ -217,16 +233,27 @@ static void cli_help(Cli *cli) {
         break;
     }
 
+    for (Cli_Value *val = cmd->value_first; val; val = val->next) {
+        if(val->match) continue;
+        if(val->name[0] == '[') continue;
+        show_help = 1;
+    }
+
     // No problem
     if (show_help) {
         fmt(ferr, "Error:\n");
         for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
             if (arg->is_used) continue;
             if (arg->is_flag_long || arg->is_flag_short) {
-                fmt(ferr, "  Invalid option: '", arg->name, "'\n");
+                fmt(ferr, "    Invalid option: '", arg->name, "'\n");
             } else {
-                fmt(ferr, "  Invalid argument: '", arg->name, "'\n");
+                fmt(ferr, "    Invalid argument: '", arg->name, "'\n");
             }
+        }
+        for (Cli_Value *val = cmd->value_first; val; val = val->next) {
+            if(val->match) continue;
+            if(val->name[0] == '[') continue;
+            fmt(ferr, "    Missing value: ", val->name, "\n");
         }
         fmt(ferr, "\n");
 

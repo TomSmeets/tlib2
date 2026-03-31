@@ -68,8 +68,8 @@ static void build_compile(Build_Platform platform, Build_Mode mode, char *input,
     Command cmd = build_compile_command(platform, mode, input, output);
 
     // Verbose logging
-    fmt_cmd(fout, &cmd);
-    fmt_s(fout, "\n");
+    fmt_cmd(ferr, &cmd);
+    fmt(ferr, "\n");
 
     // Run command
     i32 ret = os_wait(os_exec(cmd.argv));

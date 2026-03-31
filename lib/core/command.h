@@ -25,7 +25,7 @@ static void cmd_arg2(Command *cmd, char *arg1, char *arg2) {
 // Format command
 static void fmt_cmd(Fmt *fmt, Command *cmd) {
     for (u32 i = 0; i < cmd->argc; ++i) {
-        if (i > 0) fmt_s(fout, " ");
+        if (i > 0) fmt_s(fmt, " ");
         fmt_s(fmt, cmd->argv[i]);
     }
 }
