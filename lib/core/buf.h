@@ -3,7 +3,8 @@
 #pragma once
 #include "type.h"
 
-#define buf_stack(size) (Buffer){(u8[1024]){}, 1024}
+// Stack allocate a buffer of a given size
+#define buf_stack(size) ((Buffer){(u8[size]){}, size})
 
 // Copy a non-overlapping memory region from src to dst
 static void mem_copy(void *restrict dst, void *restrict src, size_t size) {
