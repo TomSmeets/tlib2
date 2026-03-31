@@ -173,10 +173,10 @@ static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info) {
 }
 
 static void cli_require(Cli *cli, bool condition) {
-    if(!condition) return;
+    if (!condition) return;
 
     Cli_Command *cmd = cli->command_last;
-    if(cmd->match) cli->has_error = 1;
+    if (cmd->match) cli->has_error = 1;
 }
 
 static char *cli_value(Cli *cli, char *name, char *info) {
@@ -234,8 +234,8 @@ static void cli_help(Cli *cli) {
     }
 
     for (Cli_Value *val = cmd->value_first; val; val = val->next) {
-        if(val->match) continue;
-        if(val->name[0] == '[') continue;
+        if (val->match) continue;
+        if (val->name[0] == '[') continue;
         show_help = 1;
     }
 
@@ -251,8 +251,8 @@ static void cli_help(Cli *cli) {
             }
         }
         for (Cli_Value *val = cmd->value_first; val; val = val->next) {
-            if(val->match) continue;
-            if(val->name[0] == '[') continue;
+            if (val->match) continue;
+            if (val->name[0] == '[') continue;
             fmt(ferr, "    Missing value: ", val->name, "\n");
         }
         fmt(ferr, "\n");

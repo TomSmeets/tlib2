@@ -1,16 +1,15 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // tl.c - Cli utils using tlib
-#include "arg.h"
 #include "base64.h"
+#include "cli.h"
 #include "dwarf.h"
 #include "elf.h"
 #include "gzip.h"
 #include "os.h"
-#include "cli.h"
 
 static void tl_cmd_hello(Cli *cli) {
     cli_command(cli, "hello", "Print Hello World");
-    if(!cli_check(cli)) return;
+    if (!cli_check(cli)) return;
     print("Hello World!");
 }
 
@@ -18,8 +17,8 @@ static void tl_cmd_base64(Cli *cli, Memory *mem) {
     cli_command(cli, "base64", "Encode / Decode base64");
     bool encode = cli_flag(cli, "-e", "--encode", "Encode Base64 data");
     bool decode = cli_flag(cli, "-d", "--decode", "Decode Base64 data");
-    if(!encode && !decode) encode = 1;
-    if(!cli_check(cli)) return;
+    if (!encode && !decode) encode = 1;
+    if (!cli_check(cli)) return;
 
     Buffer input = os_read_all(mem, os_stdin());
     Buffer output = {};
@@ -30,7 +29,7 @@ static void tl_cmd_base64(Cli *cli, Memory *mem) {
 
 static void tl_cmd_gzip(Cli *cli, Memory *mem) {
     cli_command(cli, "gzip", "Read / Write Gzip files");
-    bool compress   = cli_flag(cli, "-c", "--compress", "Compress data to a GZip file");
+    bool compress = cli_flag(cli, "-c", "--compress", "Compress data to a GZip file");
     bool decompress = cli_flag(cli, "-d", "--decompress", "Decompress a GZip file");
     if (!compress && !decompress) compress = 1;
     if (!cli_check(cli)) return;
@@ -59,24 +58,23 @@ static void tl_cmd_dump(Cli *cli, Memory *mem) {
 }
 
 static void tl_cmd_elf(Cli *cli, Memory *mem) {
-        cli_command(cli, "elf", "Elf and dwarf reader");
-        char *path = cli_value(cli, "<Input>", "Input File");
-        if(!cli_check(cli)) return;
+    cli_command(cli, "elf", "Elf and dwarf reader");
+    char *path = cli_value(cli, "<Input>", "Input File");
+    if (!cli_check(cli)) return;
 
-        File *file = os_open(path, FileMode_Read);
-        Elf *elf = elf_load(mem, file);
-        if (error) return;
+    File *file = os_open(path, FileMode_Read);
+    Elf *elf = elf_load(mem, file);
+    if (error) return;
 
-        print("entry: 0x", O(.base = 16), elf->entry);
-        for (u32 i = 0; i < elf->section_count; ++i) {
-            print(i, " ", elf->sections[i].size, " ", elf->sections[i].name);
-        }
-        dwarf_load(mem, elf);
+    print("entry: 0x", O(.base = 16), elf->entry);
+    for (u32 i = 0; i < elf->section_count; ++i) {
+        print(i, " ", elf->sections[i].size, " ", elf->sections[i].name);
+    }
+    dwarf_load(mem, elf);
 }
 
 void os_main(u32 argc, char **argv) {
     Memory *mem = mem_new();
-    Arg arg = arg_new(argc, argv);
     Cli *cli = cli_new(mem, argv);
     tl_cmd_hello(cli);
     tl_cmd_base64(cli, mem);

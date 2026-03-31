@@ -1,11 +1,9 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // build.c - Makefile but in C
 #include "build.h"
-#include "arg.h"
 #include "cli.h"
 #include "command.h"
 #include "fmt.h"
-#include "snake/snake_build.h"
 
 static void build_cmd_tl(Cli *cli) {
     cli_command(cli, "tl", "Build tl cli tool");
