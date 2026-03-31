@@ -27,7 +27,7 @@ static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info);
 static char *cli_value(Cli *cli, char *name, char *info);
 
 // Collect remaining arguments into an array
-static char **cli_remaining(Cli *cli, char *name, char *info);
+static char **cli_remaining(Cli *cli, char *argv0);
 
 // Check if the current command was matched correctly
 static bool cli_check(Cli *cli);
@@ -230,7 +230,7 @@ static void cli_help(Cli *cli) {
         }
         fmt(ferr, "\n");
 
-        fmt(ferr, "Usage: ", cli->program_name, " ", cmd->name, " ");
+        fmt(ferr, "Usage: ", cli->program_name, " ", cmd->name);
         for (Cli_Value *val = cmd->value_first; val; val = val->next) {
             fmt(ferr, " ", val->name);
         }
@@ -238,6 +238,7 @@ static void cli_help(Cli *cli) {
         for (Cli_Value *val = cmd->value_first; val; val = val->next) {
             fmt_s(ferr, "    ");
             fmt_s(ferr, val->name);
+            fmt_pad_line(ferr, 20, ' ');
             fmt_s(ferr, " | ");
             fmt_s(ferr, val->info);
             fmt_s(ferr, "\n");
@@ -257,34 +258,37 @@ static void cli_help(Cli *cli) {
     }
     
 }
-#if 0
 
-static void cli_help(Cli *cli) {
-    if (cli->has_match) return;
-    fmt_s(ferr, "Usage: ");
-    fmt_s(ferr, cli->program_name);
-    fmt_s(ferr, " <COMMAND> [VALUES...] [FLAGS...]\n");
-    for (Cli_Command *cmd = cli->doc->next; cmd; cmd = cmd->next) {
-        fmt_s(ferr, "  ");
-        fmt_s(ferr, cli->program_name);
-        fmt_s(ferr, " ");
-        fmt_s(ferr, cmd->name);
-        fmt_pad_line(ferr, 20, ' ');
-        fmt_s(ferr, " | ");
-        fmt_s(ferr, cmd->info);
-        fmt_s(ferr, "\n");
-    }
-}
+static char **cli_remaining(Cli *cli, char *argv0) {
+    Cli_Command *cmd = cli->command_last;
 
-static u32 cli_get_remaining(Cli *cli, char *argv0, u32 count, char **argv) {
-    u32 i = 0;
-    if (argv0 && count > 0) argv[i++] = argv0;
-    for (Cli_Arg *arg = cli->args; arg; arg = arg->next) {
-        if (i >= count) break;
+    Cli_Value *doc = mem_struct(cli->mem, Cli_Value);
+    doc->name = "[ARGS...]";
+    doc->info = "Remaining arguments";
+    LIST_APPEND(cmd->value_first, cmd->value_last, doc);
+
+    if (!cmd->match) return 0;
+
+    u32 count = 0;
+    if(argv0) count++;
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
-        argv[i++] = arg->name;
+        if (arg->is_flag_long) continue;
+        if (arg->is_flag_short) continue;
+        count++;
     }
-    return i;
-}
 
-#endif
+    char **argv = mem_array(cli->mem, char *, count + 1);
+    u32 i = 0;
+    if(argv0) argv[i++] = argv0;
+    for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
+        if (arg->is_used) continue;
+        if (arg->is_flag_long) continue;
+        if (arg->is_flag_short) continue;
+        argv[i++] = arg->name;
+        arg->is_used = 1;
+    }
+    assert(i == count);
+    argv[count] = 0;
+    return argv;
+}

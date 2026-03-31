@@ -9,9 +9,11 @@
 
 static void  build_cmd_tl(Cli *cli) {
     cli_command(cli, "tl", "Build tl cli tool");
+    bool run = cli_flag(cli, "-r", "--run", "Run directly");
+    char **rest = cli_remaining(cli, "out/tl/tl");
     if(!cli_check(cli)) return;
-
     build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
+    if(run) os_wait(os_exec(rest));
 }
 
 static void build_cmd_snake(Cli *cli, Memory *mem) {
