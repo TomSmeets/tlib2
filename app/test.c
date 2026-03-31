@@ -2,8 +2,8 @@
 // test.c - Run all unit tests
 #include "arg.h"
 #include "base64.h"
-#include "crc.h"
 #include "cli.h"
+#include "crc.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"
@@ -16,9 +16,9 @@
 
 #define TEST(FCN, ...)                                                                                                                               \
     ({                                                                                                                                               \
-        print("Running " #FCN "...");                                                                                                              \
-        FCN;                                                                                                                            \
-        if (error) os_exit();\
+        print("Running " #FCN "...");                                                                                                                \
+        FCN;                                                                                                                                         \
+        if (error) os_exit();                                                                                                                        \
     })
 
 void os_main(u32 argc, char **argv) {

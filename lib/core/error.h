@@ -25,7 +25,8 @@ static thread_local char *error;
 #define ANSI_RESET ""
 #endif
 
-#define check_msg(X, MSG) _error_check((X), ANSI_BOLD __FILE__ ":" TO_STRING(__LINE__) ": " ANSI_RED "Error: " ANSI_RESET ANSI_BOLD MSG ANSI_RESET "\n")
+#define check_msg(X, MSG)                                                                                                                            \
+    _error_check((X), ANSI_BOLD __FILE__ ":" TO_STRING(__LINE__) ": " ANSI_RED "Error: " ANSI_RESET ANSI_BOLD MSG ANSI_RESET "\n")
 
 #define check(X) check_msg(X, "check(" #X ") failed")
 #define check_or(X) if (!check(X))
@@ -45,7 +46,6 @@ static bool _error_check(bool cond, char *message) {
     // Return value of condition directly
     return cond;
 }
-
 
 // Clear error flag (ignores the last error)
 static void error_clear(void) {

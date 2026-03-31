@@ -6,8 +6,8 @@
 //
 // Help text is generated automatically
 #pragma once
-#include "fmt.h"
 #include "cli_arg.h"
+#include "fmt.h"
 #include "list.h"
 #include "mem.h"
 
@@ -50,9 +50,9 @@ static void test_cli(void) {
     check(cli_flag(cli, "-w", "--world", "") == 1);
     check(cli_check(cli) == 1);
 
-     cli_command(cli, "world", "");
+    cli_command(cli, "world", "");
     check(cli_flag(cli, "-x", "--xx", "") == 0);
-    check(cli_check(cli) ==0);
+    check(cli_check(cli) == 0);
 }
 
 // ==== Implementation ====
@@ -114,10 +114,10 @@ static void cli_command(Cli *cli, char *name, char *info) {
     LIST_APPEND(cli->command_first, cli->command_last, cmd);
 
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
-        if(arg->is_used) continue;
-        if(arg->is_flag_long) continue;
-        if(arg->is_flag_short) continue;
-        if(str_eq(arg->name, name)) {
+        if (arg->is_used) continue;
+        if (arg->is_flag_long) continue;
+        if (arg->is_flag_short) continue;
+        if (str_eq(arg->name, name)) {
             cmd->match = arg;
             arg->is_used = 1;
         }
@@ -127,11 +127,11 @@ static void cli_command(Cli *cli, char *name, char *info) {
 
 static bool cli_check(Cli *cli) {
     // Return false if command dit not match
-    if(!cli->command_last->match) return false;
+    if (!cli->command_last->match) return false;
 
     // Return false if not all arguments are used
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
-        if(!arg->is_used) return false;
+        if (!arg->is_used) return false;
     }
 
     // Command was valid
@@ -150,7 +150,7 @@ static bool cli_flag(Cli *cli, char *name_short, char *name_long, char *info) {
     LIST_APPEND(cmd->flag_first, cmd->flag_last, doc);
 
     // Skip check if the command is not valid
-    if(!cmd->match) return 0;
+    if (!cmd->match) return 0;
 
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
@@ -173,7 +173,7 @@ static char *cli_value(Cli *cli, char *name, char *info) {
     LIST_APPEND(cmd->value_first, cmd->value_last, doc);
 
     // Skip check if the command is not valid
-    if(cmd->match) return 0;
+    if (cmd->match) return 0;
 
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
@@ -191,7 +191,7 @@ static void cli_help(Cli *cli) {
     Cli_Command *cmd = cli->command_first;
     while (cmd && !cmd->match) cmd = cmd->next;
 
-    if(!cmd) {
+    if (!cmd) {
         fmt_s(ferr, "Usage: ");
         fmt_s(ferr, cli->program_name);
         fmt_s(ferr, " <COMMAND> [VALUES...] [FLAGS...]\n");
@@ -212,16 +212,16 @@ static void cli_help(Cli *cli) {
 
     // Check if all arguments are used
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
-        if(arg->is_used) continue;
+        if (arg->is_used) continue;
         show_help = 1;
         break;
     }
 
     // No problem
-    if(show_help) {
+    if (show_help) {
         fmt(ferr, "Error:\n");
         for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
-            if(arg->is_used) continue;
+            if (arg->is_used) continue;
             if (arg->is_flag_long || arg->is_flag_short) {
                 fmt(ferr, "  Invalid option: '", arg->name, "'\n");
             } else {
@@ -256,7 +256,6 @@ static void cli_help(Cli *cli) {
             fmt_s(ferr, "\n");
         }
     }
-    
 }
 
 static char **cli_remaining(Cli *cli, char *argv0) {
@@ -270,7 +269,7 @@ static char **cli_remaining(Cli *cli, char *argv0) {
     if (!cmd->match) return 0;
 
     u32 count = 0;
-    if(argv0) count++;
+    if (argv0) count++;
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
         if (arg->is_flag_long) continue;
@@ -280,7 +279,7 @@ static char **cli_remaining(Cli *cli, char *argv0) {
 
     char **argv = mem_array(cli->mem, char *, count + 1);
     u32 i = 0;
-    if(argv0) argv[i++] = argv0;
+    if (argv0) argv[i++] = argv0;
     for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
         if (arg->is_used) continue;
         if (arg->is_flag_long) continue;

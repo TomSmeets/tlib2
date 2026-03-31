@@ -1,8 +1,8 @@
 #pragma once
 #include "fmt.h"
+#include "list.h"
 #include "mem.h"
 #include "type.h"
-#include "list.h"
 
 typedef enum {
     Ast_Type_None,
@@ -41,7 +41,7 @@ static bool chr_is_digit(u8 chr) {
     if (chr >= '0' && chr <= '9') return 1;
     return 0;
 }
-#define LIST_APPEND_NEXT(START, END, ITEM, NEXT)                                                                                                          \
+#define LIST_APPEND_NEXT(START, END, ITEM, NEXT)                                                                                                     \
     ({                                                                                                                                               \
         if (!(START)) (START) = (ITEM);                                                                                                              \
         if ((END)) (END)->NEXT = (ITEM);                                                                                                             \

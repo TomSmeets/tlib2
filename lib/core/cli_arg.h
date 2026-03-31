@@ -29,7 +29,7 @@ static Cli_Arg *cli_arg_split(Memory *mem, char **argv) {
         if (is_skip) check_flags = 0;
 
         // Split combined short arguments: '-xyz' becomes '-x' '-y' '-z'
-        if(is_short && name_len > 2) {
+        if (is_short && name_len > 2) {
             // Iterate over chars
             for (u32 i = 1; i < name_len; ++i) {
                 char *short_name = mem_alloc_uninit(mem, 3);
