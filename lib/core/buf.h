@@ -1,10 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // buf.h - Generic data operations on buffers
 #pragma once
-#include "type.h"
-#include "ptr.h"
 #include "chr.h"
-
+#include "ptr.h"
+#include "type.h"
 
 // A simple range of data in memory
 typedef struct {

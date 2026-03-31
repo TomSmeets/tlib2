@@ -2,8 +2,8 @@
 // mem.h - Memory allocator
 #pragma once
 #include "chunk.h"
-#include "type.h"
 #include "ptr.h"
+#include "type.h"
 
 // =====================================
 // Implementation
