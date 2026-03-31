@@ -120,7 +120,7 @@ static void huffman_code_write(Huffman_Code *table, Write *write, u32 symbol) {
     write_bits_be(write, len, code);
 }
 
-static void huffman_code_test(void) {
+static void test_huffman_code(void) {
     Memory *mem = mem_new();
     u8 len[] = {3, 0, 4, 5, 0, 0, 1, 3, 5, 3};
     u32 code[] = {0b100, 0, 0b1110, 0b11110, 0, 0, 0b0, 0b101, 0b11111, 0b110};

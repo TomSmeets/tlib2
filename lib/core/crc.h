@@ -35,7 +35,7 @@ static u32 crc_compute(Buffer buf) {
     return c ^ xor;
 }
 
-static void crc_test(void) {
+static void test_crc(void) {
     check(crc_compute(str_buf("Hello World!")) == 0x1c291ca3);
     check(crc_compute(str_buf("1234")) == 0x9be3e0a3);
 }

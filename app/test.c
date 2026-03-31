@@ -1,6 +1,5 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // test.c - Run all unit tests
-#include "arg.h"
 #include "base64.h"
 #include "cli.h"
 #include "crc.h"
@@ -26,17 +25,16 @@ void os_main(u32 argc, char **argv) {
     TEST(test_mem());
     TEST(test_read());
     TEST(test_write());
-    TEST(tlang_test());
-    TEST(base64_test());
-    TEST(fmt_test());
-    TEST(arg_test());
+    TEST(test_tlang());
+    TEST(test_base64());
+    TEST(test_fmt());
     TEST(test_cli_arg());
     TEST(test_cli());
-    TEST(crc_test());
-    TEST(huffman_code_test());
-    TEST(huffman_tree_test());
-    TEST(deflate_test());
-    TEST(gzip_test());
+    TEST(test_crc());
+    TEST(test_huffman_code());
+    TEST(test_huffman_tree());
+    TEST(test_deflate());
+    TEST(test_gzip());
     if (!error) print("Success!");
     os_exit();
 }

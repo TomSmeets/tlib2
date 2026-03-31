@@ -129,7 +129,7 @@ static void base64_test_encode(Memory *mem, Buffer input, char *output_str) {
     check(buf_eq(output_dec, input));
 }
 
-static void base64_test(void) {
+static void test_base64(void) {
     Memory *mem = mem_new();
     base64_test_encode(mem, str_buf("Hello World!"), "SGVsbG8gV29ybGQh");
     base64_test_encode(mem, str_buf(""), "");

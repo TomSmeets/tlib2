@@ -58,7 +58,7 @@ static Cli_Arg *cli_arg_split(Memory *mem, char **argv) {
 
 static void test_cli_arg(void) {
     Memory *mem = mem_new();
-    Cli_Arg *arg_list = cli_arg_split(mem, (char *[]){"hello", "-", "world", "-x", "-yzw", "--test", "t", "--", "-z"});
+    Cli_Arg *arg_list = cli_arg_split(mem, (char *[]){"hello", "-", "world", "-x", "-yzw", "--test", "t", "--", "-z", 0});
 
     {
         Cli_Arg *arg = arg_list;

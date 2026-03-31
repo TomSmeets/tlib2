@@ -5,11 +5,21 @@
       "name": "Snake",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/snake",
+      "program": "${workspaceFolder}/out/snake/snake.elf",
       "args": [],
       "cwd": "${workspaceFolder}",
       "MIMode": "gdb",
-      "preLaunchTask": "build"
+      "preLaunchTask": "build snake"
+    },
+    {
+      "name": "Test",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/test",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "preLaunchTask": "build test"
     }
   ]
 }

@@ -38,16 +38,20 @@ static void cli_help(Cli *cli);
 static void test_cli(void) {
     Memory *mem = mem_new();
 
-    Cli *cli = cli_new(mem, (char *[]){"hello", "-xy", "--world", "-z", 0});
+    Cli *cli = cli_new(mem, (char *[]){"test", "hello", "-xy", "--world", "--", "-z", 0});
+
+    // No test command
     cli_command(cli, "test", "");
     check(cli_flag(cli, "-x", "--xx", "") == 0);
     check(cli_check(cli) == 0);
 
+    // Hello command is active
     cli_command(cli, "hello", "");
     check(cli_flag(cli, "-x", "--xx", "") == 1);
     check(cli_flag(cli, "-y", "--yy", "") == 1);
     check(cli_flag(cli, "-z", "--zz", "") == 0);
     check(cli_flag(cli, "-w", "--world", "") == 1);
+    check(str_eq(cli_value(cli, "file", ""), "-z"));
     check(cli_check(cli) == 1);
 
     cli_command(cli, "world", "");

@@ -79,7 +79,7 @@ static void gzip_test_buf(Memory *mem, Buffer input) {
     check(buf_eq(decompressed, input));
 }
 
-static void gzip_test(void) {
+static void test_gzip(void) {
     Memory *mem = mem_new();
     {
         Buffer target = str_buf("hello hello world hello hello\n");

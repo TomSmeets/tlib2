@@ -316,7 +316,7 @@ static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
 }
 
 // Test
-static void fmt_test(void) {
+static void test_fmt(void) {
     Memory *mem = mem_new();
     {
         Fmt *fmt = fmt_new(mem);

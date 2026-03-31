@@ -175,7 +175,7 @@ static void huffman_tree_freq_to_lengths(u32 count, u32 *freq_list, u8 *len_list
     mem_free(tmp);
 }
 
-static void huffman_tree_test(void) {
+static void test_huffman_tree(void) {
     Memory *mem = mem_new();
     char *input = "aaaaaaaabbbbcccdde";
     u32 freq_list[256] = {};

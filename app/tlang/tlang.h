@@ -276,7 +276,7 @@ static Stack *tlang_eval_block(Memory *mem, Ast *ast) {
     return stack;
 }
 
-static void tlang_test(void) {
+static void test_tlang(void) {
     Memory *mem = mem_new();
     Ast *ast = tlang_lex(mem, str_buf("x = 1*2*3;\ny=4*5*6;z=x+y;w=x*y;"));
     // for (Ast *tok = ast; tok; tok = tok->next_token) {
