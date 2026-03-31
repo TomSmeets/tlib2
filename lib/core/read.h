@@ -154,7 +154,7 @@ static Buffer read_line(Read *read) {
     while (1) {
         if (read_eof(read)) break;
         u8 chr = read_u8(read);
-        if(chr == '\n') break;
+        if (chr == '\n') break;
     }
     return buf_slice(read->buffer, start, read->bytes_read - start);
 }
