@@ -7,3 +7,4 @@ AlignConsecutiveAssignments: false
 AllowShortFunctionsOnASingleLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
 AlignAfterOpenBracket: BlockIndent
+AlignEscapedNewlines: DontAlign

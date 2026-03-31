@@ -13,11 +13,11 @@
 #include "read.h"
 #include "tlang/tlang.h"
 
-#define TEST(FCN, ...)                                                                                                                               \
-    ({                                                                                                                                               \
-        print("Running " #FCN "...");                                                                                                                \
-        FCN;                                                                                                                                         \
-        if (error) os_exit();                                                                                                                        \
+#define TEST(FCN, ...) \
+    ({ \
+        print("Running " #FCN "..."); \
+        FCN; \
+        if (error) os_exit(); \
     })
 
 void os_main(u32 argc, char **argv) {

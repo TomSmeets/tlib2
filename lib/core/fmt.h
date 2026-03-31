@@ -292,11 +292,11 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 #define fmt12(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt11(F, __VA_ARGS__))
 #define fmt(F, ...) fmt12(F, __VA_ARGS__)
 
-#define fstr(mem, ...)                                                                                                                               \
-    ({                                                                                                                                               \
-        Fmt *f = fmt_new(mem);                                                                                                                       \
-        fmt12(f, __VA_ARGS__);                                                                                                                       \
-        fmt_end(f);                                                                                                                                  \
+#define fstr(mem, ...) \
+    ({ \
+        Fmt *f = fmt_new(mem); \
+        fmt12(f, __VA_ARGS__); \
+        fmt_end(f); \
     })
 
 #define print(...) fmt(fout, __VA_ARGS__, "\n")
@@ -304,9 +304,9 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
 // print() will get tmp mem and free again
 
 // Set formatting options
-#define O(...)                                                                                                                                       \
-    (Fmt_Options) {                                                                                                                                  \
-        __VA_ARGS__                                                                                                                                  \
+#define O(...) \
+    (Fmt_Options) { \
+        __VA_ARGS__ \
     }
 
 #define EOL "\n"
