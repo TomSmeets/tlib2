@@ -167,8 +167,8 @@ static bool os_list(char *path, os_list_cb *callback, void *user) {
     // Construct a query: path + '\*'
     size_t path_len = str_len(path);
     char search_query[path_len + 3];
-    mem_copy(search_query, path, path_len);
-    mem_copy(search_query + path_len, "\\*", 2);
+    ptr_copy(search_query, path, path_len);
+    ptr_copy(search_query + path_len, "\\*", 2);
     search_query[path_len + 3] = 0;
 
     WIN32_FIND_DATAA find;

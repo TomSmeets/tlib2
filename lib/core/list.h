@@ -14,6 +14,13 @@
         } \
     } while (0)
 
+#define LIST_APPEND_NEXT(START, END, ITEM, NEXT) \
+    ({ \
+        if (!(START)) (START) = (ITEM); \
+        if ((END)) (END)->NEXT = (ITEM); \
+        (END) = (ITEM); \
+    })
+
 // Prepend item onto a singly linked list
 #define LIST_PUSH(FIRST, EL) \
     do { \

@@ -3,6 +3,7 @@
 #pragma once
 #include "error.h"
 #include "mem.h"
+#include "ptr.h"
 #include "str.h"
 #include "type.h"
 
@@ -109,7 +110,7 @@ static bool fmt_grow(Fmt *fmt, size_t size) {
 
     // Allocate data
     u8 *new_data = mem_array(fmt->mem, u8, new_size);
-    mem_copy(new_data, fmt->data, fmt->used);
+    ptr_copy(new_data, fmt->data, fmt->used);
     fmt->size = new_size;
     fmt->data = new_data;
     return true;
@@ -374,7 +375,7 @@ static Buffer fmt2_end(Fmt2 *fmt) {
     // Fill output buffer
     u32 offset = 0;
     for (u32 i = 0; i < fmt->count; ++i) {
-        mem_copy(data + offset, fmt->chunks[i].data, fmt->chunks[i].size);
+        ptr_copy(data + offset, fmt->chunks[i].data, fmt->chunks[i].size);
     }
     assert(offset == len);
 

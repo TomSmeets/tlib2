@@ -90,7 +90,7 @@ static Buffer base64_encode(Memory *mem, Buffer input) {
 // Returns zero terminated data
 static Buffer base64_decode(Memory *mem, Buffer input) {
     // Remove whitespace chars
-    input = buf_trim_whitespace(input);
+    input = buf_trim(input);
 
     size_t input_count = input.size;
     u8 *input_data = input.data;

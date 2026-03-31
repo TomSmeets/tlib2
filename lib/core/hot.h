@@ -59,7 +59,7 @@ static void *hot_load(Hot *hot, char *path, char *symbol) {
             u32 size_old = sect_old->size;
             u32 size_new = sect_new->size;
             u32 size_min = MIN(size_old, size_new);
-            mem_copy(addr_new, addr_old, size_min);
+            ptr_copy(addr_new, addr_old, size_min);
         }
     }
 

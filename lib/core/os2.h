@@ -5,18 +5,18 @@
 #include "fmt.h"
 #include "mem.h"
 #include "os.h"
+#include "ptr.h"
 #include "read.h"
 #include "write.h"
 
 #if OS_LINUX
 static char *os_cwd(Memory *mem) {
     char buffer[4 * 1024];
-    check(linux_getcwd(buffer, sizeof(buffer)) > 0);
-    if (error) return 0;
+    check_or(linux_getcwd(buffer, sizeof(buffer)) > 0) return 0;
 
     size_t len = str_len(buffer);
     char *data = mem_alloc_uninit(mem, len + 1);
-    mem_copy(data, buffer, len + 1);
+    ptr_copy(data, buffer, len + 1);
     return data;
 }
 #endif

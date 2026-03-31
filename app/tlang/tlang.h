@@ -22,25 +22,6 @@ struct Ast {
     Ast *child;
 };
 
-static bool chr_is_space(u8 chr) {
-    if (chr == ' ') return 1;
-    if (chr == '\n') return 1;
-    if (chr == '\r') return 1;
-    if (chr == '\t') return 1;
-    return 0;
-}
-
-static bool chr_is_alpha(u8 chr) {
-    if (chr >= 'a' && chr <= 'z') return 1;
-    if (chr >= 'A' && chr <= 'Z') return 1;
-    if (chr == '_') return 1;
-    return 0;
-}
-
-static bool chr_is_digit(u8 chr) {
-    if (chr >= '0' && chr <= '9') return 1;
-    return 0;
-}
 #define LIST_APPEND_NEXT(START, END, ITEM, NEXT) \
     ({ \
         if (!(START)) (START) = (ITEM); \
@@ -60,7 +41,7 @@ static Ast *tlang_lex(Memory *mem, Buffer input) {
         u8 chr = *start;
 
         // Skip whitespace
-        if (chr_is_space(chr)) continue;
+        if (chr_is_whitespace(chr)) continue;
 
         // Create node
         Ast *node = mem_struct(mem, Ast);

@@ -3,6 +3,7 @@
 #pragma once
 #include "chunk.h"
 #include "type.h"
+#include "ptr.h"
 
 // =====================================
 // Implementation
@@ -80,13 +81,13 @@ static void *mem_alloc_uninit(Memory *mem, size_t size) {
 // Allocate exactly 'size' bytes of zero initialized memory
 static void *mem_alloc_zero(Memory *mem, size_t size) {
     void *ptr = mem_alloc_uninit(mem, size);
-    if (ptr) mem_zero(ptr, size);
+    if (ptr) ptr_zero(ptr, size);
     return ptr;
 }
 
 static void *mem_clone(Memory *mem, void *data, size_t size) {
     void *new_data = mem_alloc_uninit(mem, size);
-    mem_copy(new_data, data, size);
+    ptr_copy(new_data, data, size);
     return new_data;
 }
 
@@ -127,7 +128,7 @@ static u8 *mem_realloc(Memory *mem, u8 *old_data, size_t old_size, size_t new_si
     // Make sure at least the old data fits
     check_or(new_size >= old_size) new_size = old_size;
     u8 *new_data = mem_array(mem, u8, new_size);
-    mem_copy(new_data, old_data, old_size);
+    ptr_copy(new_data, old_data, old_size);
     return new_data;
 }
 

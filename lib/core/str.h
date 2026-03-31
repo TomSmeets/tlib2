@@ -40,3 +40,11 @@ static i32 str_compare(char *a, char *b) {
         b++;
     }
 }
+
+static bool str_contains_chr(char *str, char chr) {
+    while (1) {
+        if (*str == chr) return 1;
+        if (*str == 0) return 0;
+        str++;
+    }
+}
