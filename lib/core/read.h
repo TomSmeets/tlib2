@@ -77,11 +77,19 @@ static void read_seek(Read *read, size_t cursor) {
 
 // =================== Derived ===================
 
-static u32 read_u16(Read *read) {
-    u32 out = 0;
-    out |= (u32)read_u8(read) << (0 * 8);
-    out |= (u32)read_u8(read) << (1 * 8);
+static u16 read_u16(Read *read) {
+    u16 out = 0;
+    out |= (u16)read_u8(read) << (0 * 8);
+    out |= (u16)read_u8(read) << (1 * 8);
     return out;
+}
+
+static u32 read_u24(Read *read) {
+    u32 data = 0;
+    data |= (u32)read_u8(read) << (0 * 8);
+    data |= (u32)read_u8(read) << (1 * 8);
+    data |= (u32)read_u8(read) << (2 * 8);
+    return data;
 }
 
 static u32 read_u32(Read *read) {
@@ -103,6 +111,54 @@ static u32 read_bits(Read *read, u32 count) {
     return ret;
 }
 
+// Parse unsigned LEB128 integer
+static u64 read_leb128_ex(Read *read, bool is_signed) {
+    u64 value = 0;
+    u32 shift = 0;
+    for (;;) {
+        u8 byte = read_u8(read);
+        u8 byte_low = byte & 0x7f;
+        u8 byte_high = byte & 0x80;
+        value |= (u64)byte_low << shift;
+        if (byte_high == 0) break;
+        shift += 7;
+    }
+
+    if (is_signed) {
+        u32 move = 64 - shift;
+
+        // Sign extend
+        i64 s_value = value << move;
+
+        // Shift back while sign extending
+        s_value >>= move;
+
+        value = s_value;
+    }
+    return value;
+}
+
+// read unsigned LEB128 integer
+static u64 read_uleb128(Read *read) {
+    return read_leb128_ex(read, 0);
+}
+
+// read signed LEB128 integer
+static i64 read_ileb128(Read *read) {
+    return read_leb128_ex(read, 1);
+}
+
+// Read a single line or until end of buffer
+static Buffer read_line(Read *read) {
+    u64 start = read_cursor(read);
+    while (1) {
+        if (read_eof(read)) break;
+        u8 chr = read_u8(read);
+        if(chr == '\n') break;
+    }
+    return buf_slice(read->buffer, start, read->bytes_read - start);
+}
+
 // =========== Testing =======
 static void test_read(void) {
     Read read = read_from(str_buf("Hello World!"));
@@ -120,5 +176,15 @@ static void test_read(void) {
     check(read_u8(&read) == 'H');
 
     read = read_from(buf_null());
+    check(read_eof(&read));
+
+    read = read_from(BUFFER(u8, 0b10010101, 0b10011010, 0b11101111, 0b0111010, ));
+    check(read_uleb128(&read) == 123456789);
+    check(read_eof(&read));
+
+    read = read_from(str_buf("Hello\n\nWorld"));
+    check(buf_eq(read_line(&read), str_buf("Hello\n")));
+    check(buf_eq(read_line(&read), str_buf("\n")));
+    check(buf_eq(read_line(&read), str_buf("World")));
     check(read_eof(&read));
 }
