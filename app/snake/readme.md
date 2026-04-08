@@ -1,4 +1,5 @@
 # Snake
+A simple snake game demonstrating tlibc
 
 A simple snake game demonstrating the [tlibc](https://github.com/TomSmeets/tlib2) 'pix' module that works on WASM, Windows and Linux.
 
