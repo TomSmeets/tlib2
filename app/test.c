@@ -22,6 +22,7 @@
 
 void os_main(u32 argc, char **argv) {
     // Run tests
+    TEST(test_ptr());
     TEST(test_mem());
     TEST(test_read());
     TEST(test_write());

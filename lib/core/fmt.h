@@ -2,6 +2,7 @@
 // fmt.h - Text formatter
 #pragma once
 #include "error.h"
+#include "write.h"
 #include "mem.h"
 #include "ptr.h"
 #include "str.h"
@@ -279,24 +280,25 @@ static void fmt_hexdump(Fmt *fmt, Buffer data) {
         Buffer: fmt_buf,        \
         Fmt_Options: fmt_setopt     \
     )(F, x)
+
+#define REPEAT_1(M, A, x) M(A, x)
+#define REPEAT_2(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_1(M, A, __VA_ARGS__))
+#define REPEAT_3(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_2(M, A, __VA_ARGS__))
+#define REPEAT_4(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_3(M, A, __VA_ARGS__))
+#define REPEAT_5(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_4(M, A, __VA_ARGS__))
+#define REPEAT_6(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_5(M, A, __VA_ARGS__))
+#define REPEAT_7(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_6(M, A, __VA_ARGS__))
+#define REPEAT_8(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_7(M, A, __VA_ARGS__))
+#define REPEAT_9(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_8(M, A, __VA_ARGS__))
+#define REPEAT_10(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_9(M, A, __VA_ARGS__))
+#define REPEAT(M, A, ...) REPEAT_10(M, A, __VA_ARGS__)
 // clang-format on
-#define fmt2(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt1(F, __VA_ARGS__))
-#define fmt3(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt2(F, __VA_ARGS__))
-#define fmt4(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt3(F, __VA_ARGS__))
-#define fmt5(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt4(F, __VA_ARGS__))
-#define fmt6(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt5(F, __VA_ARGS__))
-#define fmt7(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt6(F, __VA_ARGS__))
-#define fmt8(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt7(F, __VA_ARGS__))
-#define fmt9(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt8(F, __VA_ARGS__))
-#define fmt10(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt9(F, __VA_ARGS__))
-#define fmt11(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt10(F, __VA_ARGS__))
-#define fmt12(F, x, ...) fmt1(F, x) __VA_OPT__(, fmt11(F, __VA_ARGS__))
-#define fmt(F, ...) fmt12(F, __VA_ARGS__)
+#define fmt(F, ...) REPEAT(fmt1, F, __VA_ARGS__)
 
 #define fstr(mem, ...) \
     ({ \
         Fmt *f = fmt_new(mem); \
-        fmt12(f, __VA_ARGS__); \
+        fmt(f, __VA_ARGS__); \
         fmt_end(f); \
     })
 
@@ -435,4 +437,147 @@ static char *fmt2_u64(Memory *mem, u64 value) {
 
 static char *fmt2_i64(Memory *mem, i64 value) {
     return fmt2_u64_ex(mem, 1, 10, value);
+}
+
+// ================
+typedef struct {
+    // Base for printing numbers
+    u32 base;
+    u32 zero_pad;
+    u32 pad;
+    bool upper;
+    bool base_prefix;
+} Fmt3_Options;
+
+static void fmt3_c(Write *write, Fmt3_Options *opt, char chr) {
+    write_u8(write, chr);
+}
+
+static void fmt3_s(Write *write, Fmt3_Options *opt, char *str) {
+    write_buffer(write, str_buf(str));
+}
+
+static void fmt3_int(Write *write, Fmt3_Options *opt, bool is_signed, u64 value) {
+    // Configuration
+    u32 base = opt->base ?: 10;
+
+    // Reversed digits
+    u32 count = 0;
+    char buffer[1024];
+    do {
+        u32 rem = value % base;
+        u8 digit;
+        if(rem < 10) {
+            digit = rem + '0';
+        } else {
+            digit = rem - 10 + (opt->upper ? 'A' : 'a');
+        }
+        buffer[count++] = digit;
+        value /= base;
+    } while (value > 0);
+
+    while(count < opt->zero_pad) {
+        buffer[count++] = '0';
+    }
+
+    if(opt->base_prefix) {
+        if(base == 16) {
+            buffer[count++] = 'x';
+            buffer[count++] = '0';
+        }
+        if(base == 8) {
+            buffer[count++] = '0';
+        }
+        if(base == 2) {
+            buffer[count++] = 'b';
+            buffer[count++] = '0';
+        }
+    }
+
+    // Append sign char
+    if (is_signed && (i64)value < 0) {
+        buffer[count++] = '-';
+        value = -(i64)value;
+    }
+
+    // Whitespace padding
+    while(count < opt->pad) {
+        buffer[count++] = ' ';
+    }
+
+    ptr_reverse(buffer, count);
+    write_buffer(write, buf_from(buffer, count));
+}
+
+static void fmt3_u64(Write *write, Fmt3_Options *opt, u64 value) {
+    fmt3_int(write, opt, 0, value);
+}
+
+static void fmt3_i64(Write *write, Fmt3_Options *opt, i64 value) {
+    fmt3_int(write, opt, 1, value);
+}
+
+static void fmt3_buf(Write *write, Fmt3_Options *opt, Buffer buf) {
+    write_buffer(write, buf);
+}
+
+
+static void fmt3_cfg(Write *write, Fmt3_Options *opt, Fmt3_Options set) {
+    *opt = set;
+}
+
+// clang-format off
+#define fmt3_1(W, x)         \
+    _Generic((x),               \
+        char *:       fmt3_s,   \
+        i64:          fmt3_i64, \
+        u64:          fmt3_u64, \
+        i32:          fmt3_i64, \
+        u32:          fmt3_u64, \
+        i16:          fmt3_i64, \
+        u16:          fmt3_u64, \
+         i8:          fmt3_i64, \
+         u8:          fmt3_u64, \
+        char:         fmt3_c,   \
+        Buffer:       fmt3_buf, \
+        Fmt3_Options: fmt3_cfg  \
+    )(W, &_opt, x)
+// clang-format on
+
+
+
+#define fmt3_N(F, ...) REPEAT(fmt3_1, F, __VA_ARGS__)
+
+#define fmt3_2(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_1(F, __VA_ARGS__))
+#define fmt3_3(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_2(F, __VA_ARGS__))
+#define fmt3_4(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_3(F, __VA_ARGS__))
+#define fmt3_5(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_4(F, __VA_ARGS__))
+#define fmt3_6(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_5(F, __VA_ARGS__))
+#define fmt3_7(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_6(F, __VA_ARGS__))
+#define fmt3_8(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_7(F, __VA_ARGS__))
+#define fmt3_9(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_8(F, __VA_ARGS__))
+#define fmt3_10(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_9(F, __VA_ARGS__))
+#define fmt3_11(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_10(F, __VA_ARGS__))
+#define fmt3_12(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_11(F, __VA_ARGS__))
+
+#define write_fmt(F, ...) \
+    ({ \
+        Fmt3_Options _opt = {}; \
+        fmt3_N(F, __VA_ARGS__); \
+    })
+
+#define fstr3(mem, ...) \
+    ({ \
+        Write *_write = write_new(mem); \
+        Fmt3_Options _opt = {}; \
+        fmt3_N(_write, __VA_ARGS__); \
+        write_get_written(_write); \
+    })
+
+// TODO: no more 'file' in fmt, just format string
+
+static void test_fmt3(void) {
+    Memory *mem = mem_new();
+    Buffer str = fstr3(mem, "Hello: ", 1234, 1, 2, 3, 4, 5);
+    mem_free(mem);
 }

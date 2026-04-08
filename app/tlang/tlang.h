@@ -22,13 +22,6 @@ struct Ast {
     Ast *child;
 };
 
-#define LIST_APPEND_NEXT(START, END, ITEM, NEXT) \
-    ({ \
-        if (!(START)) (START) = (ITEM); \
-        if ((END)) (END)->NEXT = (ITEM); \
-        (END) = (ITEM); \
-    })
-
 static Ast *tlang_lex(Memory *mem, Buffer input) {
     Ast *list_start = 0;
     Ast *list_end = 0;

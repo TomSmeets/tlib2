@@ -5,12 +5,14 @@
 #include "command.h"
 #include "os2.h"
 
+// Supported target platforms
 typedef enum {
     Platform_Windows,
     Platform_Linux,
     Platform_WASM,
 } Build_Platform;
 
+// Build mode (compile time vs runtime trade-off)
 typedef enum {
     Mode_Debug,
     Mode_Release,
