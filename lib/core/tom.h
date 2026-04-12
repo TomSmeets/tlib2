@@ -1,7 +1,7 @@
 #pragma once
 #include "buf.h"
-#include "read.h"
 #include "fmt.h"
+#include "read.h"
 
 typedef struct {
     u32 indent;

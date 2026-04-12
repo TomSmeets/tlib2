@@ -151,7 +151,7 @@ static i64 read_ileb128(Read *read) {
 // Read a single line or until end of buffer
 static Buffer read_line(Read *read) {
     u64 start = read_cursor(read);
-    u64 end   = start;
+    u64 end = start;
     while (1) {
         if (read_eof(read)) break;
         u8 chr = read_u8(read);

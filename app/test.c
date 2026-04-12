@@ -2,7 +2,6 @@
 // test.c - Run all unit tests
 #include "base64.h"
 #include "cli.h"
-#include "tom.h"
 #include "crc.h"
 #include "deflate.h"
 #include "fmt.h"
@@ -13,6 +12,7 @@
 #include "os.h"
 #include "read.h"
 #include "tlang/tlang.h"
+#include "tom.h"
 
 #define TEST(FCN, ...) \
     ({ \

@@ -2,11 +2,11 @@
 // fmt.h - Text formatter
 #pragma once
 #include "error.h"
-#include "write.h"
 #include "mem.h"
 #include "ptr.h"
 #include "str.h"
 #include "type.h"
+#include "write.h"
 
 // Formatting options
 typedef struct {
@@ -467,7 +467,7 @@ static void fmt3_int(Write *write, Fmt3_Options *opt, bool is_signed, u64 value)
     do {
         u32 rem = value % base;
         u8 digit;
-        if(rem < 10) {
+        if (rem < 10) {
             digit = rem + '0';
         } else {
             digit = rem - 10 + (opt->upper ? 'A' : 'a');
@@ -476,19 +476,19 @@ static void fmt3_int(Write *write, Fmt3_Options *opt, bool is_signed, u64 value)
         value /= base;
     } while (value > 0);
 
-    while(count < opt->zero_pad) {
+    while (count < opt->zero_pad) {
         buffer[count++] = '0';
     }
 
-    if(opt->base_prefix) {
-        if(base == 16) {
+    if (opt->base_prefix) {
+        if (base == 16) {
             buffer[count++] = 'x';
             buffer[count++] = '0';
         }
-        if(base == 8) {
+        if (base == 8) {
             buffer[count++] = '0';
         }
-        if(base == 2) {
+        if (base == 2) {
             buffer[count++] = 'b';
             buffer[count++] = '0';
         }
@@ -501,7 +501,7 @@ static void fmt3_int(Write *write, Fmt3_Options *opt, bool is_signed, u64 value)
     }
 
     // Whitespace padding
-    while(count < opt->pad) {
+    while (count < opt->pad) {
         buffer[count++] = ' ';
     }
 
@@ -520,7 +520,6 @@ static void fmt3_i64(Write *write, Fmt3_Options *opt, i64 value) {
 static void fmt3_buf(Write *write, Fmt3_Options *opt, Buffer buf) {
     write_buffer(write, buf);
 }
-
 
 static void fmt3_cfg(Write *write, Fmt3_Options *opt, Fmt3_Options set) {
     *opt = set;
@@ -544,18 +543,16 @@ static void fmt3_cfg(Write *write, Fmt3_Options *opt, Fmt3_Options set) {
     )(W, &_opt, x)
 // clang-format on
 
-
-
 #define fmt3_N(F, ...) REPEAT(fmt3_1, F, __VA_ARGS__)
 
-#define fmt3_2(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_1(F, __VA_ARGS__))
-#define fmt3_3(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_2(F, __VA_ARGS__))
-#define fmt3_4(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_3(F, __VA_ARGS__))
-#define fmt3_5(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_4(F, __VA_ARGS__))
-#define fmt3_6(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_5(F, __VA_ARGS__))
-#define fmt3_7(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_6(F, __VA_ARGS__))
-#define fmt3_8(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_7(F, __VA_ARGS__))
-#define fmt3_9(F, x, ...)  fmt3_1(F, x) __VA_OPT__(, fmt3_8(F, __VA_ARGS__))
+#define fmt3_2(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_1(F, __VA_ARGS__))
+#define fmt3_3(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_2(F, __VA_ARGS__))
+#define fmt3_4(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_3(F, __VA_ARGS__))
+#define fmt3_5(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_4(F, __VA_ARGS__))
+#define fmt3_6(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_5(F, __VA_ARGS__))
+#define fmt3_7(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_6(F, __VA_ARGS__))
+#define fmt3_8(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_7(F, __VA_ARGS__))
+#define fmt3_9(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_8(F, __VA_ARGS__))
 #define fmt3_10(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_9(F, __VA_ARGS__))
 #define fmt3_11(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_10(F, __VA_ARGS__))
 #define fmt3_12(F, x, ...) fmt3_1(F, x) __VA_OPT__(, fmt3_11(F, __VA_ARGS__))
