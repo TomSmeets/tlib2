@@ -151,12 +151,14 @@ static i64 read_ileb128(Read *read) {
 // Read a single line or until end of buffer
 static Buffer read_line(Read *read) {
     u64 start = read_cursor(read);
+    u64 end   = start;
     while (1) {
         if (read_eof(read)) break;
         u8 chr = read_u8(read);
         if (chr == '\n') break;
+        end = read_cursor(read);
     }
-    return buf_slice(read->buffer, start, read->bytes_read - start);
+    return buf_slice(read->buffer, start, end - start);
 }
 
 // =========== Testing =======
@@ -183,8 +185,8 @@ static void test_read(void) {
     check(read_eof(&read));
 
     read = read_from(str_buf("Hello\n\nWorld"));
-    check(buf_eq(read_line(&read), str_buf("Hello\n")));
-    check(buf_eq(read_line(&read), str_buf("\n")));
+    check(buf_eq(read_line(&read), str_buf("Hello")));
+    check(buf_eq(read_line(&read), str_buf("")));
     check(buf_eq(read_line(&read), str_buf("World")));
     check(read_eof(&read));
 }

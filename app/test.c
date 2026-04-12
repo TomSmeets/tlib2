@@ -2,6 +2,7 @@
 // test.c - Run all unit tests
 #include "base64.h"
 #include "cli.h"
+#include "tom.h"
 #include "crc.h"
 #include "deflate.h"
 #include "fmt.h"
@@ -26,6 +27,7 @@ void os_main(u32 argc, char **argv) {
     TEST(test_mem());
     TEST(test_read());
     TEST(test_write());
+    TEST(test_tom());
     TEST(test_tlang());
     TEST(test_base64());
     TEST(test_fmt());
