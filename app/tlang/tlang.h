@@ -4,6 +4,69 @@
 #include "mem.h"
 #include "type.h"
 
+// data Exp = L Exp | A Exp Exp | R Int deriving (Show, Eq)
+
+typedef struct Exp Exp;
+
+typedef struct {
+    Exp *body;
+} Exp_Lambda;
+
+typedef struct {
+    Exp *fun;
+    Exp *arg;
+} Exp_App;
+
+typedef struct {
+    u32 ix;
+} Exp_Ref;
+
+typedef enum {
+    Exp_Type_None,
+    Exp_Type_Lambda,
+    Exp_Type_App,
+    Exp_Type_Ref,
+} Exp_Type;
+
+struct Exp {
+    Exp_Type type;
+    union {
+        Exp_App app;
+        Exp_Lambda lambda;
+        Exp_Ref  ref;
+    };
+};
+
+static Exp *exp_app(Memory *mem, Exp *fun, Exp *arg) {
+    Exp *exp = mem_struct(mem, Exp);
+    exp->type = Exp_Type_App;
+    exp->app.fun = fun;
+    exp->app.arg = arg;
+    return exp;
+}
+
+static Exp *exp_lambda(Memory *mem, Exp *body) {
+    Exp *exp = mem_struct(mem, Exp);
+    exp->type = Exp_Type_Lambda;
+    exp->lambda.body = body;
+    return exp;
+}
+
+static Exp *exp_ref(Memory *mem, u32 ix) {
+    Exp *exp = mem_struct(mem, Exp);
+    exp->type = Exp_Type_Ref;
+    exp->ref.ix = ix;
+    return exp;
+}
+
+
+static Exp *exp_eval(Exp *e) {
+    // A(L(b), x)
+    if(e->type == Exp_Type_App && e->lambda.body->type == Exp_Type_Lambda) {
+    }
+    return 0;
+}
+
 typedef enum {
     Ast_Type_None,
     Ast_Type_Number,
