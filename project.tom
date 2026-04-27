@@ -4,3 +4,6 @@ State Active
 Type  Prog
 Tag   C
 Start 2025-11-27
+
+TODO Maak todo list voor tlib
+TODO color output in fmt hexdump https://simonomi.dev/blog/color-code-your-bytes/

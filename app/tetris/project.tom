@@ -1,0 +1,11 @@
+Name  Tetris
+Info  Tetris implemented in tlib
+State Todo
+Type  Prog
+Tag   C
+Tag   Game
+Start 2026-04-18
+
+Todo Wasm
+Todo Sound
+Todo Migrate to gfx api

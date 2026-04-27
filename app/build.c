@@ -18,7 +18,7 @@ static void build_cmd_snake(Cli *cli, Memory *mem) {
     cli_command(cli, "snake", "Build Snake");
     bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
     bool release = cli_flag(cli, "-O", "--release", "Build in release mode");
-    bool run = cli_flag(cli, "-r", "--run", "Run snake directly with hot reload");
+    bool run = cli_flag(cli, "-r", "--run", "Run directly with hot reload");
     if (!cli_check(cli)) return;
 
     Build *build = build_new(mem, "app/snake/snake.c", "snake");
@@ -36,6 +36,20 @@ static void build_cmd_snake(Cli *cli, Memory *mem) {
     build_html(build, "app/snake/snake.html");
     build_build(build);
     if (run && !error) os_system("out/snake/snake.elf");
+}
+
+static void build_cmd_tetris(Cli *cli, Memory *mem) {
+    cli_command(cli, "tetris", "Build Tetris");
+    bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
+    bool release = cli_flag(cli, "-O", "--release", "Build in release mode");
+    bool run = cli_flag(cli, "-r", "--run", "Run directly with hot reload");
+    if (!cli_check(cli)) return;
+
+    Build *build = build_new(mem, "app/tetris/tetris.c", "tetris");
+    build->release = release;
+    build->linux = 1;
+    build_build(build);
+    if (run && !error) os_system("out/tetris/tetris.elf");
 }
 
 static void build_cmd_tlang(Cli *cli, Memory *mem) {
@@ -124,6 +138,7 @@ void os_main(u32 argc, char **argv) {
     build_cmd_test(cli);
     build_cmd_fuzz(cli);
     build_cmd_snake(cli, mem);
+    build_cmd_tetris(cli, mem);
     build_cmd_tl(cli);
     build_cmd_tlang(cli, mem);
     build_cmd_lsp(cli);
