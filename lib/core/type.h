@@ -86,3 +86,31 @@ static_assert(sizeof(bool) == 1);
 #define OS_WINDOWS 0
 #define OS_WASM 1
 #endif
+
+#define REPEAT_1(M, A, x) M(A, x)
+#define REPEAT_2(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_1(M, A, __VA_ARGS__))
+#define REPEAT_3(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_2(M, A, __VA_ARGS__))
+#define REPEAT_4(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_3(M, A, __VA_ARGS__))
+#define REPEAT_5(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_4(M, A, __VA_ARGS__))
+#define REPEAT_6(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_5(M, A, __VA_ARGS__))
+#define REPEAT_7(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_6(M, A, __VA_ARGS__))
+#define REPEAT_8(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_7(M, A, __VA_ARGS__))
+#define REPEAT_9(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_8(M, A, __VA_ARGS__))
+#define REPEAT_10(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_9(M, A, __VA_ARGS__))
+#define REPEAT_11(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_10(M, A, __VA_ARGS__))
+#define REPEAT_12(M, A, x, ...) REPEAT_1(M, A, x) __VA_OPT__(; REPEAT_11(M, A, __VA_ARGS__))
+#define REPEAT(M, A, ...) REPEAT_12(M, A, __VA_ARGS__)
+
+#define REPEAT0_1(M, x) M(x)
+#define REPEAT0_2(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_1(M, __VA_ARGS__))
+#define REPEAT0_3(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_2(M, __VA_ARGS__))
+#define REPEAT0_4(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_3(M, __VA_ARGS__))
+#define REPEAT0_5(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_4(M, __VA_ARGS__))
+#define REPEAT0_6(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_5(M, __VA_ARGS__))
+#define REPEAT0_7(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_6(M, __VA_ARGS__))
+#define REPEAT0_8(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_7(M, __VA_ARGS__))
+#define REPEAT0_9(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_8(M, __VA_ARGS__))
+#define REPEAT0_10(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_9(M, __VA_ARGS__))
+#define REPEAT0_11(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_10(M, __VA_ARGS__))
+#define REPEAT0_12(M, x, ...) REPEAT0_1(M, x) __VA_OPT__(; REPEAT0_11(M, __VA_ARGS__))
+#define REPEAT0(M, ...) REPEAT0_12(M, __VA_ARGS__)
