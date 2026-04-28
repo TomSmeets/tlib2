@@ -174,10 +174,19 @@ static void fmt_color_fg(Fmt *fmt, u8 r, u8 g, u8 b) {
     if (fmt->no_color) return;
     fmt->need_ansi_reset = 1;
     fmt_s(fmt, "\e[38;2;");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
     fmt_u64(fmt, r);
     fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
     fmt_u64(fmt, g);
     fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
     fmt_u64(fmt, b);
     fmt_s(fmt, "m");
 }
@@ -186,12 +195,89 @@ static void fmt_color_bg(Fmt *fmt, u8 r, u8 g, u8 b) {
     if (fmt->no_color) return;
     fmt->need_ansi_reset = 1;
     fmt_s(fmt, "\e[48;2;");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
     fmt_u64(fmt, r);
     fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
     fmt_u64(fmt, g);
     fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
     fmt_u64(fmt, b);
     fmt_s(fmt, "m");
+}
+
+
+static bool chr_is_printable(u32 c) {
+    return c >= 0x20 && c <= 0x7e;
+}
+
+// 2  -> 1
+// 16 -> 4
+static u32 u32_log2_ceil(u32 x) {
+    for (u32 i = 0;; ++i) {
+        x >>= 1;
+        if (!x) return i;
+    }
+}
+
+static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
+    Fmt old = *fmt;
+    u32 base = fmt->base ?: 16;
+
+    // Ensure we print something when no data is passed
+    size_t data_size = MAX(data.size, 1);
+
+    // Calculate address padding
+    u32 pad = 0;
+    while (data_size >> pad * 4) pad += 4;
+    size_t addr = 0;
+
+    // 8 / log2(base)
+    u32 pad2 = 8 / u32_log2_ceil(base);
+    for (size_t addr = 0; addr < data_size; addr += width) {
+        fmt_base(fmt, 16);
+        fmt_pad(fmt, pad);
+        fmt_zero_pad(fmt, 0);
+        fmt_u64(fmt, addr);
+        fmt_s(fmt, " | ");
+        for (u32 off = 0; off < width; ++off) {
+            if (addr + off >= data.size) {
+                for (u32 i = 0; i < pad2 + 1; ++i) {
+                    fmt_c(fmt, ' ');
+                }
+                continue;
+            }
+
+            u8 byte = data.data[addr + off];
+            fmt_color_fg(fmt, byte*2, byte*3, byte*5);
+            fmt_pad(fmt, 0);
+            fmt_zero_pad(fmt, pad2);
+            fmt_base(fmt, base);
+            fmt_u64(fmt, byte);
+            fmt_reset(fmt);
+            fmt_s(fmt, " ");
+        }
+        fmt_s(fmt, "| ");
+        for (u32 off = 0; off < width; ++off) {
+            if (addr + off >= data.size) {
+                fmt_s(fmt, " ");
+                continue;
+            }
+            u8 byte = data.data[addr + off];
+            fmt_color_fg(fmt, byte*2, byte*3, byte*5);
+            if (!chr_is_printable(byte)) byte = '.';
+            fmt_c(fmt, byte);
+            fmt_reset(fmt);
+        }
+        fmt_s(fmt, "|\n");
+    }
+    *fmt = old;
 }
 
 // clang-format off
@@ -250,6 +336,8 @@ static void test_fmt(void) {
     Memory *mem = mem_new();
     Buffer str1 = fstr(mem, F_Red, "Hello", F_Reset);
     Buffer str2 = fstr(mem, F_Blue, "World", F_Reset);
+
+
     print("Hello ", F_Yellow, F_Base(16), F_ZeroPad(16), "0x", 1234, F_Reset, " World! === ", str1, str2);
     for (u32 i = 0; i < 10; ++i) {
         debug(i);
@@ -265,6 +353,8 @@ static void test_fmt(void) {
             fmt_s(&fmt, "\n");
         }
     }
+    fmt_reset(&fmt);
+    fmt_base(&fmt, 16);
     os_write(os_stdout(), fmt_end(&fmt));
     mem_free(mem);
 }
