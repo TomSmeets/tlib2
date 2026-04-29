@@ -33,7 +33,7 @@ struct Exp {
     union {
         Exp_App app;
         Exp_Lambda lambda;
-        Exp_Ref  ref;
+        Exp_Ref ref;
     };
 };
 
@@ -59,10 +59,9 @@ static Exp *exp_ref(Memory *mem, u32 ix) {
     return exp;
 }
 
-
 static Exp *exp_eval(Exp *e) {
     // A(L(b), x)
-    if(e->type == Exp_Type_App && e->lambda.body->type == Exp_Type_Lambda) {
+    if (e->type == Exp_Type_App && e->lambda.body->type == Exp_Type_Lambda) {
     }
     return 0;
 }

@@ -30,13 +30,13 @@ static Fmt *fmt_alloc(void) {
     return fmt_new(mem_new());
 }
 
-static void fmt_free(Fmt *fmt){
+static void fmt_free(Fmt *fmt) {
     mem_free(fmt->write->mem);
 }
 
 // Write a null terminated string
 static void fmt_s(Fmt *fmt, char *str) {
-    if(!str) return;
+    if (!str) return;
     write_buffer(fmt->write, str_buf(str));
 }
 
@@ -51,7 +51,7 @@ static void fmt_buf(Fmt *fmt, Buffer buf) {
 }
 
 // Reset ansi codes
-#define F_Reset (fmt_reset(FMT),"")
+#define F_Reset (fmt_reset(FMT), "")
 static void fmt_reset(Fmt *fmt) {
     if (!fmt->need_ansi_reset) return;
     fmt->need_ansi_reset = 0;
@@ -61,7 +61,7 @@ static void fmt_reset(Fmt *fmt) {
 // Write end of line and reset ansi colors
 static Buffer fmt_end(Fmt *fmt) {
     fmt_reset(fmt);
-    if(fmt->eol) fmt_s(fmt, "\n");
+    if (fmt->eol) fmt_s(fmt, "\n");
     return write_get_written(fmt->write);
 }
 
@@ -97,29 +97,29 @@ static void fmt_ansi(Fmt *fmt, char *code) {
     fmt_s(fmt, code);
 }
 
-#define F_Pad(pad) (fmt_pad(FMT, pad),"")
+#define F_Pad(pad) (fmt_pad(FMT, pad), "")
 static void fmt_pad(Fmt *fmt, u32 pad) {
     fmt->pad = pad;
 }
 
-#define F_ZeroPad(pad) (fmt_zero_pad(FMT, pad),"")
+#define F_ZeroPad(pad) (fmt_zero_pad(FMT, pad), "")
 static void fmt_zero_pad(Fmt *fmt, u32 pad) {
     fmt->zero_pad = pad;
 }
 
-#define F_Base(base) (fmt_base(FMT, base),"")
+#define F_Base(base) (fmt_base(FMT, base), "")
 #define F_Hex F_Base(16)
 #define F_Bin F_Base(2)
 static void fmt_base(Fmt *fmt, u32 base) {
     fmt->base = base;
 }
 
-#define F_NoColor (fmt_no_color(FMT),"")
+#define F_NoColor (fmt_no_color(FMT), "")
 static void fmt_no_color(Fmt *fmt) {
     fmt->no_color = 1;
 }
 
-#define F_NoEOL (FMT->eol = 0,"")
+#define F_NoEOL (FMT->eol = 0, "")
 
 // Format any integer
 static void fmt_int(Fmt *fmt, bool is_signed, u64 value) {
@@ -227,7 +227,6 @@ static void fmt_color_bg(Fmt *fmt, u8 r, u8 g, u8 b) {
     fmt_s(fmt, "m");
 }
 
-
 static bool chr_is_printable(u32 c) {
     return c >= 0x20 && c <= 0x7e;
 }
@@ -270,7 +269,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
             }
 
             u8 byte = data.data[addr + off];
-            fmt_color_fg(fmt, byte*2, byte*3, byte*5);
+            fmt_color_fg(fmt, byte * 2, byte * 3, byte * 5);
             fmt_pad(fmt, 0);
             fmt_zero_pad(fmt, pad2);
             fmt_base(fmt, base);
@@ -285,7 +284,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
                 continue;
             }
             u8 byte = data.data[addr + off];
-            fmt_color_fg(fmt, byte*2, byte*3, byte*5);
+            fmt_color_fg(fmt, byte * 2, byte * 3, byte * 5);
             if (!chr_is_printable(byte)) byte = '.';
             fmt_c(fmt, byte);
             fmt_reset(fmt);
@@ -311,14 +310,14 @@ static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
         Buffer: fmt_buf  \
     )(FMT, x)
 // clang-format on
-#define fmt_g(F, ...) ({ Fmt *FMT = (F); REPEAT0(fmt_generic, __VA_ARGS__); })
+#define fmt_g(F, ...) \
+    ({ \
+        Fmt *FMT = (F); \
+        REPEAT0(fmt_generic, __VA_ARGS__); \
+    })
 
 // Format to writer
-#define write_fmt(W, ...) \
-    ({ \
-        Fmt fmt1 = {.write = (W) } \
-        fmt_g(&fmt1, __VA_ARGS__); \
-    })
+#define write_fmt(W, ...) ({ Fmt fmt1 = {.write = (W)} fmt_g(&fmt1, __VA_ARGS__); })
 
 // Format to string
 #define fstr(mem, ...) \
@@ -350,6 +349,6 @@ static void test_fmt(void) {
     print("Hello ", F_Yellow, F_Base(16), F_ZeroPad(16), "0x", 1234, F_Reset, " World! === ", str1, str2);
     for (u32 i = 0; i < 10; ++i) {
         debug(i);
-        print("b=", F_Red, F_Bin,  i, F_Reset," x=", F_Blue, F_Hex, i);
+        print("b=", F_Red, F_Bin, i, F_Reset, " x=", F_Blue, F_Hex, i);
     }
 }

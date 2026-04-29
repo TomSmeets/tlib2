@@ -1,10 +1,10 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // test.c - Run all unit tests
-#include "fmt.h"
 #include "base64.h"
 #include "cli.h"
 #include "crc.h"
 #include "deflate.h"
+#include "fmt.h"
 #include "gzip.h"
 // #include "hot.h"
 #include "huffman_code.h"
