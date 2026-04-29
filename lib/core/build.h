@@ -71,59 +71,62 @@ static void build_compile(Build_Platform platform, Build_Mode mode, char *input,
     Command cmd = build_compile_command(platform, mode, input, output);
 
     // Verbose logging
+    Fmt *ferr = fmt_alloc();
     fmt_cmd(ferr, &cmd);
-    fmt(ferr, "\n");
+    fmt_s(ferr, "\n");
+    os_write(os_stderr(), fmt_end(ferr));
+    fmt_free(ferr);
 
     // Run command
     i32 ret = os_wait(os_exec(cmd.argv));
     check(ret == 0);
 }
 
-static void build_lsp(Build_Platform platform, char *output) {
-    Memory *mem = mem_new();
-    Command cmd = build_compile_command(platform, Mode_Debug, "main.c", "out/main.elf");
+// static void build_lsp(Build_Platform platform, char *output) {
+//     Memory *mem = mem_new();
+//     Command cmd = build_compile_command(platform, Mode_Debug, "main.c", "out/main.elf");
 
-    char *cwd = os_cwd(mem);
+//     char *cwd = os_cwd(mem);
 
-    Fmt *fmt = fmt_new(mem);
-    fmt(fmt, "[{");
-    fmt(fmt, "\"directory\":\"", cwd, "\",");
-    fmt(fmt, "\"command\":\"");
-    fmt_cmd(fmt, &cmd);
-    fmt(fmt, "\",");
-    fmt(fmt, "\"file\":\"main.c\"");
-    fmt(fmt, "}]");
-    char *out = fmt_end(fmt);
-    os_write_file("compile_commands.json", str_buf(out));
-    mem_free(mem);
-}
+//     Fmt *fmt = fmt_new(mem);
+//     fmt(fmt, "[{");
+//     fmt(fmt, "\"directory\":\"", cwd, "\",");
+//     fmt(fmt, "\"command\":\"");
+//     fmt_cmd(fmt, &cmd);
+//     fmt(fmt, "\",");
+//     fmt(fmt, "\"file\":\"main.c\"");
+//     fmt(fmt, "}]");
+//     char *out = fmt_end(fmt);
+//     os_write_file("compile_commands.json", str_buf(out));
+//     mem_free(mem);
+// }
 
 // Generate self contained html page containing wasm module
 static void generate_html(char *output_path, char *css_path, char **js_path_list, char *wasm_path, char *html_path) {
     Memory *mem = mem_new();
     Fmt *f = fmt_new(mem);
-    fmt(f, "<!DOCTYPE html>\n");
-    fmt(f, "<head>\n");
+    fmt_g(f, "<!DOCTYPE html>\n");
+    fmt_g(f, "<head>\n");
     if (css_path) {
-        fmt(f, "<style>\n");
-        fmt(f, os_read_file_string(mem, css_path));
-        fmt(f, "</style>\n");
+        fmt_g(f, "<style>\n");
+        fmt_g(f, os_read_file_string(mem, css_path));
+        fmt_g(f, "</style>\n");
     }
 
-    fmt(f, "<script>\n");
+    fmt_g(f, "<script>\n");
     for (u32 i = 0; js_path_list[i]; ++i) {
-        fmt(f, os_read_file_string(mem, js_path_list[i]));
+        fmt_g(f, os_read_file_string(mem, js_path_list[i]));
     }
-    fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
-    fmt_buf(f, base64_encode(mem, os_read_file(mem, wasm_path)));
-    fmt(f, "\"));\n");
-    fmt(f, "</script>\n");
+    fmt_g(f, "tlib.main(Uint8Array.fromBase64(\"");
+    fmt_g(f, base64_encode(mem, os_read_file(mem, wasm_path)));
+    fmt_g(f, "\"));\n");
+    fmt_g(f, "</script>\n");
 
-    fmt(f, "</head>\n");
-    fmt(f, "<body>\n");
-    fmt(f, os_read_file_string(mem, html_path));
-    fmt(f, "</body>\n");
-    os_write_file(output_path, str_buf(fmt_end(f)));
+    fmt_g(f, "</head>\n");
+    fmt_g(f, "<body>\n");
+    fmt_g(f, os_read_file_string(mem, html_path));
+    fmt_g(f, "</body>\n");
+    os_write_file(output_path, fmt_end(f));
     mem_free(mem);
 }
 
@@ -197,35 +200,35 @@ static void build_build(Build *build) {
 
     if (build->html) {
         Fmt *f = fmt_new(mem);
-        fmt(f, "<!DOCTYPE html>\n");
-        fmt(f, "<head>\n");
+        fmt_g(f, "<!DOCTYPE html>\n");
+        fmt_g(f, "<head>\n");
         for (u32 i = 0; i < build->css_count; ++i) {
-            fmt(f, "<style>\n");
-            fmt(f, os_read_file_string(mem, build->css_files[i]));
-            fmt(f, "</style>\n");
+            fmt_g(f, "<style>\n");
+            fmt_g(f, os_read_file_string(mem, build->css_files[i]));
+            fmt_g(f, "</style>\n");
         }
 
-        fmt(f, "<script>\n");
+        fmt_g(f, "<script>\n");
 
         // Embed js files
         for (u32 i = 0; i < build->js_count; ++i) {
-            fmt(f, "// ", build->js_files[i], "\n");
-            fmt(f, os_read_file_string(mem, build->js_files[i]));
+            fmt_g(f, "// ", build->js_files[i], "\n");
+            fmt_g(f, os_read_file_string(mem, build->js_files[i]));
         }
 
         // Load embedded wasm file
-        fmt(f, "tlib.main(Uint8Array.fromBase64(\"");
+        fmt_g(f, "tlib.main(Uint8Array.fromBase64(\"");
         fmt_buf(f, base64_encode(mem, os_read_file(mem, out_wasm)));
-        fmt(f, "\"));\n");
-        fmt(f, "</script>\n");
+        fmt_g(f, "\"));\n");
+        fmt_g(f, "</script>\n");
 
-        fmt(f, "</head>\n");
-        fmt(f, "<body>\n");
+        fmt_g(f, "</head>\n");
+        fmt_g(f, "<body>\n");
         for (u32 i = 0; i < build->html_count; ++i) {
-            fmt(f, os_read_file_string(mem, build->html_files[i]));
+            fmt_g(f, os_read_file_string(mem, build->html_files[i]));
         }
-        fmt(f, "</body>\n");
-        os_write_file(out_html, str_buf(fmt_end(f)));
+        fmt_g(f, "</body>\n");
+        os_write_file(out_html, fmt_end(f));
         if (!build->wasm) os_remove(out_wasm);
     }
 }

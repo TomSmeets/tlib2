@@ -1,213 +1,232 @@
-// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // fmt.h - Text formatter
 #pragma once
-#include "error.h"
 #include "mem.h"
-#include "ptr.h"
-#include "str.h"
-#include "type.h"
+#include "os.h"
 #include "write.h"
-#include "os2.h"
 
-// Formatting options
 typedef struct {
+    // Base for printing numbers
     u32 base;
+    u32 zero_pad;
     u32 pad;
-    u8 pad_chr;
-} Fmt_Options;
+    bool upper;
+    bool base_prefix;
+    bool no_color;
+    bool need_ansi_reset;
+    bool eol;
 
-typedef struct {
-    // Memory used to grow the buffer (Optional)
-    Memory *mem;
-
-    // Output file or stream (Optional)
-    File *file;
-
-    // Flush on newline, otherwise flush when buffer becomes full
-    bool flush_on_newline;
-
-    // Buffer storage
-    size_t size;
-    size_t used;
-    u8 *data;
-
-    Fmt_Options opt;
+    // Output
+    Write *write;
 } Fmt;
 
-// Standard formatters
-static Fmt *fmt_stdout(void) {
-    // TODO: get rid of this
-    static thread_local u8 buffer[1024];
-    static thread_local Fmt fmt = {
-        .size = sizeof(buffer),
-        .flush_on_newline = 1,
-    };
-    if (!fmt.file) {
-        fmt.data = buffer;
-        fmt.file = os_stdout();
-    }
-    return &fmt;
-}
-
-static Fmt *fmt_stderr(void) {
-    static thread_local u8 buffer[1024];
-    static thread_local Fmt fmt = {
-        .size = sizeof(buffer),
-        .flush_on_newline = 1,
-    };
-    if (!fmt.file) {
-        fmt.data = buffer;
-        fmt.file = os_stderr();
-    }
-    return &fmt;
-}
-
-#define fout (fmt_stdout())
-#define ferr (fmt_stderr())
-
-// Create a new formatter that allocates memory
 static Fmt *fmt_new(Memory *mem) {
     Fmt *fmt = mem_struct(mem, Fmt);
-    fmt->mem = mem;
+    fmt->write = write_new(mem);
     return fmt;
 }
 
-// Create a formatter that writes to a buffer
-static Fmt fmt_from(u8 *data, size_t size) {
-    Fmt fmt = {};
-    fmt.size = size;
-    fmt.data = data;
-    fmt.used = 0;
-    return fmt;
+static Fmt *fmt_alloc(void) {
+    return fmt_new(mem_new());
 }
 
-// Write all buffered data to file
-static void fmt_flush(Fmt *fmt) {
-    if (!fmt->file) return;
-    Buffer data = buf_from(fmt->data, fmt->used);
-    size_t written = os_write(fmt->file, data);
-    check(written == data.size);
-    fmt->used = 0;
+static void fmt_free(Fmt *fmt){
+    mem_free(fmt->write->mem);
 }
 
-// Try to grow formatter to fit 'size' new data
-// Returns true if the new size would fit
-static bool fmt_grow(Fmt *fmt, size_t size) {
-    // Check if the buffer needs to grow
-    if (fmt->used + size <= fmt->size) return true;
-
-    // Try to flush to the file
-    fmt_flush(fmt);
-
-    // Check again
-    if (fmt->used + size <= fmt->size) return true;
-
-    // Cannot allocate if we have no memory
-    if (!fmt->mem) return false;
-
-    // Calculated new size (a power of two)
-    size_t new_size = fmt->size * 2;
-    if (new_size < 64) new_size = 64;
-    while (fmt->used + size > new_size) new_size *= 2;
-
-    // Allocate data
-    u8 *new_data = mem_array(fmt->mem, u8, new_size);
-    ptr_copy(new_data, fmt->data, fmt->used);
-    fmt->size = new_size;
-    fmt->data = new_data;
-    return true;
-}
-
-static void fmt_c(Fmt *fmt, u8 c) {
-    if (!fmt_grow(fmt, 1)) return;
-    fmt->data[fmt->used++] = c;
-    if (fmt->flush_on_newline && c == '\n') {
-        fmt_flush(fmt);
-        fmt->opt = (Fmt_Options){};
-    }
-}
-
-static void fmt_buf(Fmt *fmt, Buffer data) {
-    for (size_t i = 0; i < data.size; ++i) {
-        fmt_c(fmt, data.data[i]);
-    }
-}
-
+// Write a null terminated string
 static void fmt_s(Fmt *fmt, char *str) {
-    if (!str) return;
-    fmt_buf(fmt, str_buf(str));
+    if(!str) return;
+    write_buffer(fmt->write, str_buf(str));
 }
 
-static char *fmt_end(Fmt *fmt) {
-    if (fmt->file) {
-        fmt_flush(fmt);
-        return 0;
-    }
-
-    // Zero terminate
-    fmt_c(fmt, 0);
-    return (char *)fmt->data;
+// Write a single character
+static void fmt_c(Fmt *fmt, char chr) {
+    write_u8(fmt->write, chr);
 }
 
-static void fmt_u_ex(Fmt *fmt, u64 value, u32 base, u8 pad_char, u32 pad) {
-    u32 digit_count = 0;
-    u8 digit_list[64];
+// Write a string slice
+static void fmt_buf(Fmt *fmt, Buffer buf) {
+    write_buffer(fmt->write, buf);
+}
 
-    if (fmt->opt.base) base = fmt->opt.base;
+// Reset ansi codes
+#define F_Reset (fmt_reset(FMT),"")
+static void fmt_reset(Fmt *fmt) {
+    if (!fmt->need_ansi_reset) return;
+    fmt->need_ansi_reset = 0;
+    fmt_s(fmt, "\e[0m");
+}
 
-    assert(base >= 2 && base <= 16);
-    if (pad > array_count(digit_list)) pad = array_count(digit_list);
+// Write end of line and reset ansi colors
+static Buffer fmt_end(Fmt *fmt) {
+    fmt_reset(fmt);
+    if(fmt->eol) fmt_s(fmt, "\n");
+    return write_get_written(fmt->write);
+}
+
+// Write ansi color code
+// clang-format off
+#define F_Ansi(code) (fmt_ansi(FMT, code),"")
+#define F_Bold       F_Ansi("\e[1m")
+#define F_Faint      F_Ansi("\e[2m")
+#define F_Underline  F_Ansi("\e[4m")
+#define F_Blink      F_Ansi("\e[5m")
+#define F_Invert     F_Ansi("\e[7m")
+#define F_Strike     F_Ansi("\e[9m")
+#define F_Black      F_Ansi("\e[30m")
+#define F_Red        F_Ansi("\e[31m")
+#define F_Green      F_Ansi("\e[32m")
+#define F_Yellow     F_Ansi("\e[33m")
+#define F_Blue       F_Ansi("\e[34m")
+#define F_Magenta    F_Ansi("\e[35m")
+#define F_Cyan       F_Ansi("\e[36m")
+#define F_White      F_Ansi("\e[37m")
+#define F_Black_BG   F_Ansi("\e[40m")
+#define F_Red_BG     F_Ansi("\e[41m")
+#define F_Green_BG   F_Ansi("\e[42m")
+#define F_Yellow_BG  F_Ansi("\e[43m")
+#define F_Blue_BG    F_Ansi("\e[44m")
+#define F_Magenta_BG F_Ansi("\e[45m")
+#define F_Cyan_BG    F_Ansi("\e[46m")
+#define F_White_BG   F_Ansi("\e[47m")
+// clang-format on
+static void fmt_ansi(Fmt *fmt, char *code) {
+    if (fmt->no_color) return;
+    fmt->need_ansi_reset = 1;
+    fmt_s(fmt, code);
+}
+
+#define F_Pad(pad) (fmt_pad(FMT, pad),"")
+static void fmt_pad(Fmt *fmt, u32 pad) {
+    fmt->pad = pad;
+}
+
+#define F_ZeroPad(pad) (fmt_zero_pad(FMT, pad),"")
+static void fmt_zero_pad(Fmt *fmt, u32 pad) {
+    fmt->zero_pad = pad;
+}
+
+#define F_Base(base) (fmt_base(FMT, base),"")
+#define F_Hex F_Base(16)
+#define F_Bin F_Base(2)
+static void fmt_base(Fmt *fmt, u32 base) {
+    fmt->base = base;
+}
+
+#define F_NoColor (fmt_no_color(FMT),"")
+static void fmt_no_color(Fmt *fmt) {
+    fmt->no_color = 1;
+}
+
+#define F_NoEOL (FMT->eol = 0,"")
+
+// Format any integer
+static void fmt_int(Fmt *fmt, bool is_signed, u64 value) {
+    // Configuration
+    u32 base = fmt->base ?: 10;
+
+    // Reversed digits
+    u32 count = 0;
+    char buffer[1024];
     do {
-        u8 digit = value % base;
-        u8 chr = digit < 10 ? '0' + digit : 'a' + (digit - 10);
-        digit_list[digit_count++] = chr;
-        assert(digit_count <= array_count(digit_list));
+        u32 rem = value % base;
+        u8 digit;
+        if (rem < 10) {
+            digit = rem + '0';
+        } else {
+            digit = rem - 10 + (fmt->upper ? 'A' : 'a');
+        }
+        buffer[count++] = digit;
         value /= base;
     } while (value > 0);
 
-    while (digit_count < pad) {
-        digit_list[digit_count++] = pad_char;
-        assert(digit_count <= array_count(digit_list));
+    while (count < fmt->zero_pad) {
+        buffer[count++] = '0';
     }
 
-    for (u32 i = 0; i < digit_count; ++i) {
-        fmt_c(fmt, digit_list[digit_count - i - 1]);
-    }
-}
-
-static void fmt_u(Fmt *fmt, u64 value) {
-    fmt_u_ex(fmt, value, 10, 0, 0);
-}
-
-static void fmt_i(Fmt *fmt, i64 value) {
-    if (value < 0) {
-        fmt_s(fmt, "-");
-        value = -value;
-    }
-    fmt_u_ex(fmt, value, 10, 0, 0);
-}
-
-static void fmt_x(Fmt *fmt, u64 value) {
-    fmt_s(fmt, "0x");
-    fmt_u_ex(fmt, value, 16, 0, 0);
-}
-
-static void fmt_pad_line(Fmt *fmt, size_t line_len, u8 pad_char) {
-    size_t line_start = fmt->used;
-    size_t line_end = fmt->used;
-
-    for (;;) {
-        if (line_start == 0) break;
-        if (fmt->data[line_start - 1] == '\n') {
-            break;
+    if (fmt->base_prefix) {
+        if (base == 16) {
+            buffer[count++] = 'x';
+            buffer[count++] = '0';
         }
-        line_start--;
+        if (base == 8) {
+            buffer[count++] = '0';
+        }
+        if (base == 2) {
+            buffer[count++] = 'b';
+            buffer[count++] = '0';
+        }
     }
 
-    for (size_t i = line_end; i < line_start + line_len; ++i) {
-        fmt_c(fmt, pad_char);
+    // Append sign char
+    if (is_signed && (i64)value < 0) {
+        buffer[count++] = '-';
+        value = -(i64)value;
     }
+
+    // Whitespace padding
+    while (count < fmt->pad) {
+        buffer[count++] = ' ';
+    }
+
+    // Reverse buffer
+    ptr_reverse(buffer, count);
+    fmt_buf(fmt, buf_from(buffer, count));
 }
+
+// Format unsigned
+static void fmt_u64(Fmt *fmt, u64 value) {
+    fmt_int(fmt, 0, value);
+}
+
+// Format signed
+static void fmt_i64(Fmt *fmt, i64 value) {
+    fmt_int(fmt, 1, value);
+}
+
+static void fmt_color_fg(Fmt *fmt, u8 r, u8 g, u8 b) {
+    if (fmt->no_color) return;
+    fmt->need_ansi_reset = 1;
+    fmt_s(fmt, "\e[38;2;");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
+    fmt_u64(fmt, r);
+    fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
+    fmt_u64(fmt, g);
+    fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
+    fmt_u64(fmt, b);
+    fmt_s(fmt, "m");
+}
+
+static void fmt_color_bg(Fmt *fmt, u8 r, u8 g, u8 b) {
+    if (fmt->no_color) return;
+    fmt->need_ansi_reset = 1;
+    fmt_s(fmt, "\e[48;2;");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
+    fmt_u64(fmt, r);
+    fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
+    fmt_u64(fmt, g);
+    fmt_s(fmt, ";");
+    fmt_pad(fmt, 0);
+    fmt_zero_pad(fmt, 0);
+    fmt_base(fmt, 10);
+    fmt_u64(fmt, b);
+    fmt_s(fmt, "m");
+}
+
 
 static bool chr_is_printable(u32 c) {
     return c >= 0x20 && c <= 0x7e;
@@ -222,7 +241,10 @@ static u32 u32_log2_ceil(u32 x) {
     }
 }
 
-static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
+static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
+    Fmt old = *fmt;
+    u32 base = fmt->base ?: 16;
+
     // Ensure we print something when no data is passed
     size_t data_size = MAX(data.size, 1);
 
@@ -234,7 +256,10 @@ static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
     // 8 / log2(base)
     u32 pad2 = 8 / u32_log2_ceil(base);
     for (size_t addr = 0; addr < data_size; addr += width) {
-        fmt_u_ex(fmt, addr, 16, ' ', pad);
+        fmt_base(fmt, 16);
+        fmt_pad(fmt, pad);
+        fmt_zero_pad(fmt, 0);
+        fmt_u64(fmt, addr);
         fmt_s(fmt, " | ");
         for (u32 off = 0; off < width; ++off) {
             if (addr + off >= data.size) {
@@ -244,7 +269,13 @@ static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
                 continue;
             }
 
-            fmt_u_ex(fmt, data.data[addr + off], base, '0', pad2);
+            u8 byte = data.data[addr + off];
+            fmt_color_fg(fmt, byte*2, byte*3, byte*5);
+            fmt_pad(fmt, 0);
+            fmt_zero_pad(fmt, pad2);
+            fmt_base(fmt, base);
+            fmt_u64(fmt, byte);
+            fmt_reset(fmt);
             fmt_s(fmt, " ");
         }
         fmt_s(fmt, "| ");
@@ -253,183 +284,72 @@ static void fmt_hexdump_x(Fmt *fmt, Buffer data, u32 base, u32 width) {
                 fmt_s(fmt, " ");
                 continue;
             }
-            u8 c = data.data[addr + off];
-            if (!chr_is_printable(c)) c = '.';
-            fmt_c(fmt, c);
+            u8 byte = data.data[addr + off];
+            fmt_color_fg(fmt, byte*2, byte*3, byte*5);
+            if (!chr_is_printable(byte)) byte = '.';
+            fmt_c(fmt, byte);
+            fmt_reset(fmt);
         }
         fmt_s(fmt, "|\n");
     }
+    *fmt = old;
 }
 
-static void fmt_hexdump(Fmt *fmt, Buffer data) {
-    fmt_hexdump_x(fmt, data, 16, 8);
-}
-
-// also add fmt_pad(x) -> helper for creating the opt type
 // clang-format off
-#define fmt1(F, x)                  \
-    _Generic((x),                   \
-        char *: fmt_s,              \
-        size_t: fmt_u,              \
-        u32: fmt_u,                 \
-        i32: fmt_i,                 \
-        u16: fmt_u,                 \
-        i16: fmt_i,                 \
-        u8: fmt_u,                  \
-        i8: fmt_i,                  \
-        char: fmt_c,                \
-        Buffer: fmt_buf,        \
-        Fmt_Options: fmt_setopt     \
-    )(F, x)
-
+#define fmt_generic(x)           \
+    _Generic((x),                \
+        char *: fmt_s,   \
+        i64:    fmt_i64, \
+        u64:    fmt_u64, \
+        i32:    fmt_i64, \
+        u32:    fmt_u64, \
+        i16:    fmt_i64, \
+        u16:    fmt_u64, \
+         i8:    fmt_i64, \
+         u8:    fmt_u64, \
+        char:   fmt_c,   \
+        Buffer: fmt_buf  \
+    )(FMT, x)
 // clang-format on
-#define fmt(F, ...) REPEAT(fmt1, F, __VA_ARGS__)
+#define fmt_g(F, ...) ({ Fmt *FMT = (F); REPEAT0(fmt_generic, __VA_ARGS__); })
 
-#define fstr(mem, ...) \
+// Format to writer
+#define write_fmt(W, ...) \
     ({ \
-        Fmt *f = fmt_new(mem); \
-        fmt(f, __VA_ARGS__); \
-        fmt_end(f); \
+        Fmt fmt1 = {.write = (W) } \
+        fmt_g(&fmt1, __VA_ARGS__); \
     })
 
-#define print(...) fmt(fout, __VA_ARGS__, "\n")
+// Format to string
+#define fstr(mem, ...) \
+    ({ \
+        Write write = {.mem = mem}; \
+        Fmt _fmt = {.write = &write}; \
+        fmt_g(&_fmt, __VA_ARGS__); \
+        (char *)fmt_end(&_fmt).data; \
+    })
+
+// Format and write to file directly
+#define fprint(OUT, ...) \
+    ({ \
+        Fmt *f = fmt_alloc(); \
+        f->eol = 1; \
+        fmt_g(f, __VA_ARGS__); \
+        os_write(OUT, fmt_end(f)); \
+        fmt_free(f); \
+    })
+
+#define print(...) fprint(os_stdout(), __VA_ARGS__)
+#define debug(x) fprint(os_stderr(), F_Faint, __FILE__ ":" TO_STRING(__LINE__) ": ", F_Reset, #x, " = ", x)
+
 // TODO: no more 'file' in fmt, just format string
-// print() will get tmp mem and free again
-
-// Set formatting options
-#define O(...) \
-    (Fmt_Options) { \
-        __VA_ARGS__ \
-    }
-
-#define EOL "\n"
-
-static void fmt_setopt(Fmt *fmt, Fmt_Options opt) {
-    fmt->opt = opt;
-}
-
-// Test
 static void test_fmt(void) {
     Memory *mem = mem_new();
-    {
-        Fmt *fmt = fmt_new(mem);
-        fmt_s(fmt, "Hello");
-        fmt_s(fmt, " ");
-        fmt_s(fmt, "World: ");
-        fmt_u(fmt, 1234);
-        fmt_s(fmt, "\n");
-        char *output = fmt_end(fmt);
-        check(str_eq(output, "Hello World: 1234\n"));
+    char *str1 = fstr(mem, F_Red, "Hello", F_Reset);
+    char *str2 = fstr(mem, F_Blue, "World", F_Reset);
+    print("Hello ", F_Yellow, F_Base(16), F_ZeroPad(16), "0x", 1234, F_Reset, " World! === ", str1, str2);
+    for (u32 i = 0; i < 10; ++i) {
+        debug(i);
+        print("b=", F_Red, F_Bin,  i, F_Reset," x=", F_Blue, F_Hex, i);
     }
-
-    {
-        Fmt *fmt = fmt_new(mem);
-        fmt(fmt, "Hello", " ", "World: ", 1234, EOL);
-        char *output = fmt_end(fmt);
-        check(str_eq(output, "Hello World: 1234\n"));
-    }
-
-    check(str_eq(fstr(mem, "Hello", " ", "World: ", 1234, EOL), "Hello World: 1234\n"));
-
-    // Awesome! who needs python :P
-    // u32 x = 1234;
-    // print("Value of X in Base10: ", x, ", Base2: ", O(.base = 2), x, "!");
-    // OUTPUT: "Value of X in Base10: 1234, Base2: 10011010010!"
-    mem_free(mem);
 }
-
-
-#if 0
-typedef struct {
-    Memory *mem;
-    u32 count;
-    Buffer chunks[64];
-} Fmt2;
-
-static Fmt2 *fmt2_new(Memory *mem) {
-    Fmt2 *fmt = mem_struct(mem, Fmt2);
-    fmt->mem = mem;
-    return fmt;
-}
-
-static Buffer fmt2_end(Fmt2 *fmt) {
-    if (fmt->count == 0) return buf_null();
-    if (fmt->count == 1) return fmt->chunks[0];
-
-    // Get total size
-    u32 len = 0;
-    for (u32 i = 0; i < fmt->count; ++i) {
-        len += fmt->chunks[i].size;
-    }
-
-    // Reserve space for output buffer
-    u8 *data = mem_alloc_uninit(fmt->mem, len + 1);
-    Buffer result = buf_from(data, len);
-
-    // Fill output buffer
-    u32 offset = 0;
-    for (u32 i = 0; i < fmt->count; ++i) {
-        ptr_copy(data + offset, fmt->chunks[i].data, fmt->chunks[i].size);
-    }
-    assert(offset == len);
-
-    // Null terminate
-    data[len] = 0;
-
-    // Store result
-    fmt->count = 1;
-    fmt->chunks[0] = result;
-    return result;
-}
-
-static void fmt2_buf(Fmt2 *fmt, Buffer buf) {
-    if (fmt->count == array_count(fmt->chunks)) fmt2_end(fmt);
-    fmt->chunks[fmt->count++] = buf;
-}
-
-static void fmt2_str(Fmt2 *fmt, char *str) {
-    fmt2_buf(fmt, str_buf(str));
-}
-
-static char *fmt2_u64_ex(Memory *mem, bool sign, u32 base, u64 value) {
-    u32 count = 0;
-    char buffer[64];
-
-    i64 value_signed = value;
-    if (sign && value_signed < 0) {
-        buffer[count++] = '-';
-        value = -value_signed;
-    }
-
-    do {
-        u32 rem = value % base;
-        buffer[count++] = rem + '0';
-        value /= base;
-    } while (value > 0);
-
-    char *res = mem_alloc_uninit(mem, count + 1);
-    for (u32 i = 0; i < count; ++i) {
-        res[i] = buffer[count - i - 1];
-    }
-    res[count] = 0;
-    return res;
-}
-
-static char *fmt2_u32(Memory *mem, u32 value) {
-    return fmt2_u64_ex(mem, 0, 10, value);
-}
-
-static char *fmt2_i32(Memory *mem, i32 value) {
-    return fmt2_u64_ex(mem, 1, 10, value);
-}
-
-static char *fmt2_u64(Memory *mem, u64 value) {
-    return fmt2_u64_ex(mem, 0, 10, value);
-}
-
-static char *fmt2_i64(Memory *mem, i64 value) {
-    return fmt2_u64_ex(mem, 1, 10, value);
-}
-
-#endif
-

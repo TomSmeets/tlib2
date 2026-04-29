@@ -108,21 +108,19 @@ static void build_cmd_lsp(Cli *cli) {
 
     File *fd = os_open("compile_commands.json", FileMode_Create);
     u8 buffer[1024];
-    Fmt f = {.file = fd, .data = buffer, .size = sizeof(buffer)};
-    fmt(&f, "[");
-    fmt(&f, "{");
-    fmt(&f, "\"directory\":\"", cwd, "\",");
-    fmt(&f, "\"command\":\"");
+
+    Fmt *fmt = fmt_alloc();
+    fmt_g(fmt, "[{");
+    fmt_g(fmt, "\"directory\":\"", cwd, "\",");
+    fmt_g(fmt, "\"command\":\"");
     for (u32 i = 0; i < cc_cmd.argc; ++i) {
-        fmt(&f, cc_cmd.argv[i]);
-        fmt(&f, " ");
+        fmt_g(fmt, cc_cmd.argv[i], " ");
     }
-    fmt(&f, "\",");
-    fmt(&f, "\"file\":\"main.c\"");
-    fmt(&f, "}");
-    fmt(&f, "]");
-    fmt_end(&f);
-    os_close(fd);
+    fmt_g(fmt, "\",");
+    fmt_g(fmt, "\"file\":\"main.c\"");
+    fmt_g(fmt, "}]");
+    fmt_end(fmt);
+    fmt_free(fmt);
 }
 
 static void build_cmd_format(Cli *cli) {

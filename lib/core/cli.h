@@ -212,19 +212,17 @@ static void cli_help(Cli *cli) {
     while (cmd && !cmd->match) cmd = cmd->next;
 
     if (!cmd) {
-        fmt_s(ferr, "Usage: ");
-        fmt_s(ferr, cli->program_name);
-        fmt_s(ferr, " <COMMAND> [VALUES...] [FLAGS...]\n");
+        Fmt *usage = fmt_alloc();
+        fmt_g(usage, "Usage: ", cli->program_name, " <COMMAND> [VALUES...] [FLAGS...]\n");
         for (Cli_Command *cmd = cli->command_first; cmd; cmd = cmd->next) {
-            fmt_s(ferr, "  ");
-            fmt_s(ferr, cli->program_name);
-            fmt_s(ferr, " ");
-            fmt_s(ferr, cmd->name);
-            fmt_pad_line(ferr, 20, ' ');
-            fmt_s(ferr, " | ");
-            fmt_s(ferr, cmd->info);
-            fmt_s(ferr, "\n");
+            fmt_g(usage, "  ", cli->program_name, " ", cmd->name);
+            // fmt_pad_line(usage, 20, ' ');
+            fmt_g(usage, " | ");
+            fmt_g(usage, cmd->info);
+            fmt_g(usage, "\n");
         }
+        os_write(os_stderr(), fmt_end(usage));
+        fmt_free(usage);
         return;
     }
 
@@ -245,47 +243,50 @@ static void cli_help(Cli *cli) {
 
     // No problem
     if (show_help) {
-        fmt(ferr, "Error:\n");
+        Fmt *usage = fmt_alloc();
+        fmt_g(usage, "Error:\n");
         for (Cli_Arg *arg = cli->argv; arg; arg = arg->next) {
             if (arg->is_used) continue;
             if (arg->is_flag_long || arg->is_flag_short) {
-                fmt(ferr, "    Invalid option: '", arg->name, "'\n");
+                fmt_g(usage, "    Invalid option: '", arg->name, "'\n");
             } else {
-                fmt(ferr, "    Invalid argument: '", arg->name, "'\n");
+                fmt_g(usage, "    Invalid argument: '", arg->name, "'\n");
             }
         }
         for (Cli_Value *val = cmd->value_first; val; val = val->next) {
             if (val->match) continue;
             if (val->name[0] == '[') continue;
-            fmt(ferr, "    Missing value: ", val->name, "\n");
+            fmt_g(usage, "    Missing value: ", val->name, "\n");
         }
-        fmt(ferr, "\n");
+        fmt_g(usage, "\n");
 
-        fmt(ferr, "Usage: ", cli->program_name, " ", cmd->name);
+        fmt_g(usage, "Usage: ", cli->program_name, " ", cmd->name);
         for (Cli_Value *val = cmd->value_first; val; val = val->next) {
-            fmt(ferr, " ", val->name);
+            fmt_g(usage, " ", val->name);
         }
-        fmt(ferr, "\n");
+        fmt_g(usage, "\n");
         for (Cli_Value *val = cmd->value_first; val; val = val->next) {
-            fmt_s(ferr, "    ");
-            fmt_s(ferr, val->name);
-            fmt_pad_line(ferr, 20, ' ');
-            fmt_s(ferr, " | ");
-            fmt_s(ferr, val->info);
-            fmt_s(ferr, "\n");
+            fmt_s(usage, "    ");
+            fmt_s(usage, val->name);
+            // fmt_pad_line(usage, 20, ' ');
+            fmt_s(usage, " | ");
+            fmt_s(usage, val->info);
+            fmt_s(usage, "\n");
         }
         for (Cli_Flag *flag = cmd->flag_first; flag; flag = flag->next) {
-            fmt_s(ferr, "    ");
+            fmt_s(usage, "    ");
             if (flag->name_short) {
-                fmt_s(ferr, flag->name_short);
-                fmt_s(ferr, ", ");
+                fmt_s(usage, flag->name_short);
+                fmt_s(usage, ", ");
             }
-            fmt_s(ferr, flag->name_long);
-            fmt_pad_line(ferr, 20, ' ');
-            fmt_s(ferr, " | ");
-            fmt_s(ferr, flag->info);
-            fmt_s(ferr, "\n");
+            fmt_s(usage, flag->name_long);
+            // fmt_pad_line(usage, 20, ' ');
+            fmt_s(usage, " | ");
+            fmt_s(usage, flag->info);
+            fmt_s(usage, "\n");
         }
+        os_write(os_stderr(), fmt_end(usage));
+        fmt_free(usage);
     }
 }
 
