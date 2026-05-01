@@ -54,7 +54,12 @@ static void tl_cmd_dump(Cli *cli, Memory *mem) {
     Buffer input = os_read_all(mem, os_stdin());
     u32 base = hex ? 16 : 2;
     u32 width = wide ? 16 : 4;
-    fmt_hexdump_x(fout, input, base, width);
+
+    Fmt *fmt = fmt_alloc();
+    fmt_base(fmt, base);
+    fmt_hexdump(fmt, input, width);
+    os_write(os_stdout(), fmt_end(fmt));
+    fmt_free(fmt);
 }
 
 static void tl_cmd_elf(Cli *cli, Memory *mem) {
@@ -66,7 +71,7 @@ static void tl_cmd_elf(Cli *cli, Memory *mem) {
     Elf *elf = elf_load(mem, file);
     if (error) return;
 
-    print("entry: 0x", O(.base = 16), elf->entry);
+    print("entry: 0x", F_Base(16), elf->entry);
     for (u32 i = 0; i < elf->section_count; ++i) {
         print(i, " ", elf->sections[i].size, " ", elf->sections[i].name);
     }

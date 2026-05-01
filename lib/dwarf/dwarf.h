@@ -197,10 +197,10 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
         print(dwarf_tag_to_string(die_abbrev->tag));
         for (u32 i = 0; i < die_abbrev->attr_count; ++i) {
             Dwarf_Abbrev_Attr *attr = die_abbrev->attr_list + i;
-            fmt(fout, "  ", dwarf_attribute_type_to_string(attr->name), " ");
-            fmt_pad_line(fout, 30, ' ');
-            fmt(fout, dwarf_form_to_string(attr->form), " ");
-            fmt_pad_line(fout, 55, ' ');
+            print(F_NoEOL, "  ", dwarf_attribute_type_to_string(attr->name), " ");
+            // fmt_pad_line(fout, 30, ' ');
+            print(F_NoEOL, dwarf_form_to_string(attr->form), " ");
+            // fmt_pad_line(fout, 55, ' ');
 
             Dwarf_Die_Attr die_attr = {};
             die_attr.name = attr->name;
@@ -211,7 +211,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_strx2:
             case DW_FORM_strx4: {
                 u64 off = parse_u64_form(parse, attr->form);
-                fmt(fout, "offset = ", off);
+                print(F_NoEOL, "offset = ", off);
                 die_attr.value.str = "";
             } break;
             case DW_FORM_udata:
@@ -222,7 +222,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_data8:
             case DW_FORM_data16:
                 die_attr.value.data = parse_u64_form(parse, attr->form);
-                fmt(fout, "data = ", die_attr.value.data, "");
+                print(F_NoEOL, "data = ", die_attr.value.data);
                 break;
             case DW_FORM_sec_offset:
                 die_attr.value.data = parse_u32(parse); // ?
@@ -230,7 +230,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_addr:
                 if (addr_size == 8) die_attr.value.data = parse_u64(parse);
                 if (addr_size == 4) die_attr.value.data = parse_u32(parse);
-                fmt(fout, "addr = ", die_attr.value.data, "");
+                print(F_NoEOL, "addr = ", die_attr.value.data);
                 break;
             case DW_FORM_addrx:
             case DW_FORM_addrx1:
@@ -238,7 +238,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_addrx3:
             case DW_FORM_addrx4: {
                 u64 data = parse_u64_form(parse, attr->form);
-                fmt(fout, "addr = ", data, "");
+                print(F_NoEOL, "addr = ", data);
             } break;
             case DW_FORM_ref_udata:
             case DW_FORM_ref1:
@@ -246,31 +246,31 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_ref4:
             case DW_FORM_ref8: {
                 u64 data = parse_u64_form(parse, attr->form);
-                fmt(fout, "ref = ", data, "");
+                print(F_NoEOL, "ref = ", data );
             } break;
             case DW_FORM_exprloc: {
                 u64 len = parse_uleb128(parse);
                 parse_data(parse, len);
-                fmt(fout, "exprloc = ", len, "");
+                print(F_NoEOL, "exprloc = ", len);
             } break;
             case DW_FORM_flag_present: {
-                fmt(fout, "flag = ", 1, "");
+                print(F_NoEOL, "flag = ", 1);
             } break;
             case DW_FORM_flag: {
                 u8 present = parse_u8(parse);
-                fmt(fout, "flag = ", present, "");
+                print(F_NoEOL, "flag = ", present);
             } break;
             case DW_FORM_rnglistx: {
                 u64 ix = parse_uleb128(parse);
-                fmt(fout, "range_ix = ", ix, "");
+                print(F_NoEOL, "range_ix = ", ix);
             } break;
 
             default: {
-                fmt(fout, "?");
+                print(F_NoEOL, "?");
                 assert(0);
             } break;
             }
-            fmt(fout, "\n");
+            print("");
         }
     }
 }

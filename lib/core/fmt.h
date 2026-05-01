@@ -51,7 +51,8 @@ static void fmt_buf(Fmt *fmt, Buffer buf) {
 }
 
 // Reset ansi codes
-#define F_Reset (fmt_reset(FMT), "")
+#define F(X) (X, "")
+#define F_Reset F(fmt_reset(FMT))
 static void fmt_reset(Fmt *fmt) {
     if (!fmt->need_ansi_reset) return;
     fmt->need_ansi_reset = 0;
@@ -65,9 +66,10 @@ static Buffer fmt_end(Fmt *fmt) {
     return write_get_written(fmt->write);
 }
 
+
 // Write ansi color code
 // clang-format off
-#define F_Ansi(code) (fmt_ansi(FMT, code),"")
+#define F_Ansi(code) F(fmt_ansi(FMT, code))
 #define F_Bold       F_Ansi("\e[1m")
 #define F_Faint      F_Ansi("\e[2m")
 #define F_Underline  F_Ansi("\e[4m")
@@ -91,35 +93,36 @@ static Buffer fmt_end(Fmt *fmt) {
 #define F_Cyan_BG    F_Ansi("\e[46m")
 #define F_White_BG   F_Ansi("\e[47m")
 // clang-format on
+
 static void fmt_ansi(Fmt *fmt, char *code) {
     if (fmt->no_color) return;
     fmt->need_ansi_reset = 1;
     fmt_s(fmt, code);
 }
 
-#define F_Pad(pad) (fmt_pad(FMT, pad), "")
+#define F_Pad(pad) F(fmt_pad(FMT, pad))
 static void fmt_pad(Fmt *fmt, u32 pad) {
     fmt->pad = pad;
 }
 
-#define F_ZeroPad(pad) (fmt_zero_pad(FMT, pad), "")
+#define F_ZeroPad(pad) F(fmt_zero_pad(FMT, pad))
 static void fmt_zero_pad(Fmt *fmt, u32 pad) {
     fmt->zero_pad = pad;
 }
 
-#define F_Base(base) (fmt_base(FMT, base), "")
+#define F_Base(base) F(fmt_base(FMT, base))
 #define F_Hex F_Base(16)
 #define F_Bin F_Base(2)
 static void fmt_base(Fmt *fmt, u32 base) {
     fmt->base = base;
 }
 
-#define F_NoColor (fmt_no_color(FMT), "")
+#define F_NoColor F(fmt_no_color(FMT))
 static void fmt_no_color(Fmt *fmt) {
     fmt->no_color = 1;
 }
 
-#define F_NoEOL (FMT->eol = 0, "")
+#define F_NoEOL F(FMT->eol = 0) 
 
 // Format any integer
 static void fmt_int(Fmt *fmt, bool is_signed, u64 value) {
@@ -313,7 +316,7 @@ static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
 #define fmt_g(F, ...) \
     ({ \
         Fmt *FMT = (F); \
-        REPEAT0(fmt_generic, __VA_ARGS__); \
+        REPEAT(fmt_generic, __VA_ARGS__); \
     })
 
 // Format to writer
