@@ -66,7 +66,6 @@ static Buffer fmt_end(Fmt *fmt) {
     return write_get_written(fmt->write);
 }
 
-
 // Write ansi color code
 // clang-format off
 #define F_Ansi(code) F(fmt_ansi(FMT, code))
@@ -122,7 +121,7 @@ static void fmt_no_color(Fmt *fmt) {
     fmt->no_color = 1;
 }
 
-#define F_NoEOL F(FMT->eol = 0) 
+#define F_NoEOL F(FMT->eol = 0)
 
 // Format any integer
 static void fmt_int(Fmt *fmt, bool is_signed, u64 value) {

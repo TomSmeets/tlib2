@@ -246,7 +246,7 @@ static void dwarf_load_die(Dwarf_File *dwarf, Dwarf_Abbrev_List *abbrev) {
             case DW_FORM_ref4:
             case DW_FORM_ref8: {
                 u64 data = parse_u64_form(parse, attr->form);
-                print(F_NoEOL, "ref = ", data );
+                print(F_NoEOL, "ref = ", data);
             } break;
             case DW_FORM_exprloc: {
                 u64 len = parse_uleb128(parse);
