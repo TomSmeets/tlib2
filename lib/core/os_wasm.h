@@ -8,13 +8,6 @@
 
 #define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
 
-static void *os_alloc(size_t size) {
-    size_t page_size = 65536;
-    size_t pages = (size + page_size - 1) / page_size;
-    size_t addr = __builtin_wasm_memory_grow(0, pages) * page_size;
-    return (void *)addr;
-}
-
 WASM_IMPORT(wasm_exit) void wasm_exit(void);
 WASM_IMPORT(wasm_fail) void wasm_fail(char *message, u32 len);
 static void os_exit(void) {

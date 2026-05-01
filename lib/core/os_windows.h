@@ -19,21 +19,6 @@ int main(int argc, char **argv) {
     }
 }
 
-// Allocate a new chunk of memory
-// - returns null on failure
-static void *os_alloc(size_t size) {
-    return VirtualAlloc(
-        // Let the system choose a starting address for us
-        0,
-        // Allocation size
-        size,
-        // Reserve the address range and commit the memory in that range
-        MEM_COMMIT | MEM_RESERVE,
-        // Memory should be read and writable
-        PAGE_READWRITE
-    );
-}
-
 // Exit current application
 // - Does not return
 static void os_exit() {

@@ -2,6 +2,7 @@
 // os.h - Operating System API
 #pragma once
 #include "os_api.h"
+#include "alloc.h"
 
 #if OS_LINUX
 #include "os_linux.h"

@@ -20,14 +20,6 @@ int main(i32 argc, char **argv) {
     }
 }
 
-// Allocate a new chunk of memory
-// - returns null on failure
-static void *os_alloc(size_t size) {
-    void *ptr = linux_mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    check(ptr && ptr != MAP_FAILED);
-    return ptr;
-}
-
 // Exit current application
 static void os_exit(void) {
     if (error) {
