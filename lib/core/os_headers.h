@@ -11,7 +11,7 @@
 #pragma pop_macro("TIME_MS")
 #elif OS_WASM
 #define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
-#define WASM_PAGE_SIZE (64*1024)
+#define WASM_PAGE_SIZE (64 * 1024)
 
 static size_t wasm_memory_grow(size_t pages) {
     return __builtin_wasm_memory_grow(0, pages);

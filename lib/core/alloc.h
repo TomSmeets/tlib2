@@ -1,7 +1,7 @@
 #pragma once
-#include "type.h"
-#include "os_headers.h"
 #include "error.h"
+#include "os_headers.h"
+#include "type.h"
 
 // Allocate a new chunk of memory
 // - returns null on failure
@@ -59,7 +59,7 @@ static void *os_alloc(size_t size) {
     check(page_ix != (size_t)-1);
 
     // Convert to pointer
-    void *ptr = (void*)(page_ix * WASM_PAGE_SIZE);
+    void *ptr = (void *)(page_ix * WASM_PAGE_SIZE);
 
     // We consider null to also be invalid
     check(ptr != 0);
