@@ -53,4 +53,3 @@ static void *os_alloc(size_t size) {
     check(ptr != 0);
     return ptr;
 }
-

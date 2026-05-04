@@ -21,14 +21,14 @@ static void os_main(void);
 
 // Can be called dynamically
 void os_main_wrapper(int argc, char **argv) {
-    if(!os_init) {
+    if (!os_init) {
         os_perm = mem_new();
         os_argc = argc;
         os_argv = argv;
     }
 
     // Temporary frame memory
-    if(os_temp) mem_free(os_temp);
+    if (os_temp) mem_free(os_temp);
     os_temp = mem_new();
 
     // Call main method

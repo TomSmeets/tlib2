@@ -2,11 +2,11 @@
 // os_linux.h - Linux syscalls
 #pragma once
 #include "error.h"
+#include "fs.h"
 #include "linux.h"
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
-#include "fs.h"
 
 // =================================
 

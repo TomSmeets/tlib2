@@ -1,8 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // io.h - File IO
 #pragma once
-#include "os_headers.h"
 #include "error.h"
+#include "os_headers.h"
 
 // Abstract file handle
 typedef struct File File;
@@ -86,7 +86,7 @@ static size_t io_write_partial(File *file, Buffer buffer) {
 
 // Fill buffer with data from the file
 static void io_read(File *file, Buffer buffer) {
-    while(buffer.size) {
+    while (buffer.size) {
         size_t inc = io_read_partial(file, buffer);
         check_or(inc > 0) break;
         buffer = buf_drop(buffer, inc);
@@ -95,7 +95,7 @@ static void io_read(File *file, Buffer buffer) {
 
 // Write buffer data to the file
 static void io_write(File *file, Buffer buffer) {
-    while(buffer.size) {
+    while (buffer.size) {
         size_t inc = io_write_partial(file, buffer);
         check_or(inc > 0) break;
         buffer = buf_drop(buffer, inc);

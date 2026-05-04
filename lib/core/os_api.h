@@ -2,9 +2,8 @@
 // os_api.h - Operating System API Interface
 #pragma once
 #include "buf.h"
-#include "type.h"
 #include "fs.h"
-
+#include "type.h"
 
 // ==================================
 //      Dynamic library handling

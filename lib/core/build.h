@@ -3,9 +3,9 @@
 #pragma once
 #include "base64.h"
 #include "command.h"
-#include "os2.h"
 #include "fs.h"
 #include "io.h"
+#include "os2.h"
 
 // Supported target platforms
 typedef enum {

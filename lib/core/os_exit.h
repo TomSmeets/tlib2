@@ -1,9 +1,9 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
-// os_exit.h 
+// os_exit.h
 #pragma once
+#include "error.h"
 #include "os_headers.h"
 #include "str.h"
-#include "error.h"
 
 // Exit current application with optionally an error
 static void os_exit(void) __attribute__((__noreturn__));

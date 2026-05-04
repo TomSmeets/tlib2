@@ -3,9 +3,9 @@
 #pragma once
 #include "error.h"
 #include "os_api.h"
+#include "os_headers.h"
 #include "str.h"
 #include "type.h"
-#include "os_headers.h"
 
 // ==================================
 //      File and Stream handling

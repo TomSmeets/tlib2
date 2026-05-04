@@ -10,7 +10,7 @@
 #include "str.h"
 
 // Maximum path length
-#define PATH_MAX (4*1024)
+#define PATH_MAX (4 * 1024)
 
 // File open mode
 typedef enum {
@@ -197,7 +197,7 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
         u8 buffer[4 * 1024];
         i64 len = linux_getdents64(dir, (void *)buffer, sizeof(buffer));
         check(len >= 0);
-        if(error) break;
+        if (error) break;
 
         // End of stream
         if (len == 0) break;
@@ -215,7 +215,7 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
             if (ent->type == DT_REG) type = FileType_File;
 
             callback(user, ent->name, type);
-            if(error) break;
+            if (error) break;
         }
     }
 
@@ -243,9 +243,8 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
         if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) type = FileType_Directory;
 
         callback(user, name, type);
-        if(error) break;
+        if (error) break;
     } while (FindNextFileA(handle, &find));
     FindClose(handle);
 #endif
 }
-
