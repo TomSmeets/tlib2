@@ -36,69 +36,6 @@ static File *os_stdout(void) { return wasm_file(2); }
 static File *os_stderr(void) { return wasm_file(3); }
 // clang-format on
 
-static size_t os_read(File *file, Buffer data) {
-    os_fail("Not Implemented");
-}
-
-WASM_IMPORT(wasm_write) bool wasm_write(u32 fd, void *data, size_t size);
-static size_t os_write(File *file, Buffer data) {
-    check(wasm_write(wasm_fd(file), data.data, data.size));
-    return data.size;
-}
-
-static File *os_open(char *path, FileMode mode) {
-    os_fail("Not implemented");
-}
-
-static void os_close(File *file) {
-    os_fail("Not implemented");
-}
-
-static void os_seek(File *file, size_t pos) {
-    os_fail("Not implemented");
-}
-
-static bool os_stat(char *path, FileInfo *info) {
-    os_fail("Not implemented");
-}
-
-// Create an empty directory
-static bool os_mkdir(char *path) {
-    os_fail("Not implemented");
-}
-
-// Remove an empty directory
-static bool os_rmdir(char *path) {
-    os_fail("Not implemented");
-}
-
-// Remove a file
-static bool os_remove(char *path) {
-    os_fail("Not implemented");
-}
-
-// List directory contents
-static bool os_list(char *path, os_list_cb *callback, void *user) {
-    os_fail("Not implemented");
-}
-
-// =================================
-
-// Open a library by name or full path
-static Library *os_dlopen(char *path) {
-    os_fail("Not implemented");
-}
-
-// Lookup a symbol in a library
-static void *os_dlsym(Library *lib, char *sym) {
-    os_fail("Not implemented");
-}
-
-// Get base address of a library based on a pointer inside that library
-static void *os_dlbase(void *ptr) {
-    os_fail("Not implemented");
-}
-
 WASM_IMPORT(wasm_time) time_t wasm_time(void);
 static time_t os_time(void) {
     return wasm_time();

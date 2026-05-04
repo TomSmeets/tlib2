@@ -1,7 +1,9 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // os.h - Operating System API
 #pragma once
-#include "alloc.h"
+#include "os_alloc.h"
+#include "os_main.h"
+#include "os_exit.h"
 #include "os_api.h"
 
 #if OS_LINUX

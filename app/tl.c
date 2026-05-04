@@ -20,11 +20,11 @@ static void tl_cmd_base64(Cli *cli, Memory *mem) {
     if (!encode && !decode) encode = 1;
     if (!cli_check(cli)) return;
 
-    Buffer input = os_read_all(mem, os_stdin());
+    Buffer input = io_read(mem, io_stdin());
     Buffer output = {};
     if (encode) output = base64_encode(mem, input);
     if (decode) output = base64_decode(mem, input);
-    os_write_exact(os_stdout(), output);
+    io_write(io_stdout(), output);
 }
 
 static void tl_cmd_gzip(Cli *cli, Memory *mem) {
@@ -34,11 +34,11 @@ static void tl_cmd_gzip(Cli *cli, Memory *mem) {
     if (!compress && !decompress) compress = 1;
     if (!cli_check(cli)) return;
 
-    Buffer input = os_read_all(mem, os_stdin());
+    Buffer input = io_read(mem, io_stdin());
     Buffer output = {};
     if (compress) output = gzip_write(mem, input);
     if (decompress) output = gzip_read(mem, input);
-    os_write_exact(os_stdout(), output);
+    io_write(io_stdout(), output);
 }
 
 static void tl_cmd_dump(Cli *cli, Memory *mem) {
@@ -51,14 +51,14 @@ static void tl_cmd_dump(Cli *cli, Memory *mem) {
     if (!wide && !compact) wide = hex;
     if (!cli_check(cli)) return;
 
-    Buffer input = os_read_all(mem, os_stdin());
+    Buffer input = io_read_all(mem, io_stdin());
     u32 base = hex ? 16 : 2;
     u32 width = wide ? 16 : 4;
 
     Fmt *fmt = fmt_alloc();
     fmt_base(fmt, base);
     fmt_hexdump(fmt, input, width);
-    os_write(os_stdout(), fmt_end(fmt));
+    io_write(io_stdout(), fmt_end(fmt));
     fmt_free(fmt);
 }
 
@@ -67,7 +67,7 @@ static void tl_cmd_elf(Cli *cli, Memory *mem) {
     char *path = cli_value(cli, "<Input>", "Input File");
     if (!cli_check(cli)) return;
 
-    File *file = os_open(path, FileMode_Read);
+    File *file = io_open(path, FileMode_Read);
     Elf *elf = elf_load(mem, file);
     if (error) return;
 

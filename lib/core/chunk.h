@@ -2,8 +2,10 @@
 // chunk.h - Memory allocator for big chunks
 #pragma once
 #include "buf.h"
-#include "os.h"
 #include "type.h"
+#include "error.h"
+#include "os_alloc.h"
+#include "assert.h"
 
 typedef struct Chunk_Freelist Chunk_Freelist;
 struct Chunk_Freelist {

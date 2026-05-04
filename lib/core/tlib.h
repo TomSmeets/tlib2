@@ -65,7 +65,7 @@ static Module_Link *module_get_link(TLib *lib, Module *mod, Module *dep) {
 // Read entire file into memory
 static Buffer os_read_file(Memory *mem, char *path) {
     FileInfo info = {};
-    assert(os_stat(path, &info));
+    assert(fs_stat(path, &info));
 
     File *fd = os_open(path, FileMode_Read);
     u8 *file_data = mem_array(mem, u8, info.size);

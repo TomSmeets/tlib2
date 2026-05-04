@@ -4,6 +4,8 @@
 #include "base64.h"
 #include "command.h"
 #include "os2.h"
+#include "fs.h"
+#include "io.h"
 
 // Supported target platforms
 typedef enum {
@@ -74,7 +76,7 @@ static void build_compile(Build_Platform platform, Build_Mode mode, char *input,
     Fmt *ferr = fmt_alloc();
     fmt_cmd(ferr, &cmd);
     fmt_s(ferr, "\n");
-    os_write(os_stderr(), fmt_end(ferr));
+    io_write(io_stderr(), fmt_end(ferr));
     fmt_free(ferr);
 
     // Run command
@@ -109,24 +111,24 @@ static void generate_html(char *output_path, char *css_path, char **js_path_list
     fmt_g(f, "<head>\n");
     if (css_path) {
         fmt_g(f, "<style>\n");
-        fmt_g(f, os_read_file_string(mem, css_path));
+        fmt_g(f, fs_read(mem, css_path));
         fmt_g(f, "</style>\n");
     }
 
     fmt_g(f, "<script>\n");
     for (u32 i = 0; js_path_list[i]; ++i) {
-        fmt_g(f, os_read_file_string(mem, js_path_list[i]));
+        fmt_g(f, fs_read(mem, js_path_list[i]));
     }
     fmt_g(f, "tlib.main(Uint8Array.fromBase64(\"");
-    fmt_g(f, base64_encode(mem, os_read_file(mem, wasm_path)));
+    fmt_g(f, base64_encode(mem, fs_read(mem, wasm_path)));
     fmt_g(f, "\"));\n");
     fmt_g(f, "</script>\n");
 
     fmt_g(f, "</head>\n");
     fmt_g(f, "<body>\n");
-    fmt_g(f, os_read_file_string(mem, html_path));
+    fmt_g(f, fs_read(mem, html_path));
     fmt_g(f, "</body>\n");
-    os_write_file(output_path, fmt_end(f));
+    fs_write(output_path, fmt_end(f));
     mem_free(mem);
 }
 
@@ -204,7 +206,7 @@ static void build_build(Build *build) {
         fmt_g(f, "<head>\n");
         for (u32 i = 0; i < build->css_count; ++i) {
             fmt_g(f, "<style>\n");
-            fmt_g(f, os_read_file_string(mem, build->css_files[i]));
+            fmt_g(f, fs_read(mem, build->css_files[i]));
             fmt_g(f, "</style>\n");
         }
 
@@ -213,22 +215,22 @@ static void build_build(Build *build) {
         // Embed js files
         for (u32 i = 0; i < build->js_count; ++i) {
             fmt_g(f, "// ", build->js_files[i], "\n");
-            fmt_g(f, os_read_file_string(mem, build->js_files[i]));
+            fmt_g(f, fs_read(mem, build->js_files[i]));
         }
 
         // Load embedded wasm file
         fmt_g(f, "tlib.main(Uint8Array.fromBase64(\"");
-        fmt_buf(f, base64_encode(mem, os_read_file(mem, out_wasm)));
+        fmt_buf(f, base64_encode(mem, fs_read(mem, out_wasm)));
         fmt_g(f, "\"));\n");
         fmt_g(f, "</script>\n");
 
         fmt_g(f, "</head>\n");
         fmt_g(f, "<body>\n");
         for (u32 i = 0; i < build->html_count; ++i) {
-            fmt_g(f, os_read_file_string(mem, build->html_files[i]));
+            fmt_g(f, fs_read(mem, build->html_files[i]));
         }
         fmt_g(f, "</body>\n");
-        os_write_file(out_html, fmt_end(f));
-        if (!build->wasm) os_remove(out_wasm);
+        fs_write(out_html, fmt_end(f));
+        if (!build->wasm) fs_remove(out_wasm);
     }
 }

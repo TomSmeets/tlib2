@@ -40,9 +40,9 @@ static Buffer elf_read_section(Memory *mem, char *name, Elf *elf) {
     check(sect);
     if (error) return buf_null();
 
-    os_seek(elf->file, sect->offset);
+    io_seek(elf->file, sect->offset);
     u64 size = sect->size;
-    u8 *data = os_read_alloc(mem, elf->file, size);
+    u8 *data = io_read_alloc(mem, elf->file, size);
     return (Buffer){data, size};
 }
 

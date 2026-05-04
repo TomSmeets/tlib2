@@ -4,6 +4,7 @@
 #include "cli.h"
 #include "command.h"
 #include "fmt.h"
+#include "os_main.h"
 
 static void build_cmd_tl(Cli *cli) {
     cli_command(cli, "tl", "Build tl cli tool");
@@ -106,7 +107,7 @@ static void build_cmd_lsp(Cli *cli) {
     char cwd[1024];
     assert(linux_getcwd(cwd, sizeof(cwd)) > 0);
 
-    File *fd = os_open("compile_commands.json", FileMode_Create);
+    File *fd = fs_open("compile_commands.json", FileMode_Create);
     u8 buffer[1024];
 
     Fmt *fmt = fmt_alloc();
@@ -129,10 +130,9 @@ static void build_cmd_format(Cli *cli) {
     os_system("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin");
 }
 
-void os_main(u32 argc, char **argv) {
+void os_main(void) {
     Memory *mem = mem_new();
-    Cli *cli = cli_new(mem, argv);
-
+    Cli *cli = cli_new(mem, os_argv);
     build_cmd_test(cli);
     build_cmd_fuzz(cli);
     build_cmd_snake(cli, mem);

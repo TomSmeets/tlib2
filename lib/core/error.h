@@ -4,8 +4,6 @@
 #include "type.h"
 
 // Must be defined
-static void os_exit(void) __attribute__((__noreturn__));
-
 static thread_local char *error;
 
 // check() sets an error message if the condition fails but still continues execution
@@ -30,9 +28,6 @@ static thread_local char *error;
 
 #define check(X) check_msg(X, "check(" #X ") failed")
 #define check_or(X) if (!check(X))
-#define assert(X) \
-    if (!check_msg(X, "assert(" #X ") failed")) os_exit()
-#define os_fail(MSG) check_msg(0, MSG), os_exit()
 
 static void _error_set(char *message) {
     error = message;

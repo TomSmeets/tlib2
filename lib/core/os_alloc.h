@@ -1,14 +1,13 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// alloc.h - Platform independent memory allocation
 #pragma once
 #include "error.h"
 #include "os_headers.h"
 #include "type.h"
 
 // Allocate a new chunk of memory
-// - returns null on failure
-static void *os_alloc(size_t size);
-
-#if OS_LINUX
 static void *os_alloc(size_t size) {
+#if OS_LINUX
     // see 'man 2 mmap'
     void *ptr = linux_mmap(
         // Let the system choose a starting address for us
@@ -26,16 +25,8 @@ static void *os_alloc(size_t size) {
 
     // Check if mapping was ok
     check(ptr != MAP_FAILED);
-
-    // In theory mmap could reutrn 0 as an address if the zero page was not mapped.
-    // But we don't allow this.
-    check(ptr);
-    return ptr;
-}
-
 #elif OS_WINDOWS
-static void *os_alloc(size_t size) {
-    return VirtualAlloc(
+    void *ptr = VirtualAlloc(
         // Let the system choose a starting address for us
         0,
         // Allocation size
@@ -45,10 +36,7 @@ static void *os_alloc(size_t size) {
         // Memory should be read and writable
         PAGE_READWRITE
     );
-}
-
 #elif OS_WASM
-static void *os_alloc(size_t size) {
     // Get number of pages rounded up
     size_t pages = (size + WASM_PAGE_SIZE - 1) / WASM_PAGE_SIZE;
 
@@ -60,9 +48,9 @@ static void *os_alloc(size_t size) {
 
     // Convert to pointer
     void *ptr = (void *)(page_ix * WASM_PAGE_SIZE);
-
+#endif
     // We consider null to also be invalid
     check(ptr != 0);
     return ptr;
 }
-#endif
+

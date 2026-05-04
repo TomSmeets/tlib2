@@ -8,17 +8,6 @@ static_assert(sizeof(long) == sizeof(i64));
 static_assert(sizeof(int) == sizeof(i32));
 static_assert(sizeof(void *) == sizeof(u64));
 
-// Linux file descriptor to generic "handle" conversion
-static void *linux_file(i32 fd) {
-    if (fd < 0) return 0;
-    return (void *)((intptr_t)fd + 1);
-}
-
-static i32 linux_fd(void *file) {
-    if (!file) return -1;
-    return (i32)((intptr_t)file - 1);
-}
-
 // Timespec conversion helpers
 struct linux_timespec {
     i64 sec;
@@ -51,11 +40,12 @@ static struct linux_timespec time_to_timespec(u64 time) {
 
 // Functions from libc
 extern int system(const char *command);
+extern char *realpath(const char *path, char *resolved_path);
 
 #define RTLD_NOW 0x00002
 #define RTLD_LOCAL 0
 extern void *dlopen(const char *file, int mode);
-extern void *dlsym(void *restrict handle, const char *restrict name);
+extern void *dlsym(void *handle, const char *name);
 extern char *dlerror(void);
 
 typedef struct {

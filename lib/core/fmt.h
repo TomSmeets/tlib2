@@ -336,12 +336,12 @@ static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
         Fmt *f = fmt_alloc(); \
         f->eol = 1; \
         fmt_g(f, __VA_ARGS__); \
-        os_write(OUT, fmt_end(f)); \
+        io_write(OUT, fmt_end(f)); \
         fmt_free(f); \
     })
 
-#define print(...) fprint(os_stdout(), __VA_ARGS__)
-#define debug(x) fprint(os_stderr(), F_Faint, __FILE__ ":" TO_STRING(__LINE__) ": ", F_Reset, #x, " = ", x)
+#define print(...) fprint(io_stdout(), __VA_ARGS__)
+#define debug(x) fprint(io_stderr(), F_Faint, __FILE__ ":" TO_STRING(__LINE__) ": ", F_Reset, #x, " = ", x)
 
 // TODO: no more 'file' in fmt, just format string
 static void test_fmt(void) {

@@ -3,6 +3,7 @@
 #pragma once
 #include "mem.h"
 #include "type.h"
+#include "assert.h"
 
 // Convert a byte to the correct base64 char
 // - Considers only the bottom 6 bits

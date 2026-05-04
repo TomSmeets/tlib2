@@ -221,7 +221,7 @@ static void cli_help(Cli *cli) {
             fmt_g(usage, cmd->info);
             fmt_g(usage, "\n");
         }
-        os_write(os_stderr(), fmt_end(usage));
+        io_write(io_stderr(), fmt_end(usage));
         fmt_free(usage);
         return;
     }
@@ -285,7 +285,7 @@ static void cli_help(Cli *cli) {
             fmt_s(usage, flag->info);
             fmt_s(usage, "\n");
         }
-        os_write(os_stderr(), fmt_end(usage));
+        io_write(io_stderr(), fmt_end(usage));
         fmt_free(usage);
     }
 }

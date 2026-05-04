@@ -105,6 +105,12 @@ static Buffer mem_buffer(Memory *mem, size_t size) {
     return buf_from(ptr, size);
 }
 
+static Buffer mem_buffer_zero_terminated(Memory *mem, size_t size) {
+    u8 *ptr = mem_alloc_uninit(mem, size + 1);
+    ptr[size] = 0;
+    return buf_from(ptr, size);
+}
+
 // Create a new memory allocator
 static Memory *mem_new(void) {
     Memory mem = {};

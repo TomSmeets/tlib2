@@ -6,164 +6,7 @@
 #include "os_api.h"
 #include "str.h"
 #include "type.h"
-
-static char **linux_argv;
-
-// The main function, to exit call os_exit()
-// - This function is called in an infinite loop
-// - not defined as static to support hot reloading
-int main(i32 argc, char **argv) {
-    linux_argv = argv;
-    for (;;) {
-        os_main(argc, argv);
-        if (error) os_exit();
-    }
-}
-
-// Exit current application
-static void os_exit(void) {
-    if (error) {
-        linux_write(2, error, str_len(error));
-        linux_exit_group(1);
-    } else {
-        linux_exit_group(0);
-    }
-    __builtin_trap();
-}
-
-// ==================================
-//      File and Stream handling
-// ==================================
-static File *os_stdin(void) {
-    return linux_file(0);
-}
-
-static File *os_stdout(void) {
-    return linux_file(1);
-}
-
-static File *os_stderr(void) {
-    return linux_file(2);
-}
-
-static size_t os_read(File *file, Buffer buffer) {
-    i64 ret = linux_read(linux_fd(file), buffer.data, buffer.size);
-    check_or(ret >= 0) return 0;
-    check_or(ret <= buffer.size) ret = buffer.size;
-    return ret;
-}
-
-static size_t os_write(File *file, Buffer buffer) {
-    i64 ret = linux_write(linux_fd(file), buffer.data, buffer.size);
-    check_or(ret >= 0) return 0;
-    return ret;
-}
-
-// Open a file for reading or writing
-// - Returns 0 on failure
-static File *os_open(char *path, FileMode mode) {
-    assert(path);
-    i32 ret = -1;
-    if (mode == FileMode_Read) ret = linux_open(path, O_RDONLY, 0);
-    if (mode == FileMode_Write) ret = linux_open(path, O_RDWR, 0);
-    if (mode == FileMode_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
-    if (mode == FileMode_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
-    check(ret >= 0);
-    return linux_file(ret);
-}
-
-// Close a file
-// - Returns false on failure
-static void os_close(File *file) {
-    assert(file);
-    check(linux_close(linux_fd(file)) == 0);
-}
-
-// Seek to an absolute position in the current file
-// - Returns false on failure
-// - Files can be > 4GB
-static void os_seek(File *file, size_t pos) {
-    assert(file);
-    check(linux_seek(linux_fd(file), pos, SEEK_SET) >= 0);
-}
-
-// Returns info in File_Info struct
-// Returns false when the file does not exist
-static bool os_stat(char *path, FileInfo *info) {
-    assert(path);
-    if (info) *info = (FileInfo){};
-
-    struct linux_stat sb = {};
-    i32 ret = linux_lstat(path, &sb);
-    if (ret < 0) return false;
-
-    if (info) {
-        info->size = sb.st_size;
-        info->mtime = time_from_ns(sb.st_mtime, sb.st_mtime_nsec);
-
-        info->type = FileType_Other;
-        u32 file_type = sb.st_mode & S_IFMT;
-        if (file_type == S_IFREG) info->type = FileType_File;
-        if (file_type == S_IFDIR) info->type = FileType_Directory;
-    }
-    return true;
-}
-
-// Create an empty directory
-static bool os_mkdir(char *path) {
-    return linux_mkdir(path, 0755) == 0;
-}
-
-// Remove an empty directory
-static bool os_rmdir(char *path) {
-    return linux_rmdir(path) == 0;
-}
-
-// Remove a file
-static bool os_remove(char *path) {
-    return linux_unlink(path) == 0;
-}
-
-// List directory contents
-static bool os_list(char *path, os_list_cb *callback, void *user) {
-    i32 dir = linux_open(path, O_RDONLY | O_DIRECTORY, 0);
-    if (dir < 0) return 0;
-
-    for (;;) {
-        u8 buffer[4 * 1024];
-        i64 len = linux_getdents64(dir, (void *)buffer, sizeof(buffer));
-
-        // Error
-        if (len < 0) {
-            linux_close(dir);
-            return 0;
-        }
-
-        // End of stream
-        if (len == 0) break;
-
-        // Read entries
-        void *start = buffer;
-        void *end = buffer + len;
-        for (struct linux_dirent64 *ent = start; (void *)ent < end; ent = (void *)ent + ent->reclen) {
-            // Skip '.' and '..'
-            if (str_eq(ent->name, ".")) continue;
-            if (str_eq(ent->name, "..")) continue;
-
-            FileType type = FileType_Other;
-            if (ent->type == DT_DIR) type = FileType_Directory;
-            if (ent->type == DT_REG) type = FileType_File;
-
-            if (!callback(user, ent->name, type)) {
-                linux_close(dir);
-                return 0;
-            }
-        }
-    }
-
-    linux_close(dir);
-    return 1;
-}
+#include "fs.h"
 
 // =================================
 
@@ -234,12 +77,12 @@ static Process *os_exec(char **argv) {
     if (pid < 0) return 0;
 
     // pid > 0 -> parent process, pid is child PID
-    return linux_file(pid);
+    return fd_to_handle(pid);
 }
 
 // Wait for process to exit and return exit code
 static i32 os_wait(Process *proc) {
-    i32 pid = linux_fd(proc);
+    i32 pid = fd_from_handle(proc);
     i32 status = 0;
     if (waitpid(pid, &status, 0) < 0) return -1;
     u32 sig = status & 0x7f;
@@ -256,20 +99,20 @@ static i32 os_wait(Process *proc) {
 static Watch *os_watch_new(void) {
     i32 fd = linux_inotify_init(O_NONBLOCK);
     if (fd < 0) return 0;
-    return linux_file(fd);
+    return fd_to_handle(fd);
 }
 
 // Start watching a file or directory for changes
 static bool os_watch_add(Watch *watch, char *path) {
     assert(watch);
-    i32 fd = linux_fd(watch);
+    i32 fd = fd_from_handle(watch);
     i32 wd = linux_inotify_add_watch(fd, path, IN_MODIFY | IN_CREATE | IN_DELETE);
     return wd >= 0;
 }
 
 // Return true if a watched file was changed
 static bool os_watch_check(Watch *watch) {
-    i32 fd = linux_fd(watch);
+    i32 fd = fd_from_handle(watch);
 
     // Reserve enough space for a single event
     u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
