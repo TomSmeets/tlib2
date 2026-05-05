@@ -13,6 +13,7 @@
 #include "read.h"
 // #include "tlang/tlang.h"
 #include "tom.h"
+#include "os_main.h"
 
 #define TEST(FCN, ...) \
     ({ \
@@ -22,7 +23,7 @@
         debug(error); \
     })
 
-void os_main(u32 argc, char **argv) {
+static void os_main(void) {
     // Run tests
     TEST(test_ptr());
     TEST(test_mem());

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // build.c - Makefile but in C
 #include "build.h"
+#include "fs.h"
 #include "cli.h"
 #include "command.h"
 #include "fmt.h"
@@ -120,8 +121,9 @@ static void build_cmd_lsp(Cli *cli) {
     fmt_g(fmt, "\",");
     fmt_g(fmt, "\"file\":\"main.c\"");
     fmt_g(fmt, "}]");
-    fmt_end(fmt);
+    io_write(fd, fmt_end(fmt));
     fmt_free(fmt);
+    io_close(fd);
 }
 
 static void build_cmd_format(Cli *cli) {
