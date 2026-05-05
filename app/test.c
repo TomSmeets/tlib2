@@ -12,8 +12,8 @@
 #include "os.h"
 #include "read.h"
 // #include "tlang/tlang.h"
-#include "tom.h"
 #include "os_main.h"
+#include "tom.h"
 
 #define TEST(FCN, ...) \
     ({ \

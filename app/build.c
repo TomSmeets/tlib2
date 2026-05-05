@@ -1,10 +1,10 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // build.c - Makefile but in C
 #include "build.h"
-#include "fs.h"
 #include "cli.h"
 #include "command.h"
 #include "fmt.h"
+#include "fs.h"
 #include "os_main.h"
 
 static void build_cmd_tl(Cli *cli) {
