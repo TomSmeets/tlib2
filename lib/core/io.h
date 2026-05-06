@@ -1,13 +1,13 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // io.h - File IO
 #pragma once
+#include "buf.h"
 #include "error.h"
 #include "os_headers.h"
 
 // Abstract file handle
 typedef struct File File;
 
-#if OS_LINUX || OS_WASM
 static void *fd_to_handle(i32 fd) {
     if (fd < 0) return 0;
     return (void *)((intptr_t)fd + 1);
@@ -17,14 +17,18 @@ static i32 fd_from_handle(void *handle) {
     if (!handle) return -1;
     return (i32)((intptr_t)handle - 1);
 }
-static File *io_stdin(void) {  return fd_to_handle(0); }
+
+// clang-format off
+#if OS_LINUX || OS_WASM
+static File *io_stdin(void)  { return fd_to_handle(0); }
 static File *io_stdout(void) { return fd_to_handle(1); }
 static File *io_stderr(void) { return fd_to_handle(2); }
 #elif OS_WINDOWS
-static File *io_stdin(void)  { return GetStdHandle(STD_INPUT_HANDLE); }
+static File *io_stdin(void)  { return GetStdHandle(STD_INPUT_HANDLE);  }
 static File *io_stdout(void) { return GetStdHandle(STD_OUTPUT_HANDLE); }
-static File *io_stderr(void) { return GetStdHandle(STD_ERROR_HANDLE); }
+static File *io_stderr(void) { return GetStdHandle(STD_ERROR_HANDLE);  }
 #endif
+// clang-format on
 
 // Close a file
 static void io_close(File *file) {
@@ -57,13 +61,10 @@ static size_t io_read_partial(File *file, Buffer buffer) {
 #elif OS_WINDOWS
     DWORD size = MIN(buffer.size, U32_MAX);
     DWORD used = 0;
-    check(WriteFile(file, buffer.data, size, &used, 0));
+    check(ReadFile(file, buffer.data, size, &used, 0));
     return used;
-#elif OS_WASM
-    WASM_IMPORT(wasm_write) bool wasm_write(u32 fd, void *data, size_t size);
-    check(wasm_write(wasm_fd(file), data.data, data.size));
 #else
-    return 0
+    return 0;
 #endif
 }
 
@@ -79,8 +80,13 @@ static size_t io_write_partial(File *file, Buffer buffer) {
     DWORD size = MIN(buffer.size, U32_MAX);
     DWORD used = 0;
     check(WriteFile(file, buffer.data, size, &used, 0));
+    return used;
+#elif OS_WASM
+    WASM_IMPORT(wasm_write) bool wasm_write(u32 fd, void *data, size_t size);
+    check(wasm_write(fd_from_handle(file), buffer.data, buffer.size));
+    return buffer.size;
 #else
-    return 0
+    return 0;
 #endif
 }
 

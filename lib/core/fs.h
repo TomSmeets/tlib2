@@ -80,7 +80,7 @@ static FileInfo fs_stat(char *path) {
     info.mtime = 0; // TODO
     info.type = FileType_File;
     if (winfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        info->type = FileType_Directory;
+        info.type = FileType_Directory;
     }
 #endif
     return info;
@@ -220,7 +220,7 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
     }
 
     linux_close(dir);
-#else
+#elif OS_WINDOWS
     // Construct a query: path + '\*'
     size_t path_len = str_len(path);
     char search_query[path_len + 3];
@@ -230,7 +230,7 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
 
     WIN32_FIND_DATAA find;
     HANDLE handle = FindFirstFileA(search_query, &find);
-    if (handle == INVALID_HANDLE_VALUE) return 0;
+    if (handle == INVALID_HANDLE_VALUE) return;
 
     do {
         char *name = find.cFileName;

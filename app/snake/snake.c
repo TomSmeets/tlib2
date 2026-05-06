@@ -95,7 +95,7 @@ static void snake_draw(Snake *snake) {
     mem_free(tmp);
 }
 
-void os_main(u32 argc, char **argv) {
+static void os_main(void) {
     static Snake *snake;
 
     time_t now = os_time();

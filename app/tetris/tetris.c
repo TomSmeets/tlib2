@@ -141,7 +141,7 @@ static void tetris_next_piece(Tetris *tetris) {
     }
 }
 
-void os_main(u32 argc, char **argv) {
+static void os_main(void) {
     static Tetris *tetris;
 
     time_t now = os_time();

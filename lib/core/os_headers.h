@@ -8,7 +8,9 @@
 
 #elif OS_WINDOWS
 #pragma push_macro("TIME_MS")
+#pragma push_macro("PATH_MAX")
 #include <windows.h>
+#pragma pop_macro("PATH_MAX")
 #pragma pop_macro("TIME_MS")
 
 #elif OS_WASM

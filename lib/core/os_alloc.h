@@ -53,3 +53,12 @@ static void *os_alloc(size_t size) {
     check(ptr != 0);
     return ptr;
 }
+
+static void test_alloc(void) {
+    char *n = os_alloc(0);
+    char *a = os_alloc(16);
+    char *b = os_alloc(32);
+    check(a);
+    check(b);
+    check(a != b);
+}

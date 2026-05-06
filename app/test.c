@@ -20,18 +20,20 @@
         print(F_Green, "Testing ", F_Yellow, #FCN); \
         FCN; \
         if (error) os_exit(); \
-        debug(error); \
+        if (error) debug(error); \
     })
 
 static void os_main(void) {
     // Run tests
+    TEST(test_alloc());
     TEST(test_ptr());
     TEST(test_mem());
+    TEST(test_base64());
+
     TEST(test_read());
     TEST(test_write());
     TEST(test_tom());
     // TEST(test_tlang());
-    TEST(test_base64());
     TEST(test_fmt());
     TEST(test_cli_arg());
     TEST(test_cli());

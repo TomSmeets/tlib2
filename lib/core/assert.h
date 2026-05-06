@@ -4,6 +4,7 @@
 #include "error.h"
 #include "os_exit.h"
 
-#define assert(X) \
-    if (!check_msg(X, "assert(" #X ") failed")) os_exit()
-#define os_fail(MSG) check_msg(0, MSG), os_exit()
+// Check condition or crash
+#define assert(X) check_or(X) os_exit()
+#define os_fail(MSG) check(!MSG), os_exit()
+#define unreachable() os_fail("Unreachable");

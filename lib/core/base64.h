@@ -30,7 +30,7 @@ static u8 base64_to_bits(u8 c) {
     if (c == '/') return 63;
 
     // invalid
-    os_fail("Not a valid base64 character");
+    check(!"Not a valid base64 character");
     return 0;
 }
 

@@ -4,7 +4,6 @@
 #include "os_alloc.h"
 #include "os_api.h"
 #include "os_exit.h"
-#include "os_main.h"
 
 #if OS_LINUX
 #include "os_linux.h"

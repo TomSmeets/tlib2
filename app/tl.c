@@ -78,9 +78,9 @@ static void tl_cmd_elf(Cli *cli, Memory *mem) {
     dwarf_load(mem, elf);
 }
 
-void os_main(u32 argc, char **argv) {
+static void os_main(void) {
     Memory *mem = mem_new();
-    Cli *cli = cli_new(mem, argv);
+    Cli *cli = cli_new(mem, os_argv);
     tl_cmd_hello(cli);
     tl_cmd_base64(cli, mem);
     tl_cmd_gzip(cli, mem);

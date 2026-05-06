@@ -5,7 +5,6 @@
 #include "command.h"
 #include "fs.h"
 #include "io.h"
-#include "os2.h"
 
 // Supported target platforms
 typedef enum {

@@ -1,7 +1,7 @@
 #include "tlang.h"
 #include "os2.h"
 
-void os_main(u32 argc, char **argv) {
+static void os_main(void) {
     Memory *mem = mem_new();
     check_or(argc == 2) return;
 

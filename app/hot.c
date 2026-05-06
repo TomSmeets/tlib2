@@ -19,7 +19,7 @@ static char *entry_name;
 
 static void (*entry_method)(u32, char **);
 
-void os_main(u32 argc, char **argv) {
+static void os_main(void) {
     bool init = !hot;
     if (init) {
         // Check arguments

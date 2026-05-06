@@ -13,6 +13,19 @@ static thread_local char *error;
 // Checking for the errors should be mostly optional
 // Errors should be able to be handled at some later time
 
+// Throw an error
+static void _error_set(char *message) {
+    // We are only interested in the first error that occurred
+    if (!error) error = message;
+}
+
+// Throw an error if the condition becomes false
+// - Returns the condition value
+static bool _error_check(bool cond, char *message) {
+    if (!cond) _error_set(message);
+    return cond;
+}
+
 #if OS_LINUX
 #define ANSI_BOLD "\e[1m"
 #define ANSI_RED "\e[31m"
@@ -25,22 +38,8 @@ static thread_local char *error;
 
 #define check_msg(X, MSG) \
     _error_check((X), ANSI_BOLD __FILE__ ":" TO_STRING(__LINE__) ": " ANSI_RED "Error: " ANSI_RESET ANSI_BOLD MSG ANSI_RESET "\n")
-
 #define check(X) check_msg(X, "check(" #X ") failed")
 #define check_or(X) if (!check(X))
-
-static void _error_set(char *message) {
-    error = message;
-}
-
-// Set the error flag if the condition becomes false
-static bool _error_check(bool cond, char *message) {
-    // Set the error message only if this is the first error
-    if (!cond && !error) _error_set(message);
-
-    // Return value of condition directly
-    return cond;
-}
 
 // Clear error flag (ignores the last error)
 static void error_clear(void) {

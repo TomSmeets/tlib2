@@ -1,15 +1,10 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // test.c - Run all unit tests
-#define main _main
-#include "arg.h"
 #include "base64.h"
 #include "crc.h"
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"
-
-void os_main(u32 argc, char **argv) {
-}
 
 int LLVMFuzzerTestOneInput(u8 *data, size_t size) {
     Buffer input = {data, size};

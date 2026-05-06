@@ -132,7 +132,7 @@ static void build_cmd_format(Cli *cli) {
     os_system("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin");
 }
 
-void os_main(void) {
+static void os_main(void) {
     Memory *mem = mem_new();
     Cli *cli = cli_new(mem, os_argv);
     build_cmd_test(cli);

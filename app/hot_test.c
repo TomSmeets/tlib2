@@ -5,7 +5,7 @@
 
 static thread_local int counter = 0;
 
-void os_main(int argc, char **argv) {
+static void os_main(void) {
     printf("Hello world: %d!\n", counter);
     counter++;
     usleep(100 * 1000); // sleep 5 ms

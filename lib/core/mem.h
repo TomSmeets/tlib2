@@ -2,6 +2,7 @@
 // mem.h - Memory allocator
 #pragma once
 #include "chunk.h"
+#include "error.h"
 #include "ptr.h"
 #include "type.h"
 
@@ -29,12 +30,6 @@ typedef struct {
 static size_t size_align_up(size_t value, size_t align) {
     size_t mask = align - 1;
     return (value + mask) & ~mask;
-}
-
-// Align a pointer to a power of two
-static void *ptr_align_up(void *ptr, size_t align) {
-    size_t mask = align - 1;
-    return (void *)(((intptr_t)ptr + mask) & ~mask);
 }
 
 // Allocate 'size' bytes of uninitialized memory
