@@ -33,7 +33,6 @@ static void build_cmd_snake(Cli *cli, Memory *mem) {
     }
     build_js(build, "lib/core/os_wasm.js");
     build_js(build, "lib/pix/pix_wasm.js");
-    build_js(build, "app/snake/snake.js");
     build_css(build, "app/snake/snake.css");
     build_html(build, "app/snake/snake.html");
     build_build(build);

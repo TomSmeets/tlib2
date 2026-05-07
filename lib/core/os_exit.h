@@ -29,9 +29,19 @@ static void os_exit(void) {
     __builtin_trap();
 }
 #elif OS_WASM
-WASM_IMPORT(wasm_exit) void wasm_exit(char *message, u32 len);
 static void os_exit(void) {
-    wasm_exit(error, str_len(error));
+    if(error) {
+        wasm_call_vp(
+            "(p) => {"
+            "  let msg = c_string(p);"
+            "  console.log(msg);"
+            "  alert(msg);"
+            "}",
+            error
+        );
+    }
+
+    wasm_call("() => tlib.exit = true");
     __builtin_trap();
 }
 #endif

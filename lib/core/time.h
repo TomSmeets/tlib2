@@ -36,10 +36,7 @@ static time_t os_time(void) {
     time_t time = (time_t)(count / freq) + offset;
     return time;
 #elif OS_WASM
-    // Nice to have:
-    // > return wasm_eval("BigInt(new Date().getTime()*1000))")
-    WASM_IMPORT(wasm_time) time_t wasm_time(void);
-    return wasm_time();
+    return wasm_call_l("() => BigInt(new Date().getTime()*1000)");
 #endif
 }
 
@@ -53,7 +50,8 @@ static void os_sleep(time_t duration) {
     Sleep((u64)duration / 1000);
 #elif OS_WASM
     // return wasm_eval("(duration) => tlib.next_sleep = duration")(duration);
-    WASM_IMPORT(wasm_sleep) void wasm_sleep(time_t duration);
-    wasm_sleep(duration);
+    // WASM_IMPORT(wasm_sleep) void wasm_sleep(time_t duration);
+    // wasm_sleep(duration);
+    wasm_call_vl("(t) => tlib.next_sleep = t", duration);
 #endif
 }
