@@ -19,7 +19,6 @@ struct Pix {
     Input events[64];
 };
 
-
 #define STR(...) #__VA_ARGS__
 // Create a new Pix renderer with a given title and window size
 static Pix *pix_new(Memory *mem, char *title, v2i window_size) {
@@ -61,6 +60,7 @@ static Input pix_input(Pix *pix) {
 // - Pixels are r,g,b, from top left to bottom right
 // - Image is scaled
 static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
+    // clang-format off
     wasm_call_viip(STR((size_x, size_y, data_ptr) => {
         var data = new Uint8ClampedArray(tlib.memory.buffer, data_ptr, size_x*size_y*4);
         let image_data = new ImageData(data, size_x, size_y);
@@ -78,6 +78,7 @@ static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
         }
         tlib.ctx.putImageData(image_data, 0, 0);
     }), size.x, size.y, rgb);
+    // clang-format on
 }
 
 WASM_IMPORT(pix_wasm_start_audio) void pix_wasm_start_audio(Pix_Audio_Sample *buffer_data, u32 buffer_size, u32 *cursor);

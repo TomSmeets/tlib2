@@ -30,7 +30,7 @@ static void os_exit(void) {
 }
 #elif OS_WASM
 static void os_exit(void) {
-    if(error) {
+    if (error) {
         wasm_call_vp(
             "(msg) => {"
             "  console.log(str_c(msg));"
