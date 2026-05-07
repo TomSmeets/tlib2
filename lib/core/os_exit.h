@@ -32,10 +32,9 @@ static void os_exit(void) {
 static void os_exit(void) {
     if(error) {
         wasm_call_vp(
-            "(p) => {"
-            "  let msg = c_string(p);"
-            "  console.log(msg);"
-            "  alert(msg);"
+            "(msg) => {"
+            "  console.log(str_c(msg));"
+            "  alert(str_c(msg));"
             "}",
             error
         );

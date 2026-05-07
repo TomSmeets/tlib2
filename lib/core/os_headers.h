@@ -26,8 +26,11 @@ WASM_IMPORT(wasm_call) i32 wasm_call_ii(char *, i32);
 WASM_IMPORT(wasm_call) void wasm_call_vi(char *, i32);
 WASM_IMPORT(wasm_call) void wasm_call_vp(char *, void *);
 WASM_IMPORT(wasm_call) void wasm_call_vpi(char *, void *, i32);
+WASM_IMPORT(wasm_call) void wasm_call_viip(char *, i32, i32, void *);
+WASM_IMPORT(wasm_call) void wasm_call_vpip(char *, void *, i32, void *);
 
 WASM_IMPORT(wasm_call) i64 wasm_call_l(char *);
 WASM_IMPORT(wasm_call) i64 wasm_call_ll(char *, i64);
 WASM_IMPORT(wasm_call) void wasm_call_vl(char *, i64);
+WASM_IMPORT(wasm_call) void wasm_call_vpl(char *, void *, i64);
 #endif

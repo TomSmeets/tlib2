@@ -113,7 +113,7 @@ static void os_main(void) {
         print("Highscore: ", snake->high_score);
 
 #if OS_WASM
-        wasm_call_vpi("(msg, y) => alert(c_string(msg) + y)", "Hello World: ", snake->level->score);
+        wasm_call_vpi("(msg, y) => alert(str_c(msg) + y)", "Hello World: ", snake->level->score);
 #endif
 
         mem_free(snake->level->mem);
@@ -175,8 +175,6 @@ static void os_main(void) {
 #if OS_WASM
     wasm_call_vi("(x) => document.getElementById('score').innerText = x", snake->level->score);
     wasm_call_vi("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
-    check(delay == 1234);
-    os_exit();
 #endif
 
     os_sleep(diff);

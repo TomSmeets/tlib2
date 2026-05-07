@@ -19,13 +19,26 @@ struct Pix {
     Input events[64];
 };
 
-WASM_IMPORT(pix_wasm_start_input) void pix_wasm_start_input(Pix *pix);
 
+#define STR(...) #__VA_ARGS__
 // Create a new Pix renderer with a given title and window size
 static Pix *pix_new(Memory *mem, char *title, v2i window_size) {
     Pix *pix = mem_struct(mem, Pix);
     pix->mem = mem;
-    pix_wasm_start_input(pix);
+
+    // Init
+    // clang-format off
+    wasm_call_vp(STR((pix) => {
+        document.addEventListener("keydown", (ev) => {
+            if (!ev.repeat) tlib.import.pix_wasm_key_down(pix, ev.keyCode, true);
+        });
+        document.addEventListener("keyup", (ev) => {
+            if (!ev.repeat)  tlib.import.pix_wasm_key_down(pix, ev.keyCode, false);
+        });
+        document.addEventListener("contextmenu", (ev) => ev.preventDefault());
+    }), pix);
+    // clang-format on
+
     return pix;
 }
 
@@ -47,9 +60,24 @@ static Input pix_input(Pix *pix) {
 // Update screen contents
 // - Pixels are r,g,b, from top left to bottom right
 // - Image is scaled
-WASM_IMPORT(pix_wasm_draw) void pix_wasm_draw(u32 sx, u32 sy, u8 *data);
 static void pix_draw(Pix *pix, v2i size, u8 *rgb) {
-    pix_wasm_draw(size.x, size.y, rgb);
+    wasm_call_viip(STR((size_x, size_y, data_ptr) => {
+        var data = new Uint8ClampedArray(tlib.memory.buffer, data_ptr, size_x*size_y*4);
+        let image_data = new ImageData(data, size_x, size_y);
+
+        if(!tlib.canvas) {
+            tlib.canvas = document.getElementById("canvas");
+            tlib.canvas.width = size_x;
+            tlib.canvas.height = size_y;
+            tlib.ctx = tlib.canvas.getContext("2d");
+        }
+
+        if(tlib.canvas.width != size_x || tlib.canvas.height != size_y) {
+            tlib.canvas.width = size_x;
+            tlib.canvas.height = size_y;
+        }
+        tlib.ctx.putImageData(image_data, 0, 0);
+    }), size.x, size.y, rgb);
 }
 
 WASM_IMPORT(pix_wasm_start_audio) void pix_wasm_start_audio(Pix_Audio_Sample *buffer_data, u32 buffer_size, u32 *cursor);
