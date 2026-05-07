@@ -5,20 +5,25 @@
 
 #if OS_LINUX
 #include "linux.h"
+#endif
 
-#elif OS_WINDOWS
+#if OS_WINDOWS
 #pragma push_macro("TIME_MS")
 #pragma push_macro("PATH_MAX")
 #include <windows.h>
 #pragma pop_macro("PATH_MAX")
 #pragma pop_macro("TIME_MS")
+#endif
 
-#elif OS_WASM
+#if OS_WASM
 #define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
 #define WASM_PAGE_SIZE (64 * 1024)
 static size_t wasm_memory_grow(size_t pages) {
     return __builtin_wasm_memory_grow(0, pages);
 }
+#else
+#define WASM_IMPORT(name)
+#endif
 
 WASM_IMPORT(wasm_call) void wasm_call(char *);
 WASM_IMPORT(wasm_call) i32 wasm_call_i(char *);
@@ -33,4 +38,3 @@ WASM_IMPORT(wasm_call) i64 wasm_call_l(char *);
 WASM_IMPORT(wasm_call) i64 wasm_call_ll(char *, i64);
 WASM_IMPORT(wasm_call) void wasm_call_vl(char *, i64);
 WASM_IMPORT(wasm_call) void wasm_call_vpl(char *, void *, i64);
-#endif

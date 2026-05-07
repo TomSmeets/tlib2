@@ -25,7 +25,7 @@ static Command build_compile_command(Build_Platform platform, Build_Mode mode, c
     cmd_arg(&cmd, "clang");
 
     // Enforce C23 standard
-    cmd_arg(&cmd, "-std=c23");
+    cmd_arg(&cmd, "-std=gnu23");
 
     // Warn flags
     cmd_arg(&cmd, "-Wall");
