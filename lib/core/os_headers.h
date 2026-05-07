@@ -20,4 +20,6 @@
 static size_t wasm_memory_grow(size_t pages) {
     return __builtin_wasm_memory_grow(0, pages);
 }
+
+WASM_IMPORT(wasm_call) i32 wasm_call(const char *, i32, i32);
 #endif

@@ -156,3 +156,28 @@ static void test_mem(void) {
     mem_free(tmp);
     check(chunk_alloc_size == original_size1);
 }
+
+// Temporary memory (per frame)
+static thread_local Memory *_mem_tmp;
+static Memory *mem_tmp(void) {
+    if (!_mem_tmp) _mem_tmp = mem_new();
+    return _mem_tmp;
+}
+
+static void mem_tmp_free(void) {
+    if (!_mem_tmp) return;
+    mem_free(_mem_tmp);
+    _mem_tmp = 0;
+}
+
+// Permanent memory (never freed)
+static thread_local Memory *_mem_perm;
+static Memory *mem_perm(void) {
+    if (!_mem_perm) _mem_perm = mem_new();
+    return _mem_perm;
+}
+static void mem_perm_free(void) {
+    if (!_mem_perm) return;
+    mem_free(_mem_perm);
+    _mem_perm = 0;
+}

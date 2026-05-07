@@ -33,19 +33,6 @@ static void *os_dlbase(void *ptr) {
 //               Time
 // ==================================
 
-// Get unix timestamp in micro seconds
-static time_t os_time(void) {
-    struct linux_timespec t = {};
-    linux_clock_gettime(CLOCK_REALTIME, &t);
-    return time_from_timespec(&t);
-}
-
-static void os_sleep(time_t duration) {
-    if (duration < 0) duration = 0;
-    struct linux_timespec time = time_to_timespec(duration);
-    linux_nanosleep(&time, 0);
-}
-
 // ==== Random ====
 // Get a random 64 bit number from the os
 static u64 os_rand(void) {

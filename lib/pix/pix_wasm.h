@@ -26,7 +26,6 @@ static Pix *pix_new(Memory *mem, char *title, v2i window_size) {
     Pix *pix = mem_struct(mem, Pix);
     pix->mem = mem;
     pix_wasm_start_input(pix);
-
     return pix;
 }
 

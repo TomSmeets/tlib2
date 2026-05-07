@@ -20,5 +20,7 @@ int LLVMFuzzerTestOneInput(u8 *data, size_t size) {
     mem_free(mem);
     check(chunk_alloc_size == 0);
     if (error) __builtin_trap();
+    mem_tmp_free();
+    mem_perm_free();
     return 0;
 }

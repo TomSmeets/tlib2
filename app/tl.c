@@ -6,6 +6,7 @@
 #include "elf.h"
 #include "gzip.h"
 #include "os.h"
+#include "os_main.h"
 
 static void tl_cmd_hello(Cli *cli) {
     cli_command(cli, "hello", "Print Hello World");
@@ -79,7 +80,7 @@ static void tl_cmd_elf(Cli *cli, Memory *mem) {
 }
 
 static void os_main(void) {
-    Memory *mem = mem_new();
+    Memory *mem = mem_perm();
     Cli *cli = cli_new(mem, os_argv);
     tl_cmd_hello(cli);
     tl_cmd_base64(cli, mem);

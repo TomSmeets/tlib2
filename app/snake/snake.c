@@ -3,21 +3,17 @@
 #include "fmt.h"
 #include "level.h"
 #include "os.h"
+#include "os_main.h"
 #include "pix.h"
 #include "rand.h"
 #include "sound.h"
+#include "time.h"
 #include "vec.h"
 
-#if OS_WASM
-WASM_IMPORT(snake_update) void snake_update(u32 score, u32 highscore);
-#endif
-
 static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
-    Memory *tmp = mem_new();
-
     // Construct sample array
     u32 sample_count = duration * PIX_AUDIO_RATE;
-    Pix_Audio_Sample *samples = mem_array(tmp, Pix_Audio_Sample, sample_count);
+    Pix_Audio_Sample *samples = mem_array(mem_tmp(), Pix_Audio_Sample, sample_count);
 
     f32 dt = 1.0f / PIX_AUDIO_RATE;
     f32 phase = 0;
@@ -34,9 +30,6 @@ static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 d
         phase = f_fract(phase + dt * freq);
     }
     pix_play(pix, sample_count, samples);
-
-    // Memory is not needed anymore
-    mem_free(tmp);
 }
 
 // Game state
@@ -60,8 +53,7 @@ typedef struct {
 
 static void snake_draw(Snake *snake) {
     Level *level = snake->level;
-    Memory *tmp = mem_new();
-    u8 *canvas = mem_array(tmp, u8, 4 * level->sx * level->sy);
+    u8 *canvas = mem_array(mem_tmp(), u8, 4 * level->sx * level->sy);
     u8 *px = canvas;
 
     for (u32 i = 0; i < level->sy * level->sx; ++i) {
@@ -92,7 +84,6 @@ static void snake_draw(Snake *snake) {
         }
     }
     pix_draw(snake->pix, (v2i){level->sx, level->sy}, canvas);
-    mem_free(tmp);
 }
 
 static void os_main(void) {
@@ -101,7 +92,7 @@ static void os_main(void) {
     time_t now = os_time();
     if (!snake) {
         print("Hello World!");
-        Memory *mem = mem_new();
+        Memory *mem = mem_perm();
         snake = mem_struct(mem, Snake);
         snake->mem = mem;
         snake->pix = pix_new(mem, "Snake", (v2i){800, 600});
@@ -177,7 +168,8 @@ static void os_main(void) {
     time_t diff = now + delay - os_time();
 
 #if OS_WASM
-    snake_update(snake->level->score, snake->high_score);
+    wasm_call("(x) => document.getElementById('score').innerText = x", snake->level->score, 0);
+    wasm_call("(x) => document.getElementById('highscore').innerText = x", snake->high_score, 0);
 #endif
 
     os_sleep(diff);

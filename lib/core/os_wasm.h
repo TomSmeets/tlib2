@@ -11,17 +11,6 @@
 //      File and Stream handling
 // ==================================
 
-WASM_IMPORT(wasm_time) time_t wasm_time(void);
-static time_t os_time(void) {
-    return wasm_time();
-}
-
-WASM_IMPORT(wasm_sleep) void wasm_sleep(time_t duration);
-static void os_sleep(time_t duration) {
-    if (duration < 0) duration = 0;
-    wasm_sleep(duration);
-}
-
 static u64 os_rand(void) {
     return os_time();
 }

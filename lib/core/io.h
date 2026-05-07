@@ -3,6 +3,7 @@
 #pragma once
 #include "buf.h"
 #include "error.h"
+#include "mem.h"
 #include "os_headers.h"
 
 // Abstract file handle
@@ -106,4 +107,11 @@ static void io_write(File *file, Buffer buffer) {
         check_or(inc > 0) break;
         buffer = buf_drop(buffer, inc);
     }
+}
+
+static void *io_read_alloc(File *file, Memory *mem, size_t size) {
+    void *ptr = mem_alloc_uninit(mem, size + 1);
+    Buffer buffer = {ptr, size};
+    io_read(file, buffer);
+    return ptr;
 }

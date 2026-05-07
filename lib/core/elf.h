@@ -1,8 +1,8 @@
 // Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
 // elf.h - Elf File parsing
 #pragma once
+#include "io.h"
 #include "mem.h"
-#include "os2.h"
 #include "str.h"
 #include "type.h"
 
@@ -64,7 +64,7 @@ typedef struct {
 
 static Elf *elf_load(Memory *mem, File *file) {
     Elf64_Ehdr header;
-    os_read_exact(file, buf_from_struct(&header));
+    io_read(file, buf_from_struct(&header));
     if (error) return 0;
 
     // Check ELF magic number
@@ -81,14 +81,14 @@ static Elf *elf_load(Memory *mem, File *file) {
     elf->sections = mem_array(mem, Elf_Section, elf->section_count);
 
     // Read section headers
-    os_seek(file, header.shoff);
-    Elf64_Shdr *table = os_read_alloc(mem, file, header.shnum * sizeof(Elf64_Shdr));
+    io_seek(file, header.shoff);
+    Elf64_Shdr *table = io_read_alloc(file, mem, header.shnum * sizeof(Elf64_Shdr));
     if (error) return 0;
 
     // Read section header string table
     Elf64_Shdr *strtab = &table[header.shstrndx];
-    os_seek(file, strtab->offset);
-    char *str = os_read_alloc(mem, file, strtab->size);
+    io_seek(file, strtab->offset);
+    char *str = io_read_alloc(file, mem, strtab->size);
     if (error) return 0;
 
     for (u32 i = 0; i < elf->section_count; i++) {
