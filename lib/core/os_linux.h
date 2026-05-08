@@ -10,24 +10,6 @@
 
 // =================================
 
-// Open a library by name or full path
-static Library *os_dlopen(char *path) {
-    return (Library *)dlopen(path, RTLD_LOCAL | RTLD_NOW);
-}
-
-// Lookup a symbol in a library
-static void *os_dlsym(Library *lib, char *sym) {
-    return dlsym((void *)lib, sym);
-}
-
-// Get base address of a library based on a pointer inside that library
-static void *os_dlbase(void *ptr) {
-    Dl_info info;
-    int ret = dladdr(ptr, &info);
-    // Returns 0 on failure
-    if (ret == 0) return 0;
-    return info.fbase;
-}
 
 // ==================================
 //               Time

@@ -5,27 +5,6 @@
 #include "fs.h"
 #include "type.h"
 
-// ==================================
-//      Dynamic library handling
-// ==================================
-typedef struct Library Library;
-
-// Open a library by name or full path
-static Library *os_dlopen(char *path);
-
-// Lookup a symbol in a library
-static void *os_dlsym(Library *lib, char *sym);
-
-// Get base address of a library based on a pointer inside that library
-static void *os_dlbase(void *ptr);
-
-// ==================================
-//               Time
-// ==================================
-
-// Get unix timestamp in micro seconds
-static time_t os_time(void);
-
 // Sleep for a given time in micro seconds
 static void os_sleep(time_t us);
 

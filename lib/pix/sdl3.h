@@ -1,7 +1,7 @@
 // sdl3.h - Partial SDL3 api header to improve compile speed
 #pragma once
-#include "os.h"
 #include "type.h"
+#include "dl.h"
 #if 0
 #include <SDL3/SDL.h>
 #else
@@ -618,28 +618,28 @@ typedef struct {
 
 static void sdl3_load(SDL3 *sdl) {
 #if OS_LINUX
-    Library *handle = os_dlopen("libSDL3.so");
+    Library *handle = dl_open("libSDL3.so");
 #elif OS_WINDOWS
-    Library *handle = os_dlopen("SDL3.dll");
+    Library *handle = dl_open("SDL3.dll");
 #endif
-    assert(handle);
-    sdl->SDL_CreateWindow = os_dlsym(handle, "SDL_CreateWindow");
-    sdl->SDL_GL_CreateContext = os_dlsym(handle, "SDL_GL_CreateContext");
-    sdl->SDL_GL_GetProcAddress = os_dlsym(handle, "SDL_GL_GetProcAddress");
-    sdl->SDL_GL_SetAttribute = os_dlsym(handle, "SDL_GL_SetAttribute");
-    sdl->SDL_GL_SetSwapInterval = os_dlsym(handle, "SDL_GL_SetSwapInterval");
-    sdl->SDL_GL_SwapWindow = os_dlsym(handle, "SDL_GL_SwapWindow");
-    sdl->SDL_GetAudioStreamDevice = os_dlsym(handle, "SDL_GetAudioStreamDevice");
-    sdl->SDL_GetAudioStreamQueued = os_dlsym(handle, "SDL_GetAudioStreamQueued");
-    sdl->SDL_GetWindowSize = os_dlsym(handle, "SDL_GetWindowSize");
-    sdl->SDL_InitSubSystem = os_dlsym(handle, "SDL_InitSubSystem");
-    sdl->SDL_OpenAudioDeviceStream = os_dlsym(handle, "SDL_OpenAudioDeviceStream");
-    sdl->SDL_PollEvent = os_dlsym(handle, "SDL_PollEvent");
-    sdl->SDL_PutAudioStreamData = os_dlsym(handle, "SDL_PutAudioStreamData");
-    sdl->SDL_Quit = os_dlsym(handle, "SDL_Quit");
-    sdl->SDL_ResumeAudioDevice = os_dlsym(handle, "SDL_ResumeAudioDevice");
-    sdl->SDL_SetHint = os_dlsym(handle, "SDL_SetHint");
-    sdl->SDL_SetWindowFullscreen = os_dlsym(handle, "SDL_SetWindowFullscreen");
-    sdl->SDL_SetWindowRelativeMouseMode = os_dlsym(handle, "SDL_SetWindowRelativeMouseMode");
+    check_or(handle) return;
+    sdl->SDL_CreateWindow = dl_sym(handle, "SDL_CreateWindow");
+    sdl->SDL_GL_CreateContext = dl_sym(handle, "SDL_GL_CreateContext");
+    sdl->SDL_GL_GetProcAddress = dl_sym(handle, "SDL_GL_GetProcAddress");
+    sdl->SDL_GL_SetAttribute = dl_sym(handle, "SDL_GL_SetAttribute");
+    sdl->SDL_GL_SetSwapInterval = dl_sym(handle, "SDL_GL_SetSwapInterval");
+    sdl->SDL_GL_SwapWindow = dl_sym(handle, "SDL_GL_SwapWindow");
+    sdl->SDL_GetAudioStreamDevice = dl_sym(handle, "SDL_GetAudioStreamDevice");
+    sdl->SDL_GetAudioStreamQueued = dl_sym(handle, "SDL_GetAudioStreamQueued");
+    sdl->SDL_GetWindowSize = dl_sym(handle, "SDL_GetWindowSize");
+    sdl->SDL_InitSubSystem = dl_sym(handle, "SDL_InitSubSystem");
+    sdl->SDL_OpenAudioDeviceStream = dl_sym(handle, "SDL_OpenAudioDeviceStream");
+    sdl->SDL_PollEvent = dl_sym(handle, "SDL_PollEvent");
+    sdl->SDL_PutAudioStreamData = dl_sym(handle, "SDL_PutAudioStreamData");
+    sdl->SDL_Quit = dl_sym(handle, "SDL_Quit");
+    sdl->SDL_ResumeAudioDevice = dl_sym(handle, "SDL_ResumeAudioDevice");
+    sdl->SDL_SetHint = dl_sym(handle, "SDL_SetHint");
+    sdl->SDL_SetWindowFullscreen = dl_sym(handle, "SDL_SetWindowFullscreen");
+    sdl->SDL_SetWindowRelativeMouseMode = dl_sym(handle, "SDL_SetWindowRelativeMouseMode");
 }
 #endif

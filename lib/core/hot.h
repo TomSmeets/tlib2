@@ -5,6 +5,7 @@
 #include "fmt.h"
 #include "mem.h"
 #include "os2.h"
+#include "time.h"
 
 typedef struct {
     Memory *mem;
@@ -22,12 +23,12 @@ static Hot *hot_new(Memory *mem) {
 // Load a (new) version of the library
 static void *hot_load(Hot *hot, char *path, char *symbol) {
     // Path must be copied to a unique location
-    time_t time = os_time();
+    time_t time = time_now();
     char *unique_path = fstr(hot->mem, "/tmp/hot_", O(.base = 16), (u64)time, ".so");
     os_file_copy(path, unique_path);
 
     // Load library
-    Library *lib = os_dlopen(unique_path);
+    Library *lib = dl_open(unique_path);
     assert(lib);
     assert(lib != hot->lib);
 

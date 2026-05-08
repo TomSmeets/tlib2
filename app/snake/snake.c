@@ -89,7 +89,7 @@ static void snake_draw(Snake *snake) {
 static void os_main(void) {
     static Snake *snake;
 
-    time_t now = os_time();
+    time_t now = time_now();
     if (!snake) {
         print("Hello World!");
         Memory *mem = mem_perm();
@@ -145,7 +145,6 @@ th, td { padding: 8px; width: 100px; background-color: white; }
         print("---- Game Over ----");
         print("Score:     ", snake->level->score);
         print("Highscore: ", snake->high_score);
-        wasm_call_vpi("(msg, y) => alert(str_c(msg) + y)", "Hello World: ", snake->level->score);
         mem_free(snake->level->mem);
         snake->level = snake_level_new(&snake->rand);
     }
@@ -200,7 +199,7 @@ th, td { padding: 8px; width: 100px; background-color: white; }
     snake_draw(snake);
 
     time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
-    time_t diff = now + delay - os_time();
+    time_t diff = now + delay - time_now();
     wasm_call_vi("(x) => document.getElementById('score').innerText = x", snake->level->score);
     wasm_call_vi("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
     os_sleep(diff);

@@ -48,11 +48,6 @@ typedef __SIZE_TYPE__ size_t;
 #define SIZE_MB ((size_t)1 << 20)
 #define SIZE_GB ((size_t)1 << 30)
 
-// Unix time in micro seconds
-typedef i64 time_t;
-#define TIME_MS ((time_t)1000)
-#define TIME_SEC ((time_t)1000000)
-
 // Boolean
 #if __STDC_VERSION__ <= 201710L && !__cplusplus
 typedef _Bool bool;

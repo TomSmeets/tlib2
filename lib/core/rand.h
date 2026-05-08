@@ -3,6 +3,7 @@
 #pragma once
 #include "buf.h"
 #include "math.h"
+#include "time.h"
 #include "type.h"
 
 typedef struct {
@@ -23,7 +24,7 @@ static Rand rand_new(void) {
     check(ret == sizeof(seed));
 #else
     // Fallback to time
-    seed = os_time();
+    seed = time_now();
 #endif
     return rand_from(seed);
 }

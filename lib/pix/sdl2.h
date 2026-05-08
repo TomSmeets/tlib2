@@ -1,5 +1,5 @@
 #pragma once
-#include "os.h"
+#include "dl.h"
 #include "type.h"
 #if 0
 #include <SDL2/SDL.h>
@@ -456,27 +456,27 @@ typedef struct {
 
 static void sdl2_load(SDL2 *sdl) {
 #if OS_LINUX
-    Library *handle = os_dlopen("libSDL2.so");
+    Library *handle = dl_open("libSDL2.so");
 #elif OS_WINDOWS
-    Library *handle = os_dlopen("SDL2.dll");
+    Library *handle = dl_open("SDL2.dll");
 #endif
-    assert(handle);
-    sdl->SDL_CloseAudioDevice = os_dlsym(handle, "SDL_CloseAudioDevice");
-    sdl->SDL_CreateRenderer = os_dlsym(handle, "SDL_CreateRenderer");
-    sdl->SDL_CreateTexture = os_dlsym(handle, "SDL_CreateTexture");
-    sdl->SDL_CreateWindow = os_dlsym(handle, "SDL_CreateWindow");
-    sdl->SDL_DestroyRenderer = os_dlsym(handle, "SDL_DestroyRenderer");
-    sdl->SDL_DestroyTexture = os_dlsym(handle, "SDL_DestroyTexture");
-    sdl->SDL_DestroyWindow = os_dlsym(handle, "SDL_DestroyWindow");
-    sdl->SDL_InitSubSystem = os_dlsym(handle, "SDL_InitSubSystem");
-    sdl->SDL_LockAudioDevice = os_dlsym(handle, "SDL_LockAudioDevice");
-    sdl->SDL_OpenAudioDevice = os_dlsym(handle, "SDL_OpenAudioDevice");
-    sdl->SDL_PauseAudioDevice = os_dlsym(handle, "SDL_PauseAudioDevice");
-    sdl->SDL_PollEvent = os_dlsym(handle, "SDL_PollEvent");
-    sdl->SDL_Quit = os_dlsym(handle, "SDL_Quit");
-    sdl->SDL_RenderCopy = os_dlsym(handle, "SDL_RenderCopy");
-    sdl->SDL_RenderPresent = os_dlsym(handle, "SDL_RenderPresent");
-    sdl->SDL_SetTextureScaleMode = os_dlsym(handle, "SDL_SetTextureScaleMode");
-    sdl->SDL_UnlockAudioDevice = os_dlsym(handle, "SDL_UnlockAudioDevice");
-    sdl->SDL_UpdateTexture = os_dlsym(handle, "SDL_UpdateTexture");
+    check_or(handle) return;
+    sdl->SDL_CloseAudioDevice = dl_sym(handle, "SDL_CloseAudioDevice");
+    sdl->SDL_CreateRenderer = dl_sym(handle, "SDL_CreateRenderer");
+    sdl->SDL_CreateTexture = dl_sym(handle, "SDL_CreateTexture");
+    sdl->SDL_CreateWindow = dl_sym(handle, "SDL_CreateWindow");
+    sdl->SDL_DestroyRenderer = dl_sym(handle, "SDL_DestroyRenderer");
+    sdl->SDL_DestroyTexture = dl_sym(handle, "SDL_DestroyTexture");
+    sdl->SDL_DestroyWindow = dl_sym(handle, "SDL_DestroyWindow");
+    sdl->SDL_InitSubSystem = dl_sym(handle, "SDL_InitSubSystem");
+    sdl->SDL_LockAudioDevice = dl_sym(handle, "SDL_LockAudioDevice");
+    sdl->SDL_OpenAudioDevice = dl_sym(handle, "SDL_OpenAudioDevice");
+    sdl->SDL_PauseAudioDevice = dl_sym(handle, "SDL_PauseAudioDevice");
+    sdl->SDL_PollEvent = dl_sym(handle, "SDL_PollEvent");
+    sdl->SDL_Quit = dl_sym(handle, "SDL_Quit");
+    sdl->SDL_RenderCopy = dl_sym(handle, "SDL_RenderCopy");
+    sdl->SDL_RenderPresent = dl_sym(handle, "SDL_RenderPresent");
+    sdl->SDL_SetTextureScaleMode = dl_sym(handle, "SDL_SetTextureScaleMode");
+    sdl->SDL_UnlockAudioDevice = dl_sym(handle, "SDL_UnlockAudioDevice");
+    sdl->SDL_UpdateTexture = dl_sym(handle, "SDL_UpdateTexture");
 }

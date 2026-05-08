@@ -144,7 +144,7 @@ static void tetris_next_piece(Tetris *tetris) {
 static void os_main(void) {
     static Tetris *tetris;
 
-    time_t now = os_time();
+    time_t now = time_now();
     if (!tetris) {
         print("Hello World!");
         Memory *mem = mem_new();
@@ -228,6 +228,6 @@ static void os_main(void) {
     tetris_draw(tetris);
 
     time_t delay = 1000 * TIME_MS / 60;
-    time_t diff = now + delay - os_time();
+    time_t diff = now + delay - time_now();
     os_sleep(diff);
 }

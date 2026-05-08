@@ -2,9 +2,19 @@
 // time.h - Timing and sleeps
 #pragma once
 #include "os_headers.h"
+#include "type.h"
+
+// Unix time in micro seconds
+typedef i64 time_t;
+
+// One Millisecond
+#define TIME_MS ((time_t)1000)
+
+// One Second
+#define TIME_SEC ((time_t)1000000)
 
 // Get time micro seconds since 01-01-1970
-static time_t os_time(void) {
+static time_t time_now(void) {
 #if OS_LINUX
     struct linux_timespec t = {};
     linux_clock_gettime(CLOCK_REALTIME, &t);
@@ -49,9 +59,7 @@ static void os_sleep(time_t duration) {
     // Sleep in ms
     Sleep((u64)duration / 1000);
 #elif OS_WASM
-    // return wasm_eval("(duration) => tlib.next_sleep = duration")(duration);
-    // WASM_IMPORT(wasm_sleep) void wasm_sleep(time_t duration);
-    // wasm_sleep(duration);
+    // Actual sleep is not possible in js :(
     wasm_call_vl("(t) => tlib.next_sleep = t", duration);
 #endif
 }

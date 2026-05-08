@@ -6,6 +6,7 @@
 #include "io.h"
 #include "mem.h"
 #include "os_headers.h"
+#include "time.h"
 #include "ptr.h"
 #include "str.h"
 

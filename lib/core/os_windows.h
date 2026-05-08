@@ -12,31 +12,6 @@
 // ==================================
 
 // =================================
-
-// Open a library by name or full path
-static Library *os_dlopen(char *path) {
-    return (Library *)LoadLibrary(path);
-}
-
-// Lookup a symbol in a library
-static void *os_dlsym(Library *lib, char *sym) {
-    return GetProcAddress((void *)lib, sym);
-}
-
-// Get base address of a library based on a pointer inside that library
-static void *os_dlbase(void *ptr) {
-    // Not supported
-    return 0;
-}
-
-// ==== Random ====
-// Get a random 64 bit number from the os
-static u64 os_rand(void) {
-    LARGE_INTEGER big_count;
-    assert(QueryPerformanceCounter(&big_count));
-    return (u64)big_count.QuadPart;
-}
-
 // ==== System Commands ====
 static void os_system(char *command) {
     check(system(command) == 0);
