@@ -10,7 +10,6 @@ typedef struct {
     u64 inc;
 } Rand;
 
-
 // Initialize a new pseudo random number generator with a given seed
 static Rand rand_from(u64 seed) {
     return (Rand){.state = seed, .inc = 1};
