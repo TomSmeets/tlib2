@@ -151,7 +151,7 @@ static void os_main(void) {
         tetris = mem_struct(mem, Tetris);
         tetris->mem = mem;
         tetris->pix = pix_new(mem, "Tetris", (v2i){8 * 40, 16 * 40});
-        tetris->rand = rand_new(os_rand());
+        tetris->rand = rand_new();
     }
 
     bool move_down = 0;

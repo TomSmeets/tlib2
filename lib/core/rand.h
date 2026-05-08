@@ -10,9 +10,23 @@ typedef struct {
     u64 inc;
 } Rand;
 
+
 // Initialize a new pseudo random number generator with a given seed
-static Rand rand_new(u64 seed) {
+static Rand rand_from(u64 seed) {
     return (Rand){.state = seed, .inc = 1};
+}
+
+// Initialize a new pseudo random number generator
+static Rand rand_new(void) {
+    u64 seed = 0;
+#if OS_LINUX
+    i64 ret = linux_getrandom(&seed, sizeof(seed), 0);
+    check(ret == sizeof(seed));
+#else
+    // Fallback to time
+    seed = os_time();
+#endif
+    return rand_from(seed);
 }
 
 // Generate a random 32 bit number

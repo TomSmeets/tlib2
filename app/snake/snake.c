@@ -96,8 +96,42 @@ static void os_main(void) {
         snake = mem_struct(mem, Snake);
         snake->mem = mem;
         snake->pix = pix_new(mem, "Snake", (v2i){800, 600});
-        snake->rand = rand_new(os_rand());
+        snake->rand = rand_new();
         snake->level = snake_level_new(&snake->rand);
+        wasm_call_vp("(s) => document.body.innerHTML = str_c(s)", R"(
+            <canvas id='canvas'></canvas>
+            <table>
+                <tr>
+                    <td>Score:</td><td id='score'>?</td>
+                    <td>Highscore:</td><td id='highscore'>?</td>
+                </tr>
+            </table>
+        )");
+
+        wasm_call_vp("(s) => { let e = document.createElement('style'); e.innerHTML = str_c(s); document.head.appendChild(e); }", R"(
+html,body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #cccccc;
+}
+canvas, table {
+    background-color: #cccccc;
+    image-rendering: pixelated;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 800px;
+}
+
+table, th, td {
+    border-collapse: collapse;
+}
+
+th, td { padding: 8px; width: 100px; background-color: white; }
+        )");
     }
 
     if (snake->level->game_over) {
@@ -111,11 +145,7 @@ static void os_main(void) {
         print("---- Game Over ----");
         print("Score:     ", snake->level->score);
         print("Highscore: ", snake->high_score);
-
-#if OS_WASM
         wasm_call_vpi("(msg, y) => alert(str_c(msg) + y)", "Hello World: ", snake->level->score);
-#endif
-
         mem_free(snake->level->mem);
         snake->level = snake_level_new(&snake->rand);
     }
@@ -171,11 +201,7 @@ static void os_main(void) {
 
     time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
     time_t diff = now + delay - os_time();
-
-#if OS_WASM
     wasm_call_vi("(x) => document.getElementById('score').innerText = x", snake->level->score);
     wasm_call_vi("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
-#endif
-
     os_sleep(diff);
 }

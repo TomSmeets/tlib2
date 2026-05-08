@@ -15,10 +15,10 @@
 
 // Prepend item onto a singly linked list
 #define LIST_PUSH(FIRST, EL) \
-    do { \
+    ({ \
         (EL)->next = (FIRST); \
         (FIRST) = (EL); \
-    } while (0)
+    })
 
 #define LIST_NEXT(LIST, NEXT) (*(void **)((LIST) + (NEXT)))
 

@@ -9,6 +9,4 @@
 #include "os_linux.h"
 #elif OS_WINDOWS
 #include "os_windows.h"
-#elif OS_WASM
-#include "os_wasm.h"
 #endif
