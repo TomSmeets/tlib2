@@ -42,7 +42,7 @@ static Buffer elf_read_section(Memory *mem, char *name, Elf *elf) {
 
     io_seek(elf->file, sect->offset);
     u64 size = sect->size;
-    u8 *data = io_read_alloc(mem, elf->file, size);
+    u8 *data = io_read_alloc(elf->file, mem, size);
     return (Buffer){data, size};
 }
 

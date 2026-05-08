@@ -4,8 +4,10 @@
 #include "cli.h"
 #include "dwarf.h"
 #include "elf.h"
+#include "fs.h"
 #include "gzip.h"
-#include "os.h"
+#include "io.h"
+#include "mem.h"
 #include "os_main.h"
 
 static void tl_cmd_hello(Cli *cli) {
@@ -21,7 +23,7 @@ static void tl_cmd_base64(Cli *cli, Memory *mem) {
     if (!encode && !decode) encode = 1;
     if (!cli_check(cli)) return;
 
-    Buffer input = io_read(mem, io_stdin());
+    Buffer input = io_read_all_alloc(io_stdin(), mem);
     Buffer output = {};
     if (encode) output = base64_encode(mem, input);
     if (decode) output = base64_decode(mem, input);
@@ -35,7 +37,7 @@ static void tl_cmd_gzip(Cli *cli, Memory *mem) {
     if (!compress && !decompress) compress = 1;
     if (!cli_check(cli)) return;
 
-    Buffer input = io_read(mem, io_stdin());
+    Buffer input = io_read_all_alloc(io_stdin(), mem);
     Buffer output = {};
     if (compress) output = gzip_write(mem, input);
     if (decompress) output = gzip_read(mem, input);
@@ -52,7 +54,7 @@ static void tl_cmd_dump(Cli *cli, Memory *mem) {
     if (!wide && !compact) wide = hex;
     if (!cli_check(cli)) return;
 
-    Buffer input = io_read_all(mem, io_stdin());
+    Buffer input = io_read_all_alloc(io_stdin(), mem);
     u32 base = hex ? 16 : 2;
     u32 width = wide ? 16 : 4;
 
@@ -68,7 +70,7 @@ static void tl_cmd_elf(Cli *cli, Memory *mem) {
     char *path = cli_value(cli, "<Input>", "Input File");
     if (!cli_check(cli)) return;
 
-    File *file = io_open(path, FileMode_Read);
+    File *file = fs_open(path, FileMode_Read);
     Elf *elf = elf_load(mem, file);
     if (error) return;
 

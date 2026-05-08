@@ -2,7 +2,7 @@
 // tetris.c - A simple tetris game
 #include "fmt.h"
 #include "mem.h"
-#include "os.h"
+#include "os_main.h"
 #include "pix.h"
 #include "rand.h"
 #include "sound.h"

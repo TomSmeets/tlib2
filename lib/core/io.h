@@ -5,6 +5,7 @@
 #include "error.h"
 #include "mem.h"
 #include "os_headers.h"
+#include "write.h"
 
 // Abstract file handle
 typedef struct File File;
@@ -103,4 +104,15 @@ static void *io_read_alloc(File *file, Memory *mem, size_t size) {
     Buffer buffer = {ptr, size};
     io_read(file, buffer);
     return ptr;
+}
+
+static Buffer io_read_all_alloc(File *file, Memory *mem) {
+    Write *write = write_new(mem);
+    Buffer buffer = buf_stack(1024);
+    while (1) {
+        size_t used = io_read_partial(file, buffer);
+        write_buffer(write, buf_take(buffer, used));
+        if (used < buffer.size) break;
+    }
+    return write_get_written(write);
 }
