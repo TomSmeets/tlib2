@@ -7,6 +7,7 @@
 
 // Command line arguments
 static char **os_argv;
+static u32 os_argc;
 
 // Main entry point, called forever until an error or a call to os_exit()
 static void os_main(void);
@@ -14,7 +15,10 @@ static void os_main(void);
 // Can be called dynamically
 void os_main_wrapper(int argc, char **argv) {
     // Remember argv
-    if (!os_argv && argv) os_argv = argv;
+    if (!os_argv && argv) {
+        os_argv = argv;
+        os_argc = argc;
+    }
 
     // Call main method
     os_main();

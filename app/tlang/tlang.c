@@ -1,18 +1,23 @@
 #include "tlang.h"
-#include "os2.h"
+#include "fs.h"
+#include "os_main.h"
 
 static void os_main(void) {
-    Memory *mem = mem_new();
-    check_or(argc == 2) return;
+    Memory *mem = mem_perm();
+    check_or(os_argc == 2) return;
 
-    Buffer input = os_read_file(mem, argv[1]);
+    Buffer input = fs_read(mem, os_argv[1]);
     Ast *ast = tlang_lex(mem, input);
     for (Ast *tok = ast; tok; tok = tok->next_token) {
         print("Tok: ", " type ", tok->type, " text ", tok->text);
     }
     Parse p = {.token = ast};
     ast = tlang_parse(&p);
-    tlang_fmt(fout, ast, 0);
+
+    Fmt *f = fmt_new(mem);
+    tlang_fmt(f, ast, 0);
+    io_write(io_stdout(), fmt_end(f));
+
     Stack *env = tlang_eval_block(mem, ast);
     for (Stack *s = env; s; s = s->next) {
         print(s->name, " = ", s->value);

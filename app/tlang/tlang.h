@@ -321,7 +321,9 @@ static void test_tlang(void) {
 
     Parse p = {.token = ast};
     ast = tlang_parse(&p);
-    tlang_fmt(fout, ast, 0);
+    Fmt *out = fmt_new(mem);
+    tlang_fmt(out, ast, 0);
+    io_write(io_stdout(), fmt_end(out));
     Stack *env = tlang_eval_block(mem, ast);
     // for (Stack *s = env; s; s = s->next) {
     //     print(s->name, " = ", s->value);
