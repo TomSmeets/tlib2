@@ -5,6 +5,7 @@
 #include "command.h"
 #include "fs.h"
 #include "io.h"
+#include "proc.h"
 
 // Supported target platforms
 typedef enum {
@@ -79,7 +80,7 @@ static void build_compile(Build_Platform platform, Build_Mode mode, char *input,
     fmt_free(ferr);
 
     // Run command
-    i32 ret = os_wait(os_exec(cmd.argv));
+    i32 ret = proc_wait(proc_exec(cmd.argv));
     check(ret == 0);
 }
 
@@ -192,7 +193,7 @@ static void build_build(Build *build) {
     char *out_wasm = fstr(mem, out_path, "/", build->output_name, ".wasm");
     char *out_html = fstr(mem, out_path, "/", build->output_name, ".html");
 
-    os_system(fstr(mem, "mkdir -p ", out_path));
+    proc_shell(fstr(mem, "mkdir -p ", out_path));
     if (error) return;
 
     if (build->windows) build_compile(Platform_Windows, mode, build->source_file, out_exe);

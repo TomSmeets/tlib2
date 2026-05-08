@@ -1,8 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // fmt.h - Text formatter
 #pragma once
+#include "io.h"
 #include "mem.h"
-#include "os.h"
 #include "write.h"
 
 typedef struct {

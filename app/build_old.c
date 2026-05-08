@@ -106,7 +106,7 @@ static void cmd_dwarf(Cli *cli) {
 
 static void cmd_format(Cli *cli) {
     if (!cli_command(cli, "format", "Format tlib")) return;
-    os_system("clang-format --verbose -i app/* src/*");
+    proc_shell("clang-format --verbose -i app/* src/*");
     os_exit();
 }
 

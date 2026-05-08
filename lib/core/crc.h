@@ -3,7 +3,6 @@
 #pragma once
 #include "buf.h"
 #include "error.h"
-#include "os.h"
 #include "str.h"
 #include "type.h"
 

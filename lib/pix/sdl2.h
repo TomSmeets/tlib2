@@ -1,5 +1,6 @@
 #pragma once
 #include "dl.h"
+#include "error.h"
 #include "type.h"
 #if 0
 #include <SDL2/SDL.h>

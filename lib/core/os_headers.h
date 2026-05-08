@@ -36,18 +36,45 @@ WASM_IMPORT(wasm_call) void wasm_call_vl(char *, i64);
 WASM_IMPORT(wasm_call) void wasm_call_vpl(char *, void *, i64);
 #else
 #define WASM_IMPORT(name)
-void wasm_call(char *) {}
-i32 wasm_call_i(char *) {return 0;}
-i32 wasm_call_ii(char *, i32) {return 0;}
-void wasm_call_vi(char *, i32) {}
-void wasm_call_vp(char *, void *) {}
-void wasm_call_vpi(char *, void *, i32) {}
-void wasm_call_viip(char *, i32, i32, void *) {}
-void wasm_call_vpip(char *, void *, i32, void *) {}
+void wasm_call(char *) {
+}
+i32 wasm_call_i(char *) {
+    return 0;
+}
+i32 wasm_call_ii(char *, i32) {
+    return 0;
+}
+void wasm_call_vi(char *, i32) {
+}
+void wasm_call_vp(char *, void *) {
+}
+void wasm_call_vpi(char *, void *, i32) {
+}
+void wasm_call_viip(char *, i32, i32, void *) {
+}
+void wasm_call_vpip(char *, void *, i32, void *) {
+}
 
-i64 wasm_call_l(char *) {return 0;}
-i64 wasm_call_ll(char *, i64) {return 0;}
-void wasm_call_vl(char *, i64) {}
-void wasm_call_vpl(char *, void *, i64) {}
+i64 wasm_call_l(char *) {
+    return 0;
+}
+i64 wasm_call_ll(char *, i64) {
+    return 0;
+}
+void wasm_call_vl(char *, i64) {
+}
+void wasm_call_vpl(char *, void *, i64) {
+}
 #endif
 
+// Convert a unix file descriptor to a opaque pointer
+static void *fd_to_handle(i32 fd) {
+    if (fd < 0) return 0;
+    return (void *)((intptr_t)fd + 1);
+}
+
+// Convert a opaque pointer back to a unix file descriptor
+static i32 fd_from_handle(void *handle) {
+    if (!handle) return -1;
+    return (i32)((intptr_t)handle - 1);
+}

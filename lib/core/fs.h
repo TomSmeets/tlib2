@@ -6,9 +6,9 @@
 #include "io.h"
 #include "mem.h"
 #include "os_headers.h"
-#include "time.h"
 #include "ptr.h"
 #include "str.h"
+#include "time.h"
 
 // Maximum path length
 #define PATH_MAX (4 * 1024)
@@ -247,5 +247,59 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
         if (error) break;
     } while (FindNextFileA(handle, &find));
     FindClose(handle);
+#endif
+}
+
+typedef struct Watch Watch;
+
+// Create a new file watches
+static Watch *fs_watch_new(void) {
+#if OS_LINUX
+    i32 fd = linux_inotify_init(O_NONBLOCK);
+    check_or(fd >= 0) return 0;
+    return fd_to_handle(fd);
+#else
+    return 0;
+#endif
+}
+
+// Start watching a file or directory for changes
+static void os_watch_add(Watch *watch, char *path) {
+#if OS_LINUX
+    i32 fd = fd_from_handle(watch);
+    i32 wd = linux_inotify_add_watch(fd, path, IN_MODIFY | IN_CREATE | IN_DELETE);
+    check(wd >= 0);
+#endif
+}
+
+// Return true if a watched file was changed
+static bool os_watch_check(Watch *watch) {
+#if OS_LINUX
+    i32 fd = fd_from_handle(watch);
+
+    // Reserve enough space for a single event
+    u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
+
+    bool status = 0;
+    while (1) {
+        i64 ret = linux_read(fd, buffer, sizeof(buffer));
+
+        // No more data
+        if (ret == -EAGAIN) return status;
+
+        // Some other error, should not happen
+        assert(ret >= 0);
+
+        // Something changed!
+        struct inotify_event *event = (struct inotify_event *)buffer;
+
+        // Don't care about the event details
+        (void)event;
+
+        // Keep reading, to clear the buffer
+        status = 1;
+    }
+#else
+    return false;
 #endif
 }

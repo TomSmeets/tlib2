@@ -6,6 +6,7 @@
 #include "fmt.h"
 #include "fs.h"
 #include "os_main.h"
+#include "proc.h"
 
 static void build_cmd_tl(Cli *cli) {
     cli_command(cli, "tl", "Build tl cli tool");
@@ -13,7 +14,7 @@ static void build_cmd_tl(Cli *cli) {
     char **rest = cli_remaining(cli, "out/tl/tl");
     if (!cli_check(cli)) return;
     build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
-    if (run) os_wait(os_exec(rest));
+    if (run) proc_wait(proc_exec(rest));
 }
 
 static void build_cmd_snake(Cli *cli, Memory *mem) {
@@ -33,7 +34,7 @@ static void build_cmd_snake(Cli *cli, Memory *mem) {
     }
     build_js(build, "lib/core/os_wasm.js");
     build_build(build);
-    if (run && !error) os_system("out/snake/snake.elf");
+    if (run && !error) proc_shell("out/snake/snake.elf");
 }
 
 static void build_cmd_tetris(Cli *cli, Memory *mem) {
@@ -47,7 +48,7 @@ static void build_cmd_tetris(Cli *cli, Memory *mem) {
     build->release = release;
     build->linux = 1;
     build_build(build);
-    if (run && !error) os_system("out/tetris/tetris.elf");
+    if (run && !error) proc_shell("out/tetris/tetris.elf");
 }
 
 static void build_cmd_tlang(Cli *cli, Memory *mem) {
@@ -74,9 +75,9 @@ static void build_cmd_test(Cli *cli) {
     if (error) return;
     if (build_only) return;
     if (gdb) {
-        os_system("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test");
+        proc_shell("DEBUGINFOD_URLS= gdb -q -ex 'b os_main' -ex 'run' -ex 'tui en' out/test");
     } else {
-        os_system("out/test");
+        proc_shell("out/test");
     }
 }
 static void build_cmd_fuzz(Cli *cli) {
@@ -84,10 +85,10 @@ static void build_cmd_fuzz(Cli *cli) {
     bool build_only = cli_flag(cli, "-b", "--build", "Build only");
     if (!cli_check(cli)) return;
 
-    os_system("clang -std=c23 -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz");
+    proc_shell("clang -std=c23 -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz");
     if (error) return;
     if (build_only) return;
-    os_system("out/fuzz");
+    proc_shell("out/fuzz");
 }
 
 static void build_cmd_lsp(Cli *cli) {
@@ -125,7 +126,7 @@ static void build_cmd_lsp(Cli *cli) {
 static void build_cmd_format(Cli *cli) {
     cli_command(cli, "format", "Format all code");
     if (!cli_check(cli)) return;
-    os_system("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin");
+    proc_shell("find . -name '*.c' -o -name '*.h' | clang-format -i --verbose --files=/dev/stdin");
 }
 
 static void os_main(void) {

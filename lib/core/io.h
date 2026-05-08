@@ -9,16 +9,6 @@
 // Abstract file handle
 typedef struct File File;
 
-static void *fd_to_handle(i32 fd) {
-    if (fd < 0) return 0;
-    return (void *)((intptr_t)fd + 1);
-}
-
-static i32 fd_from_handle(void *handle) {
-    if (!handle) return -1;
-    return (i32)((intptr_t)handle - 1);
-}
-
 // clang-format off
 #if OS_LINUX || OS_WASM
 static File *io_stdin(void)  { return fd_to_handle(0); }

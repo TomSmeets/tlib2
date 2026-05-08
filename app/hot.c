@@ -74,7 +74,7 @@ static void os_main(void) {
         entry_method = 0;
 
         // Run build command
-        os_system(build_command);
+        proc_shell(build_command);
 
         // Load the new application
         if (!error) {

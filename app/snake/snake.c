@@ -2,7 +2,6 @@
 // snake.c - A simple snake game
 #include "fmt.h"
 #include "level.h"
-#include "os.h"
 #include "os_main.h"
 #include "pix.h"
 #include "rand.h"

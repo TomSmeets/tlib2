@@ -1,7 +1,7 @@
 // sdl3.h - Partial SDL3 api header to improve compile speed
 #pragma once
-#include "type.h"
 #include "dl.h"
+#include "type.h"
 #if 0
 #include <SDL3/SDL.h>
 #else

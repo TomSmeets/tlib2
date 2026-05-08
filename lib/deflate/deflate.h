@@ -7,7 +7,6 @@
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "mem.h"
-#include "os.h"
 #include "rand.h"
 #include "read.h"
 #include "type.h"
