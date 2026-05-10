@@ -10,9 +10,8 @@
 #define WINDOWS(X)
 #endif
 
-
 LINUX(int a = 5);
 WINDOWS(int b = 6);
 
-LINUX(int main(int argc, char *argv) {});
-WINDOWS(int WINMAIN(void) {})
+LINUX(int main(int argc, char *argv){});
+WINDOWS(int WINMAIN(void){})

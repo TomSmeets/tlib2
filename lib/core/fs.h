@@ -25,12 +25,11 @@ typedef enum {
     FileMode_CreateExe,
 } FileMode;
 
-
 static void buf_split_backwards(Buffer buf, u8 key, Buffer *left, Buffer *right) {
     for (i32 i = buf.size - 1; i >= 0; --i) {
         if (buf.data[i] == key) {
             *left = buf_take(buf, i);
-            *right= buf_drop(buf, i+1);
+            *right = buf_drop(buf, i + 1);
             return;
         }
     }
