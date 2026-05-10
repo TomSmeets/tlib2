@@ -25,28 +25,58 @@ typedef enum {
     FileMode_CreateExe,
 } FileMode;
 
+
+static void buf_split_backwards(Buffer buf, u8 key, Buffer *left, Buffer *right) {
+    for (i32 i = buf.size - 1; i >= 0; --i) {
+        if (buf.data[i] == key) {
+            *left = buf_take(buf, i);
+            *right= buf_drop(buf, i+1);
+            return;
+        }
+    }
+    *left = buf;
+    *right = (Buffer){};
+}
+
+typedef struct {
+    Buffer parent;
+    Buffer file;
+    Buffer base;
+    Buffer ext;
+} Path_Components;
+
+static Path_Components path_split(Buffer path) {
+    Path_Components ret = {};
+    // Find last '/'
+    buf_split_backwards(path, '/', &ret.parent, &ret.file);
+    buf_split_backwards(ret.file, '.', &ret.base, &ret.ext);
+    return ret;
+}
+
 // Open a file for reading or writing
 static File *fs_open(char *path, FileMode mode) {
-#if OS_LINUX
-    i32 ret = -1;
-    if (mode == FileMode_Read) ret = linux_open(path, O_RDONLY, 0);
-    if (mode == FileMode_Write) ret = linux_open(path, O_RDWR, 0);
-    if (mode == FileMode_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
-    if (mode == FileMode_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
-    check(ret >= 0);
-    return fd_to_handle(ret);
-#elif OS_WINDOWS
-    HANDLE ret = 0;
-    if (mode == FileMode_Read) ret = CreateFileA(path, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (mode == FileMode_Write) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (mode == FileMode_Create) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-    if (mode == FileMode_CreateExe) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-    check(ret);
-    check(ret != INVALID_HANDLE_VALUE);
-    return (File *)ret;
-#else
-    return 0;
-#endif
+    IF_LINUX({
+        i32 ret = -1;
+        if (mode == FileMode_Read) ret = linux_open(path, O_RDONLY, 0);
+        if (mode == FileMode_Write) ret = linux_open(path, O_RDWR, 0);
+        if (mode == FileMode_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
+        if (mode == FileMode_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
+        check(ret >= 0);
+        return fd_to_handle(ret);
+    })
+
+    IF_WINDOWS({
+        HANDLE ret = 0;
+        if (mode == FileMode_Read) ret = CreateFileA(path, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        if (mode == FileMode_Write) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        if (mode == FileMode_Create) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+        if (mode == FileMode_CreateExe) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+        check(ret);
+        check(ret != INVALID_HANDLE_VALUE);
+        return (File *)ret;
+    })
+
+    IF_WASM({ return 0; })
 }
 
 typedef enum {
@@ -65,40 +95,46 @@ typedef struct {
 
 static FileInfo fs_stat(char *path) {
     FileInfo info = {};
-#if OS_LINUX
-    struct linux_stat sb = {};
-    check(linux_lstat(path, &sb) == 0);
-    info.size = sb.st_size;
-    info.mtime = time_from_ns(sb.st_mtime, sb.st_mtime_nsec);
-    info.type = FileType_Other;
-    u32 file_type = sb.st_mode & S_IFMT;
-    if (file_type == S_IFREG) info.type = FileType_File;
-    if (file_type == S_IFDIR) info.type = FileType_Directory;
-#elif OS_WINDOWS
-    WIN32_FILE_ATTRIBUTE_DATA winfo;
-    check(GetFileAttributesExA(path, GetFileExInfoStandard, &winfo));
-    info.size = ((size_t)winfo.nFileSizeHigh << 32) | (size_t)winfo.nFileSizeLow;
-    info.mtime = 0; // TODO
-    info.type = FileType_File;
-    if (winfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        info.type = FileType_Directory;
-    }
-#endif
+
+    IF_LINUX({
+        struct linux_stat sb = {};
+        check(linux_lstat(path, &sb) == 0);
+        info.size = sb.st_size;
+        info.mtime = time_from_ns(sb.st_mtime, sb.st_mtime_nsec);
+        info.type = FileType_Other;
+        u32 file_type = sb.st_mode & S_IFMT;
+        if (file_type == S_IFREG) info.type = FileType_File;
+        if (file_type == S_IFDIR) info.type = FileType_Directory;
+    })
+
+    IF_WINDOWS({
+        WIN32_FILE_ATTRIBUTE_DATA winfo;
+        check(GetFileAttributesExA(path, GetFileExInfoStandard, &winfo));
+        info.size = ((size_t)winfo.nFileSizeHigh << 32) | (size_t)winfo.nFileSizeLow;
+        info.mtime = 0; // TODO
+        info.type = FileType_File;
+        if (winfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            info.type = FileType_Directory;
+        }
+    })
     return info;
 }
 
 // Get current working directory
 static char *fs_cwd(Memory *mem) {
     char buf[PATH_MAX];
-#if OS_LINUX
-    // Returns length including null byte, negative for error
-    i64 len = linux_getcwd(buf, sizeof(buf)) - 1;
-#elif OS_WINDOWS
-    // Returns length excluding null byte, zero for error
-    i64 len = GetCurrentDirectory(sizeof(buf), buf);
-#else
     i64 len = 0;
-#endif
+
+    IF_LINUX({
+        // Returns length including null byte, negative for error
+        len = linux_getcwd(buf, sizeof(buf)) - 1;
+    })
+
+    IF_WINDOWS({
+        // Returns length excluding null byte, zero for error
+        len = GetCurrentDirectory(sizeof(buf), buf);
+    })
+
     // Ensure valid result
     check_or(len > 0) return "";
 
@@ -111,40 +147,31 @@ static char *fs_cwd(Memory *mem) {
 
 // Create an empty directory
 static void fs_mkdir(char *path) {
-#if OS_LINUX
-    check(linux_mkdir(path, 0755) == 0);
-#elif OS_WINDOWS
-    check(CreateDirectoryA(path, NULL));
-#endif
+    IF_LINUX({ check(linux_mkdir(path, 0755) == 0); })
+    IF_WINDOWS({ check(CreateDirectoryA(path, NULL)); })
 }
 
 // Remove an empty directory
 static void fs_rmdir(char *path) {
-#if OS_LINUX
-    check(linux_rmdir(path) == 0);
-#elif OS_WINDOWS
-    check(RemoveDirectoryA(path));
-#endif
+    IF_LINUX({ check(linux_rmdir(path) == 0); })
+    IF_WINDOWS({ check(RemoveDirectoryA(path)); })
 }
 
 // Remove a file
 static void fs_remove(char *path) {
-#if OS_LINUX
-    check(linux_unlink(path) == 0);
-#elif OS_WINDOWS
-    check(DeleteFileA(path));
-#endif
+    IF_LINUX({ check(linux_unlink(path) == 0); })
+    IF_WINDOWS({ check(DeleteFileA(path)); })
 }
 
 static char *fs_realpath(Memory *mem, char *path) {
     char *result = path;
 
-#if OS_LINUX
-    char buffer[PATH_MAX];
-    char *ret = realpath(path, buffer);
-    check(ret);
-    if (ret) result = ret;
-#endif
+    IF_LINUX({
+        char buffer[PATH_MAX];
+        char *ret = realpath(path, buffer);
+        check(ret);
+        if (ret) result = ret;
+    })
 
     return mem_clone(mem, result, str_len(result));
 }
@@ -190,116 +217,118 @@ typedef void fs_list_cb(void *user, char *name, FileType type);
 
 // List directory contents
 static void fs_list(char *path, fs_list_cb *callback, void *user) {
-#if OS_LINUX
-    i32 dir = linux_open(path, O_RDONLY | O_DIRECTORY, 0);
-    check_or(dir >= 0) return;
+    IF_LINUX({
+        i32 dir = linux_open(path, O_RDONLY | O_DIRECTORY, 0);
+        check_or(dir >= 0) return;
 
-    for (;;) {
-        u8 buffer[4 * 1024];
-        i64 len = linux_getdents64(dir, (void *)buffer, sizeof(buffer));
-        check(len >= 0);
-        if (error) break;
-
-        // End of stream
-        if (len == 0) break;
-
-        // Read entries
-        void *start = buffer;
-        void *end = buffer + len;
-        for (struct linux_dirent64 *ent = start; (void *)ent < end; ent = (void *)ent + ent->reclen) {
-            // Skip '.' and '..'
-            if (str_eq(ent->name, ".")) continue;
-            if (str_eq(ent->name, "..")) continue;
-
-            FileType type = FileType_Other;
-            if (ent->type == DT_DIR) type = FileType_Directory;
-            if (ent->type == DT_REG) type = FileType_File;
-
-            callback(user, ent->name, type);
+        for (;;) {
+            u8 buffer[4 * 1024];
+            i64 len = linux_getdents64(dir, (void *)buffer, sizeof(buffer));
+            check(len >= 0);
             if (error) break;
+
+            // End of stream
+            if (len == 0) break;
+
+            // Read entries
+            void *start = buffer;
+            void *end = buffer + len;
+            for (struct linux_dirent64 *ent = start; (void *)ent < end; ent = (void *)ent + ent->reclen) {
+                // Skip '.' and '..'
+                if (str_eq(ent->name, ".")) continue;
+                if (str_eq(ent->name, "..")) continue;
+
+                FileType type = FileType_Other;
+                if (ent->type == DT_DIR) type = FileType_Directory;
+                if (ent->type == DT_REG) type = FileType_File;
+
+                callback(user, ent->name, type);
+                if (error) break;
+            }
         }
-    }
+        linux_close(dir);
+    })
 
-    linux_close(dir);
-#elif OS_WINDOWS
-    // Construct a query: path + '\*'
-    size_t path_len = str_len(path);
-    char search_query[path_len + 3];
-    ptr_copy(search_query, path, path_len);
-    ptr_copy(search_query + path_len, "\\*", 2);
-    search_query[path_len + 3] = 0;
+    IF_WINDOWS({
+        // Construct a query: path + '\*'
+        size_t path_len = str_len(path);
+        char search_query[path_len + 3];
+        ptr_copy(search_query, path, path_len);
+        ptr_copy(search_query + path_len, "\\*", 2);
+        search_query[path_len + 3] = 0;
 
-    WIN32_FIND_DATAA find;
-    HANDLE handle = FindFirstFileA(search_query, &find);
-    if (handle == INVALID_HANDLE_VALUE) return;
+        WIN32_FIND_DATAA find;
+        HANDLE handle = FindFirstFileA(search_query, &find);
+        if (handle == INVALID_HANDLE_VALUE) return;
 
-    do {
-        char *name = find.cFileName;
+        do {
+            char *name = find.cFileName;
 
-        // Skip "." and ".."
-        if (str_eq(name, ".")) continue;
-        if (str_eq(name, "..")) continue;
+            // Skip "." and ".."
+            if (str_eq(name, ".")) continue;
+            if (str_eq(name, "..")) continue;
 
-        FileType type = FileType_File;
-        if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) type = FileType_Directory;
+            FileType type = FileType_File;
+            if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) type = FileType_Directory;
 
-        callback(user, name, type);
-        if (error) break;
-    } while (FindNextFileA(handle, &find));
-    FindClose(handle);
-#endif
+            callback(user, name, type);
+            if (error) break;
+        } while (FindNextFileA(handle, &find));
+        FindClose(handle);
+    })
 }
 
 typedef struct Watch Watch;
 
 // Create a new file watches
 static Watch *fs_watch_new(void) {
-#if OS_LINUX
-    i32 fd = linux_inotify_init(O_NONBLOCK);
-    check_or(fd >= 0) return 0;
-    return fd_to_handle(fd);
-#else
-    return 0;
-#endif
+    Watch *ret = 0;
+
+    IF_LINUX({
+        i32 fd = linux_inotify_init(O_NONBLOCK);
+        check_or(fd >= 0) return 0;
+        ret = fd_to_handle(fd);
+    })
+
+    return ret;
 }
 
 // Start watching a file or directory for changes
 static void os_watch_add(Watch *watch, char *path) {
-#if OS_LINUX
-    i32 fd = fd_from_handle(watch);
-    i32 wd = linux_inotify_add_watch(fd, path, IN_MODIFY | IN_CREATE | IN_DELETE);
-    check(wd >= 0);
-#endif
+    IF_LINUX({
+        i32 fd = fd_from_handle(watch);
+        i32 wd = linux_inotify_add_watch(fd, path, IN_MODIFY | IN_CREATE | IN_DELETE);
+        check(wd >= 0);
+    })
 }
 
 // Return true if a watched file was changed
 static bool os_watch_check(Watch *watch) {
-#if OS_LINUX
-    i32 fd = fd_from_handle(watch);
+    IF_LINUX({
+        i32 fd = fd_from_handle(watch);
 
-    // Reserve enough space for a single event
-    u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
+        // Reserve enough space for a single event
+        u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
 
-    bool status = 0;
-    while (1) {
-        i64 ret = linux_read(fd, buffer, sizeof(buffer));
+        bool status = 0;
+        while (1) {
+            i64 ret = linux_read(fd, buffer, sizeof(buffer));
 
-        // No more data
-        if (ret == -EAGAIN) return status;
+            // No more data
+            if (ret == -EAGAIN) return status;
 
-        // Some other error, should not happen
-        assert(ret >= 0);
+            // Some other error, should not happen
+            assert(ret >= 0);
 
-        // Something changed!
-        struct inotify_event *event = (struct inotify_event *)buffer;
+            // Something changed!
+            struct inotify_event *event = (struct inotify_event *)buffer;
 
-        // Don't care about the event details
-        (void)event;
+            // Don't care about the event details
+            (void)event;
 
-        // Keep reading, to clear the buffer
-        status = 1;
-    }
-#else
+            // Keep reading, to clear the buffer
+            status = 1;
+        }
+    })
     return false;
-#endif
 }

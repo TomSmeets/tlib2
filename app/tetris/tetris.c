@@ -6,10 +6,7 @@
 #include "pix.h"
 #include "rand.h"
 #include "sound.h"
-
-#if OS_WASM
-WASM_IMPORT(snake_update) void snake_update(u32 score, u32 highscore);
-#endif
+#include "wasm.h"
 
 typedef struct {
     u8 x;
@@ -147,6 +144,28 @@ static void os_main(void) {
     time_t now = time_now();
     if (!tetris) {
         print("Hello World!");
+
+        js_append_style(
+            "html,body {"
+            "    width: 100%;"
+            "    height: 100%;"
+            "    overflow: hidden;"
+            "    background-color: #cccccc;"
+            "}"
+            "canvas, table {"
+            "    background-color: #cccccc;"
+            "    image-rendering: pixelated;"
+            "    padding-left: 0;"
+            "    padding-right: 0;"
+            "    margin-left: auto;"
+            "    margin-right: auto;"
+            "    display: block;"
+            "    width: 600px;"
+            "}"
+        );
+
+        js_set_html("<canvas id='canvas'></canvas>");
+
         Memory *mem = mem_new();
         tetris = mem_struct(mem, Tetris);
         tetris->mem = mem;

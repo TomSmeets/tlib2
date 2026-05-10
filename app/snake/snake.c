@@ -2,12 +2,14 @@
 // snake.c - A simple snake game
 #include "fmt.h"
 #include "level.h"
+#include "os_headers.h"
 #include "os_main.h"
 #include "pix.h"
 #include "rand.h"
 #include "sound.h"
 #include "time.h"
 #include "vec.h"
+#include "wasm.h"
 
 static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
     // Construct sample array
@@ -97,40 +99,45 @@ static void os_main(void) {
         snake->pix = pix_new(mem, "Snake", (v2i){800, 600});
         snake->rand = rand_new();
         snake->level = snake_level_new(&snake->rand);
-        wasm_call_vp("(s) => document.body.innerHTML = str_c(s)", R"(
-            <canvas id='canvas'></canvas>
-            <table>
-                <tr>
-                    <td>Score:</td><td id='score'>?</td>
-                    <td>Highscore:</td><td id='highscore'>?</td>
-                </tr>
-            </table>
-        )");
 
-        wasm_call_vp("(s) => { let e = document.createElement('style'); e.innerHTML = str_c(s); document.head.appendChild(e); }", R"(
-html,body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #cccccc;
-}
-canvas, table {
-    background-color: #cccccc;
-    image-rendering: pixelated;
-    padding-left: 0;
-    padding-right: 0;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-    width: 800px;
-}
+        js_set_html(
+            "<canvas id='canvas'></canvas>"
+            "<table>"
+            "  <tr>"
+            "    <td>Score:</td><td id='score'>?</td>"
+            "    <td>Highscore:</td><td id='highscore'>?</td>"
+            "  </tr>"
+            "</table>"
+        );
 
-table, th, td {
-    border-collapse: collapse;
-}
-
-th, td { padding: 8px; width: 100px; background-color: white; }
-        )");
+        js_append_style(
+            "html,body {"
+            "    width: 100%;"
+            "    height: 100%;"
+            "    overflow: hidden;"
+            "    background-color: #cccccc;"
+            "}"
+            "canvas, table {"
+            "    background-color: #cccccc;"
+            "    image-rendering: pixelated;"
+            "    padding-left: 0;"
+            "    padding-right: 0;"
+            "    margin-left: auto;"
+            "    margin-right: auto;"
+            "    display: block;"
+            "    width: 800px;"
+            "}"
+            ""
+            "table, th, td {"
+            "    border-collapse: collapse;"
+            "}"
+            ""
+            "th, td {"
+            "    padding: 8px;"
+            "    width: 100px;"
+            "    background-color: white;"
+            "}"
+        );
     }
 
     if (snake->level->game_over) {
@@ -199,7 +206,7 @@ th, td { padding: 8px; width: 100px; background-color: white; }
 
     time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
     time_t diff = now + delay - time_now();
-    wasm_call_vi("(x) => document.getElementById('score').innerText = x", snake->level->score);
-    wasm_call_vi("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
+    js_vi("(x, y) => document.getElementById('score').innerText = x", snake->level->score);
+    js_vi("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
     os_sleep(diff);
 }

@@ -37,6 +37,39 @@ static void build_cmd_snake(Cli *cli, Memory *mem) {
     if (run && !error) proc_shell("out/snake/snake.elf");
 }
 
+static char *str_from_buf(Buffer buf, Memory *mem) {
+    char *ret = mem_alloc_uninit(mem, buf.size + 1);
+    ptr_copy(ret, buf.data, buf.size);
+    ret[buf.size] = 0;
+    return ret;
+}
+
+static void build_cmd_build(Cli *cli, Memory *mem) {
+    cli_command(cli, "build", "Build Something");
+    bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
+    bool release = cli_flag(cli, "-O", "--release", "Build in release mode");
+    bool run = cli_flag(cli, "-r", "--run", "Run directly with hot reload");
+    char *path = cli_value(cli, "<SOURCE>", "main.c file");
+    if (!cli_check(cli)) return;
+
+    Path_Components split = path_split(str_buf(path));
+
+    char *name = str_from_buf(split.base, mem);
+    print("Building: ", name, " from ", path);
+
+    Build *build = build_new(mem, path, name);
+    build->release = release;
+    build->linux = 1;
+    if (!quick && !run) {
+        build->windows = 1;
+        build->wasm = !release;
+        build->html = 1;
+    }
+    build_js(build, "lib/core/os_wasm.js");
+    build_build(build);
+    if (run && !error) proc_shell("out/snake/snake.elf");
+}
+
 static void build_cmd_tetris(Cli *cli, Memory *mem) {
     cli_command(cli, "tetris", "Build Tetris");
     bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
@@ -135,6 +168,7 @@ static void os_main(void) {
     build_cmd_test(cli);
     build_cmd_fuzz(cli);
     build_cmd_snake(cli, mem);
+    build_cmd_build(cli, mem);
     build_cmd_tetris(cli, mem);
     build_cmd_tl(cli);
     build_cmd_tlang(cli, mem);

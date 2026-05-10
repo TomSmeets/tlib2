@@ -21,50 +21,26 @@
 static size_t wasm_memory_grow(size_t pages) {
     return __builtin_wasm_memory_grow(0, pages);
 }
-WASM_IMPORT(wasm_call) void wasm_call(char *);
-WASM_IMPORT(wasm_call) i32 wasm_call_i(char *);
-WASM_IMPORT(wasm_call) i32 wasm_call_ii(char *, i32);
-WASM_IMPORT(wasm_call) void wasm_call_vi(char *, i32);
-WASM_IMPORT(wasm_call) void wasm_call_vp(char *, void *);
-WASM_IMPORT(wasm_call) void wasm_call_vpi(char *, void *, i32);
-WASM_IMPORT(wasm_call) void wasm_call_viip(char *, i32, i32, void *);
-WASM_IMPORT(wasm_call) void wasm_call_vpip(char *, void *, i32, void *);
 
-WASM_IMPORT(wasm_call) i64 wasm_call_l(char *);
-WASM_IMPORT(wasm_call) i64 wasm_call_ll(char *, i64);
-WASM_IMPORT(wasm_call) void wasm_call_vl(char *, i64);
-WASM_IMPORT(wasm_call) void wasm_call_vpl(char *, void *, i64);
+WASM_IMPORT(wasm_call) void js_v(char *);
+WASM_IMPORT(wasm_call) void js_vp(char *, void *);
+WASM_IMPORT(wasm_call) void js_vpi(char *, void *, i32);
+WASM_IMPORT(wasm_call) void js_vi(char *, i32);
+WASM_IMPORT(wasm_call) void js_vl(char *, i64);
+WASM_IMPORT(wasm_call) void js_vpip(char *, void *, i32, void *);
+WASM_IMPORT(wasm_call) void js_viip(char *, i32, i32, void *);
+WASM_IMPORT(wasm_call) i64 js_l(char *);
 #else
-#define WASM_IMPORT(name)
-void wasm_call(char *) {
-}
-i32 wasm_call_i(char *) {
-    return 0;
-}
-i32 wasm_call_ii(char *, i32) {
-    return 0;
-}
-void wasm_call_vi(char *, i32) {
-}
-void wasm_call_vp(char *, void *) {
-}
-void wasm_call_vpi(char *, void *, i32) {
-}
-void wasm_call_viip(char *, i32, i32, void *) {
-}
-void wasm_call_vpip(char *, void *, i32, void *) {
-}
-
-i64 wasm_call_l(char *) {
-    return 0;
-}
-i64 wasm_call_ll(char *, i64) {
-    return 0;
-}
-void wasm_call_vl(char *, i64) {
-}
-void wasm_call_vpl(char *, void *, i64) {
-}
+// clang-format off
+static void js_v(char *) {}
+static void js_vp(char *, void *) {}
+static void js_vpi(char *, void *, i32){};
+static void js_vi(char *, i32) {}
+static void js_vl(char *, i64) {}
+static void js_vpip(char *, void *, i32, void *) {}
+static void js_viip(char *, i32, i32, void *) {}
+static i64 js_l(char *) {return 0;}
+// clang-format on
 #endif
 
 // Convert a unix file descriptor to a opaque pointer
@@ -78,3 +54,24 @@ static i32 fd_from_handle(void *handle) {
     if (!handle) return -1;
     return (i32)((intptr_t)handle - 1);
 }
+
+// Simple ifdef macros,
+// Why? Because it is more readable, clang-format will not indent '#if'
+#if OS_WINDOWS
+#define IF_WINDOWS(X) X
+#else
+#define IF_WINDOWS(X)
+#endif
+
+#if OS_LINUX
+#define IF_LINUX(X) X
+#else
+#define IF_LINUX(X)
+#endif
+
+#if OS_WASM
+#define IF_WASM(X) X
+#else
+#define IF_WASM(X)
+#endif
+ 
