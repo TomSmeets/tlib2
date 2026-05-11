@@ -50,7 +50,7 @@ static void *os_alloc(size_t size) {
     void *ptr = (void *)(page_ix * WASM_PAGE_SIZE);
 #endif
     // We consider null to also be invalid
-    check(ptr != 0);
+    if (size > 0) check(ptr != 0);
     return ptr;
 }
 
