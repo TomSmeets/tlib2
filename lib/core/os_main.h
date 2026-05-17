@@ -35,7 +35,7 @@ int main(i32 argc, char **argv) {
     for (;;) os_main_wrapper(argc, argv);
 }
 #elif OS_WINDOWS
-int main(int argc, char **argv) {
-    for (;;) os_main_wrapper(argc, argv);
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+    for (;;) os_main_wrapper(0, 0);
 }
 #endif

@@ -8,35 +8,6 @@
 #include "os_main.h"
 #include "proc.h"
 
-static void build_cmd_tl(Cli *cli) {
-    cli_command(cli, "tl", "Build tl cli tool");
-    bool run = cli_flag(cli, "-r", "--run", "Run directly");
-    char **rest = cli_remaining(cli, "out/tl/tl");
-    if (!cli_check(cli)) return;
-    build_compile(Platform_Linux, Mode_Debug, "app/tl.c", "out/tl/tl");
-    if (run) proc_wait(proc_exec(rest));
-}
-
-static void build_cmd_snake(Cli *cli, Memory *mem) {
-    cli_command(cli, "snake", "Build Snake");
-    bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
-    bool release = cli_flag(cli, "-O", "--release", "Build in release mode");
-    bool run = cli_flag(cli, "-r", "--run", "Run directly with hot reload");
-    if (!cli_check(cli)) return;
-
-    Build *build = build_new(mem, "app/snake/snake.c", "snake");
-    build->release = release;
-    build->linux = 1;
-    if (!quick && !run) {
-        build->windows = 1;
-        build->wasm = !release;
-        build->html = 1;
-    }
-    build_js(build, "lib/core/os_wasm.js");
-    build_build(build);
-    if (run && !error) proc_shell("out/snake/snake.elf");
-}
-
 static char *str_from_buf(Buffer buf, Memory *mem) {
     char *ret = mem_alloc_uninit(mem, buf.size + 1);
     ptr_copy(ret, buf.data, buf.size);
@@ -67,35 +38,7 @@ static void build_cmd_build(Cli *cli, Memory *mem) {
     }
     build_js(build, "lib/core/os_wasm.js");
     build_build(build);
-    if (run && !error) proc_shell("out/snake/snake.elf");
-}
-
-static void build_cmd_tetris(Cli *cli, Memory *mem) {
-    cli_command(cli, "tetris", "Build Tetris");
-    bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
-    bool release = cli_flag(cli, "-O", "--release", "Build in release mode");
-    bool run = cli_flag(cli, "-r", "--run", "Run directly with hot reload");
-    if (!cli_check(cli)) return;
-
-    Build *build = build_new(mem, "app/tetris/tetris.c", "tetris");
-    build->release = release;
-    build->linux = 1;
-    build_build(build);
-    if (run && !error) proc_shell("out/tetris/tetris.elf");
-}
-
-static void build_cmd_tlang(Cli *cli, Memory *mem) {
-    cli_command(cli, "tlang", "Build Tom's language");
-    bool quick = cli_flag(cli, "-q", "--quick", "Skip other platforms");
-    bool release = cli_flag(cli, "-O", "--release", "Build in release mode");
-    if (!cli_check(cli)) return;
-
-    Build *build = build_new(mem, "app/tlang/tlang.c", "tlang");
-    build->release = release;
-    build->linux = 1;
-    build->windows = 1;
-    build->wasm = 1;
-    build_build(build);
+    if (run && !error) proc_shell(fstr(mem, "out/", name, "/", name, ".elf"));
 }
 
 static void build_cmd_test(Cli *cli) {
@@ -167,11 +110,7 @@ static void os_main(void) {
     Cli *cli = cli_new(mem, os_argv);
     build_cmd_test(cli);
     build_cmd_fuzz(cli);
-    build_cmd_snake(cli, mem);
     build_cmd_build(cli, mem);
-    build_cmd_tetris(cli, mem);
-    build_cmd_tl(cli);
-    build_cmd_tlang(cli, mem);
     build_cmd_lsp(cli);
     build_cmd_format(cli);
     cli_help(cli);
