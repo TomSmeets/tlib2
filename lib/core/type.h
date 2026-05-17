@@ -22,6 +22,11 @@
 #define OS_WASM 1
 #endif
 
+typedef unsigned long ulong;
+typedef unsigned int uint;
+typedef unsigned short ushort;
+typedef unsigned char uchar;
+
 // Base types
 typedef __UINT8_TYPE__ u8;
 typedef __INT8_TYPE__ i8;

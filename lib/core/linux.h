@@ -162,21 +162,7 @@ static i64 linux_syscall0(i64 a0) {
 #define O_DIRECTORY 0200000
 #define O_CLOEXEC 02000000
 
-static i64 linux_read(i32 fd, void *buf, u64 size) {
-    return linux_syscall3(0x00, fd, (i64)buf, size);
-}
-
-static i64 linux_write(i32 fd, const void *buf, u64 size) {
-    return linux_syscall3(0x01, fd, (i64)buf, size);
-}
-
-static i32 linux_open(const char *path, i32 flags, u32 mode) {
-    return linux_syscall3(0x02, (i64)path, flags, mode);
-}
-
-static i32 linux_close(i32 fd) {
-    return linux_syscall1(0x03, fd);
-}
+typedef u32 umode_t;
 
 // ==== Stat ====
 struct linux_stat {
@@ -288,8 +274,8 @@ static i64 linux_gettimeofday(struct linux_timeval *time, void *tz) {
 struct linux_dirent64 {
     u64 ino;
     i64 off;
-    unsigned short reclen;
-    unsigned char type;
+    ushort reclen;
+    uchar type;
     char name[];
 };
 
@@ -310,27 +296,10 @@ static i64 linux_getrandom(void *buf, u64 size, u32 flags) {
 }
 
 // ==== INotify ====
-#define IN_MODIFY 0x00000002
-#define IN_CREATE 0x00000100
-#define IN_DELETE 0x00000200
-#define NAME_MAX 255
-
-struct inotify_event {
-    i32 wd;
-    u32 mask;
-    u32 cookie;
-    u32 len;
-    char name[];
-};
-
-static i32 linux_inotify_init(i32 flags) {
-    return linux_syscall1(0x126, flags);
-}
-
-static i32 linux_inotify_add_watch(i32 fd, const char *path, u32 mask) {
-    return linux_syscall3(0xfe, fd, (i64)path, mask);
-}
-
 int fork(void);
 int waitpid(int pid, int *status, int options);
 int execvp(const char *file, char *const argv[]);
+
+static long sys_read (uint fd,       char *buf, size_t count)       { return linux_syscall3(0, fd, (i64)buf, count); }
+static long sys_write(uint fd, const char *buf, size_t count)       { return linux_syscall3(1, fd, (i64)buf, count); }
+static long sys_close(uint fd)                                      { return linux_syscall1(3, fd); }

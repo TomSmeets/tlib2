@@ -52,14 +52,21 @@ static Path_Components path_split(Buffer path) {
     return ret;
 }
 
+#if OS_LINUX
+#define NAME_MAX 255
+static long sys_open(const char *filename, int flags, umode_t mode) {
+    return linux_syscall3(2, (i64)filename, flags, mode);
+}
+#endif
+
 // Open a file for reading or writing
 static File *fs_open(char *path, FileMode mode) {
     IF_LINUX({
         i32 ret = -1;
-        if (mode == FileMode_Read) ret = linux_open(path, O_RDONLY, 0);
-        if (mode == FileMode_Write) ret = linux_open(path, O_RDWR, 0);
-        if (mode == FileMode_Create) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
-        if (mode == FileMode_CreateExe) ret = linux_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
+        if (mode == FileMode_Read) ret = sys_open(path, O_RDONLY, 0);
+        if (mode == FileMode_Write) ret = sys_open(path, O_RDWR, 0);
+        if (mode == FileMode_Create) ret = sys_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
+        if (mode == FileMode_CreateExe) ret = sys_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
         check(ret >= 0);
         return fd_to_handle(ret);
     })
@@ -217,7 +224,7 @@ typedef void fs_list_cb(void *user, char *name, FileType type);
 // List directory contents
 static void fs_list(char *path, fs_list_cb *callback, void *user) {
     IF_LINUX({
-        i32 dir = linux_open(path, O_RDONLY | O_DIRECTORY, 0);
+        i32 dir = sys_open(path, O_RDONLY | O_DIRECTORY, 0);
         check_or(dir >= 0) return;
 
         for (;;) {
@@ -245,7 +252,7 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
                 if (error) break;
             }
         }
-        linux_close(dir);
+        sys_close(dir);
     })
 
     IF_WINDOWS({
@@ -275,59 +282,4 @@ static void fs_list(char *path, fs_list_cb *callback, void *user) {
         } while (FindNextFileA(handle, &find));
         FindClose(handle);
     })
-}
-
-typedef struct Watch Watch;
-
-// Create a new file watches
-static Watch *fs_watch_new(void) {
-    Watch *ret = 0;
-
-    IF_LINUX({
-        i32 fd = linux_inotify_init(O_NONBLOCK);
-        check_or(fd >= 0) return 0;
-        ret = fd_to_handle(fd);
-    })
-
-    return ret;
-}
-
-// Start watching a file or directory for changes
-static void os_watch_add(Watch *watch, char *path) {
-    IF_LINUX({
-        i32 fd = fd_from_handle(watch);
-        i32 wd = linux_inotify_add_watch(fd, path, IN_MODIFY | IN_CREATE | IN_DELETE);
-        check(wd >= 0);
-    })
-}
-
-// Return true if a watched file was changed
-static bool os_watch_check(Watch *watch) {
-    IF_LINUX({
-        i32 fd = fd_from_handle(watch);
-
-        // Reserve enough space for a single event
-        u8 buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
-
-        bool status = 0;
-        while (1) {
-            i64 ret = linux_read(fd, buffer, sizeof(buffer));
-
-            // No more data
-            if (ret == -EAGAIN) return status;
-
-            // Some other error, should not happen
-            assert(ret >= 0);
-
-            // Something changed!
-            struct inotify_event *event = (struct inotify_event *)buffer;
-
-            // Don't care about the event details
-            (void)event;
-
-            // Keep reading, to clear the buffer
-            status = 1;
-        }
-    })
-    return false;
 }

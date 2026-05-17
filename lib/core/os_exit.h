@@ -10,7 +10,7 @@ __attribute__((__noreturn__)) static void os_exit(void) {
     if (error) {
         // Exit with an error
         IF_LINUX({
-            linux_write(2, error, str_len(error));
+            sys_write(2, error, str_len(error));
             linux_exit_group(1);
         })
 

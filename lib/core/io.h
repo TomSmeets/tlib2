@@ -25,7 +25,7 @@ static File *io_stderr(void) { return GetStdHandle(STD_ERROR_HANDLE);  }
 // Close a file
 static void io_close(File *file) {
 #if OS_LINUX
-    check(linux_close(fd_from_handle(file)) == 0);
+    check(sys_close(fd_from_handle(file)) == 0);
 #elif OS_WINDOWS
     check(CloseHandle(file));
 #endif
@@ -46,7 +46,7 @@ static void io_seek(File *file, size_t pos) {
 // - Returns actual number of bytes read
 static size_t io_read_partial(File *file, Buffer buffer) {
 #if OS_LINUX
-    i64 ret = linux_read(fd_from_handle(file), buffer.data, buffer.size);
+    i64 ret = sys_read(fd_from_handle(file), (char*)buffer.data, buffer.size);
     check_or(ret >= 0) ret = 0;
     check_or(ret <= buffer.size) ret = buffer.size;
     return ret;
@@ -64,7 +64,7 @@ static size_t io_read_partial(File *file, Buffer buffer) {
 // - Returns actual number of bytes written
 static size_t io_write_partial(File *file, Buffer buffer) {
 #if OS_LINUX
-    i64 ret = linux_write(fd_from_handle(file), buffer.data, buffer.size);
+    i64 ret = sys_write(fd_from_handle(file), (char *)buffer.data, buffer.size);
     check_or(ret >= 0) ret = 0;
     check_or(ret <= buffer.size) ret = buffer.size;
     return ret;
