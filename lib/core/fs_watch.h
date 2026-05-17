@@ -1,8 +1,8 @@
 #pragma once
-#include "os_headers.h"
 #include "error.h"
-#include "io.h"
 #include "fs.h"
+#include "io.h"
+#include "os_headers.h"
 
 #if OS_LINUX
 #define IN_MODIFY 0x00000002

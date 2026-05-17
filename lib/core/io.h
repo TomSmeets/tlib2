@@ -46,7 +46,7 @@ static void io_seek(File *file, size_t pos) {
 // - Returns actual number of bytes read
 static size_t io_read_partial(File *file, Buffer buffer) {
 #if OS_LINUX
-    i64 ret = sys_read(fd_from_handle(file), (char*)buffer.data, buffer.size);
+    i64 ret = sys_read(fd_from_handle(file), (char *)buffer.data, buffer.size);
     check_or(ret >= 0) ret = 0;
     check_or(ret <= buffer.size) ret = buffer.size;
     return ret;

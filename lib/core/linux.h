@@ -300,6 +300,12 @@ int fork(void);
 int waitpid(int pid, int *status, int options);
 int execvp(const char *file, char *const argv[]);
 
-static long sys_read (uint fd,       char *buf, size_t count)       { return linux_syscall3(0, fd, (i64)buf, count); }
-static long sys_write(uint fd, const char *buf, size_t count)       { return linux_syscall3(1, fd, (i64)buf, count); }
-static long sys_close(uint fd)                                      { return linux_syscall1(3, fd); }
+static long sys_read(uint fd, char *buf, size_t count) {
+    return linux_syscall3(0, fd, (i64)buf, count);
+}
+static long sys_write(uint fd, const char *buf, size_t count) {
+    return linux_syscall3(1, fd, (i64)buf, count);
+}
+static long sys_close(uint fd) {
+    return linux_syscall1(3, fd);
+}
