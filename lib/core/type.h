@@ -84,4 +84,4 @@ static_assert(sizeof(bool) == 1);
 #define REPEAT_11(M, x, ...) REPEAT_1(M, x) __VA_OPT__(; REPEAT_10(M, __VA_ARGS__))
 #define REPEAT_12(M, x, ...) REPEAT_1(M, x) __VA_OPT__(; REPEAT_11(M, __VA_ARGS__))
 // Repeat 'M' For each argument
-#define REPEAT(M, ...) REPEAT_12(M, __VA_ARGS__)
+#define REPEAT(M, ...) __VA_OPT__( REPEAT_12(M, __VA_ARGS__) )
