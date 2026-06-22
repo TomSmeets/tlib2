@@ -63,6 +63,10 @@ static void fmt_reset(Fmt *fmt) {
 static Buffer fmt_end(Fmt *fmt) {
     fmt_reset(fmt);
     if (fmt->eol) fmt_s(fmt, "\n");
+
+    write_u8(fmt->write, 0);
+    fmt->write->bytes_written--;
+
     return write_get_written(fmt->write);
 }
 
@@ -322,9 +326,9 @@ static void fmt_hexdump(Fmt *fmt, Buffer data, u32 width) {
 #define write_fmt(W, ...) ({ Fmt fmt1 = {.write = (W)} fmt_g(&fmt1, __VA_ARGS__); })
 
 // Format to string
-#define fstr(mem, ...) \
+#define fstr(MEM, ...) \
     ({ \
-        Write write = {.mem = mem}; \
+        Write write = {.mem = MEM}; \
         Fmt _fmt = {.write = &write}; \
         fmt_g(&_fmt, __VA_ARGS__); \
         (char *)fmt_end(&_fmt).data; \
