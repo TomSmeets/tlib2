@@ -7,6 +7,8 @@
 #include "io.h"
 #include "proc.h"
 
+#undef linux
+
 // Supported target platforms
 typedef enum {
     Platform_Windows,

@@ -206,7 +206,7 @@ static void os_main(void) {
 
     time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
     time_t diff = now + delay - time_now();
-    js_vi("(x, y) => document.getElementById('score').innerText = x", snake->level->score);
-    js_vi("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
+    js("(x) => document.getElementById('score').innerText = x", snake->level->score);
+    js("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
     os_sleep(diff);
 }

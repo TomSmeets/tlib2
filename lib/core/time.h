@@ -46,7 +46,7 @@ static time_t time_now(void) {
     time_t time = (time_t)(count / freq) + offset;
     return time;
 #elif OS_WASM
-    return js_l("() => BigInt(new Date().getTime()*1000)");
+    return js_ret("() => BigInt(new Date().getTime()*1000)", i64);
 #endif
 }
 
@@ -60,6 +60,6 @@ static void os_sleep(time_t duration) {
     Sleep((u64)duration / 1000);
 #elif OS_WASM
     // Actual sleep is not possible in js :(
-    js_vl("(t) => tlib.next_sleep = t", duration);
+    js("(t) => tlib.next_sleep = t", duration);
 #endif
 }

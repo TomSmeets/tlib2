@@ -19,21 +19,19 @@ __attribute__((__noreturn__)) static void os_exit(void) {
             ExitProcess(1);
         })
 
-        IF_WASM({
-            js_vp(
-                "(msg) => {"
-                "  console.log(str_c(msg));"
-                "  alert(str_c(msg));"
-                "  tlib.exit = true;"
-                "}",
-                error
-            );
-        })
+        // IF_WASM({
+            js("(msg) => {"
+               "  console.log(str_c(msg));"
+               "  alert(str_c(msg));"
+               "  tlib.exit = true;"
+               "}",
+               error);
+        // })
     } else {
         // Exit normally
         IF_LINUX({ linux_exit_group(0); })
         IF_WINDOWS({ ExitProcess(0); })
-        IF_WASM({ js_v("() => tlib.exit = true"); })
+        IF_WASM({ js("() => tlib.exit = true"); })
     }
 
     // Issue invalid instruction

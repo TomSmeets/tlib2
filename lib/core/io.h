@@ -74,7 +74,9 @@ static size_t io_write_partial(File *file, Buffer buffer) {
     check(WriteFile(file, buffer.data, size, &used, 0));
     return used;
 #elif OS_WASM
-    if (file == io_stdout()) js_vpi("(str, len) => console.log(str_buf(str, len))", buffer.data, (i32)buffer.size);
+    if (file == io_stdout()) {
+        js("(str, len) => console.log(str_buf(str, len))", (void*)buffer.data, (i32)buffer.size);
+    }
     return buffer.size;
 #else
     return 0;

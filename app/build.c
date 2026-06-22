@@ -81,7 +81,7 @@ static void build_cmd_lsp(Cli *cli) {
     char cwd[1024];
     assert(linux_getcwd(cwd, sizeof(cwd)) > 0);
 
-    File *fd = fs_open("compile_commands.json", FileMode_Create);
+    File *fd = fs_open("compile_commands.json", FileMode_Write);
     u8 buffer[1024];
 
     Fmt *fmt = fmt_alloc();

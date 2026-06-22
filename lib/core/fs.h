@@ -17,10 +17,17 @@
 typedef enum {
     // Read only
     FileMode_Read,
-    // Read and Write, no truncation
+
+    // Write Only
     FileMode_Write,
+    FileMode_WriteExe,
+
+    // Append only
+    FileMode_Append,
+
     // Create new file or truncate existing
-    FileMode_Create,
+    FileMode_ReadWrite,
+
     // Create new executable file
     FileMode_CreateExe,
 } FileMode;
@@ -62,11 +69,13 @@ static long sys_open(const char *filename, int flags, umode_t mode) {
 // Open a file for reading or writing
 static File *fs_open(char *path, FileMode mode) {
     IF_LINUX({
+        u32 flags = 0;
         i32 ret = -1;
-        if (mode == FileMode_Read) ret = sys_open(path, O_RDONLY, 0);
-        if (mode == FileMode_Write) ret = sys_open(path, O_RDWR, 0);
-        if (mode == FileMode_Create) ret = sys_open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
-        if (mode == FileMode_CreateExe) ret = sys_open(path, O_RDWR | O_CREAT | O_TRUNC, 0755);
+        if (mode == FileMode_Read)      ret = sys_open(path, O_RDONLY, 0);
+        if (mode == FileMode_Write)     ret = sys_open(path, O_WRONLY | O_CREAT | O_TRUNC,  0644);
+        if (mode == FileMode_WriteExe)  ret = sys_open(path, O_WRONLY | O_CREAT | O_TRUNC,  0755);
+        if (mode == FileMode_Append)    ret = sys_open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (mode == FileMode_ReadWrite) ret = sys_open(path, O_RDWR | O_CREAT | O_APPEND, 0644);
         check(ret >= 0);
         return fd_to_handle(ret);
     })
@@ -74,9 +83,8 @@ static File *fs_open(char *path, FileMode mode) {
     IF_WINDOWS({
         HANDLE ret = 0;
         if (mode == FileMode_Read) ret = CreateFileA(path, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-        if (mode == FileMode_Write) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-        if (mode == FileMode_Create) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-        if (mode == FileMode_CreateExe) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+        if (mode == FileMode_Write) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+        if (mode == FileMode_WriteExe) ret = CreateFileA(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
         check(ret);
         check(ret != INVALID_HANDLE_VALUE);
         return (File *)ret;
@@ -185,7 +193,7 @@ static char *fs_realpath(Memory *mem, char *path) {
 // Copy file contents from 'src' to 'dst'
 static void fs_copy(char *src_path, char *dst_path) {
     File *src = fs_open(src_path, FileMode_Read);
-    File *dst = fs_open(dst_path, FileMode_CreateExe);
+    File *dst = fs_open(dst_path, FileMode_WriteExe);
     Buffer buffer = buf_stack(4 * 1024);
     for (;;) {
         size_t used = io_read_partial(src, buffer);
@@ -198,7 +206,7 @@ static void fs_copy(char *src_path, char *dst_path) {
 }
 
 static void fs_write(char *path, Buffer data) {
-    File *fd = fs_open(path, FileMode_Create);
+    File *fd = fs_open(path, FileMode_Write);
     io_write(fd, data);
     io_close(fd);
 }
