@@ -10,7 +10,7 @@ clang \
   -Wno-unused-function \
   -Wno-unused-variable \
   -Wno-unused-but-set-variable \
-  -std=c23 -O0 -g \
+  -std=gnu23 -O0 -g \
   -I lib/core  \
   -o out/build \
   app/build.c
