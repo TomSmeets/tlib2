@@ -28,7 +28,7 @@ static void test_macro(void) {
     check(array_count(test) == 12);
 
     // should consider size of the type
-    void *ptrs[] = { 0, &test_macro };
+    void *ptrs[] = {0, &test_macro};
     check(array_count(ptrs) == 2);
 
     // One item
@@ -47,8 +47,8 @@ static void test_macro(void) {
 
     // REPEAT
     int x = 0;
-    #define INC(I) x += I
+#define INC(I) x += I
     REPEAT(INC, 1, 2, 3, 4);
     check(x == 1 + 2 + 3 + 4);
-    #undef INC
+#undef INC
 }

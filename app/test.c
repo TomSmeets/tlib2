@@ -8,12 +8,12 @@
 #include "gzip.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
-#include "read.h"
-#include "tlang/tlang.h"
-#include "os_main.h"
 #include "macro_test.h"
-#include "tom.h"
+#include "os_main.h"
+#include "read.h"
 #include "str_test.h"
+#include "tlang/tlang.h"
+#include "tom.h"
 
 #define TEST(FCN, ...) \
     ({ \

@@ -1,9 +1,9 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // time.h - Timing and sleeps
 #pragma once
+#include "error.h"
 #include "os_headers.h"
 #include "type.h"
-#include "error.h"
 
 // Unix time in micro seconds
 typedef i64 time_t;

@@ -1,6 +1,6 @@
 #pragma once
-#include "str.h"
 #include "error.h"
+#include "str.h"
 
 static void test_str(void) {
     char msg[] = "Hello World";
