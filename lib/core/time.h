@@ -3,6 +3,7 @@
 #pragma once
 #include "os_headers.h"
 #include "type.h"
+#include "error.h"
 
 // Unix time in micro seconds
 typedef i64 time_t;
@@ -62,4 +63,18 @@ static void os_sleep(time_t duration) {
     // Actual sleep is not possible in js :(
     js("(t) => tlib.next_sleep = t", duration);
 #endif
+}
+
+static void test_time(void) {
+    time_t dt = 1 * TIME_MS;
+
+    time_t a = time_now();
+    os_sleep(dt);
+
+    time_t b = time_now();
+    check(b > a);
+    os_sleep(dt);
+
+    time_t c = time_now();
+    check(c > b);
 }

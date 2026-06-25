@@ -6,13 +6,14 @@
 #include "deflate.h"
 #include "fmt.h"
 #include "gzip.h"
-// #include "hot.h"
 #include "huffman_code.h"
 #include "huffman_tree.h"
 #include "read.h"
-// #include "tlang/tlang.h"
+#include "tlang/tlang.h"
 #include "os_main.h"
+#include "macro_test.h"
 #include "tom.h"
+#include "str_test.h"
 
 #define TEST(FCN, ...) \
     ({ \
@@ -25,22 +26,24 @@
 static void os_main(void) {
     // Run tests
     TEST(test_alloc());
-    TEST(test_ptr());
-    TEST(test_mem());
     TEST(test_base64());
-
-    TEST(test_read());
-    TEST(test_write());
-    TEST(test_tom());
-    // TEST(test_tlang());
-    TEST(test_fmt());
-    TEST(test_cli_arg());
     TEST(test_cli());
+    TEST(test_cli_arg());
     TEST(test_crc());
+    TEST(test_deflate());
+    TEST(test_fmt());
+    TEST(test_gzip());
     TEST(test_huffman_code());
     TEST(test_huffman_tree());
-    TEST(test_deflate());
-    TEST(test_gzip());
+    TEST(test_macro());
+    TEST(test_mem());
+    TEST(test_ptr());
+    TEST(test_read());
+    TEST(test_str());
+    TEST(test_time());
+    TEST(test_tlang());
+    TEST(test_tom());
+    TEST(test_write());
     if (!error) print("Success!");
     os_exit();
 }
