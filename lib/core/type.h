@@ -45,4 +45,3 @@ typedef _Bool bool;
 #define false 0
 #endif
 static_assert(sizeof(bool) == 1);
-

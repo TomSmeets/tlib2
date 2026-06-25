@@ -144,7 +144,7 @@ static void os_main(void) {
     if (!tetris) {
         print("Hello World!");
 
-        #if OS_WASM
+#if OS_WASM
         js_append_style(
             "html,body {"
             "    width: 100%;"
@@ -165,7 +165,7 @@ static void os_main(void) {
         );
 
         js_set_html("<canvas id='canvas'></canvas>");
-        #endif
+#endif
 
         Memory *mem = mem_new();
         tetris = mem_struct(mem, Tetris);

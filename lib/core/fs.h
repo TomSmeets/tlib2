@@ -71,10 +71,10 @@ static File *fs_open(char *path, FileMode mode) {
     IF_LINUX({
         u32 flags = 0;
         i32 ret = -1;
-        if (mode == FileMode_Read)      ret = sys_open(path, O_RDONLY, 0);
-        if (mode == FileMode_Write)     ret = sys_open(path, O_WRONLY | O_CREAT | O_TRUNC,  0644);
-        if (mode == FileMode_WriteExe)  ret = sys_open(path, O_WRONLY | O_CREAT | O_TRUNC,  0755);
-        if (mode == FileMode_Append)    ret = sys_open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (mode == FileMode_Read) ret = sys_open(path, O_RDONLY, 0);
+        if (mode == FileMode_Write) ret = sys_open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (mode == FileMode_WriteExe) ret = sys_open(path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
+        if (mode == FileMode_Append) ret = sys_open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
         if (mode == FileMode_ReadWrite) ret = sys_open(path, O_RDWR | O_CREAT | O_APPEND, 0644);
         check(ret >= 0);
         return fd_to_handle(ret);

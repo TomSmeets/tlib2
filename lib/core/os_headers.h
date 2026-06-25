@@ -1,8 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // os_headers.h - Basic platform includes
 #pragma once
-#include "type.h"
 #include "os_detection.h"
+#include "type.h"
 
 // =============== Linux =================
 #if OS_LINUX

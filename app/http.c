@@ -1,7 +1,7 @@
 #include "fmt.h"
+#include "os_headers.h"
 #include "os_main.h"
 #include "time.h"
-#include "os_headers.h"
 
 static bool update = 1;
 static u64 value = 0;
@@ -59,10 +59,10 @@ static Todo *todo_copy(Todo *todo) {
 }
 
 static char *todo_fmt(Todo *todo) {
-    if(!todo) return "";
-    char *line  = fstr(mem_tmp(), "Todo: ", todo->text, "");
+    if (!todo) return "";
+    char *line = fstr(mem_tmp(), "Todo: ", todo->text, "");
     char *child = todo_fmt(todo->child);
-    char *next  = todo_fmt(todo->next);
+    char *next = todo_fmt(todo->next);
     return fstr(mem_tmp(), line, child, next);
 }
 
@@ -81,7 +81,7 @@ typedef struct {
 
 static HtmlCallback html_callback(Html *html) {
     int i = html->callback_count++;
-    return (HtmlCallback) { i, false };
+    return (HtmlCallback){i, false};
 }
 
 static void html_emit(Html *html, char *text) {
@@ -111,8 +111,8 @@ static void os_main(void) {
     }
 
     if (update) {
-        if(value > 1000) value = 1000;
-        
+        if (value > 1000) value = 1000;
+
         Fmt *f = fmt_new(mem_tmp());
         fmt_g(f, "<h1>Hello World!</h1>\n");
         fmt_g(f, "<p>Value: ", value, "</p>\n");

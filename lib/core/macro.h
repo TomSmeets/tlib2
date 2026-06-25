@@ -32,4 +32,4 @@
 
 // Call macro for each argument:
 //   REPEAT(M, x, y, z, ...) => M(x); M(y); M(z);
-#define REPEAT(M, ...) __VA_OPT__( REPEAT_12(M, __VA_ARGS__) )
+#define REPEAT(M, ...) __VA_OPT__(REPEAT_12(M, __VA_ARGS__))

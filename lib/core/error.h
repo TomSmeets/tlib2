@@ -1,9 +1,9 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // error.h - Very simple error handling
 #pragma once
-#include "type.h"
-#include "macro.h"
 #include "ansi.h"
+#include "macro.h"
+#include "type.h"
 
 // Set to a message if an error occurred, null otherwise
 static thread_local char *error;
