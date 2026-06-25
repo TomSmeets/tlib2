@@ -4,26 +4,6 @@
 #include "type.h"
 #include "os_detection.h"
 
-// Simple ifdef macros,
-// Why? Because it is more readable, clang-format will not indent '#if'
-#if OS_WINDOWS
-#define IF_WINDOWS(X) X
-#else
-#define IF_WINDOWS(X)
-#endif
-
-#if OS_LINUX
-#define IF_LINUX(X) X
-#else
-#define IF_LINUX(X)
-#endif
-
-#if OS_WASM
-#define IF_WASM(X) X
-#else
-#define IF_WASM(X)
-#endif
-
 // =============== Linux =================
 #if OS_LINUX
 #include "linux.h"

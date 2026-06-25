@@ -5,6 +5,11 @@
 
 #if OS_WASM
 
+#define WASM_PAGE_SIZE (64 * 1024)
+static size_t wasm_memory_grow(size_t pages) {
+    return __builtin_wasm_memory_grow(0, pages);
+}
+
 // Import a javascript function into WebAssembly
 // To export functions just make them non-static
 #define WASM_IMPORT(name) __attribute((import_module("env"), import_name(#name)))
@@ -40,14 +45,11 @@ WASM_IMPORT(js_call)     i64  js_call_i64(char *code);
         REPEAT(JS_PUSH, __VA_ARGS__); \
         js_call_ ## return_type (code); \
     })
-
-#define js(code, ...) \
-    REPEAT(JS_PUSH, __VA_ARGS__); \
-    js_call_void(code);
 #else
-#define js(...)
 #define js_ret(...)
 #endif
+
+#define js(code, ...) js_ret(code, void, ## __VA_ARGS__)
 
 static void js_append_style(char *css) {
     js(R"((css) => {
