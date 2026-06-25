@@ -2,6 +2,7 @@
 // os_headers.h - Basic platform includes
 #pragma once
 #include "type.h"
+#include "os_detection.h"
 
 // Simple ifdef macros,
 // Why? Because it is more readable, clang-format will not indent '#if'
