@@ -1,7 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
-// dl.h - Dynamic Linking
+// dl.h - Dynamic linking
 #pragma once
 #include "os_headers.h"
+#include "error.h"
 
 // Dynamic library is just another opaque handle
 typedef struct Library Library;

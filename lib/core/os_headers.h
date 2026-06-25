@@ -19,7 +19,9 @@
 #endif
 
 // =============== WASM =================
+#if OS_WASM
 #include "wasm.h"
+#endif
 
 // Convert a unix file descriptor to a opaque pointer
 static void *fd_to_handle(i32 fd) {

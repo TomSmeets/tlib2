@@ -19,14 +19,14 @@ __attribute__((__noreturn__)) static void os_exit(void) {
             ExitProcess(1);
         })
 
-        // IF_WASM({
+        IF_WASM({
             js("(msg) => {"
                "  console.log(str_c(msg));"
                "  alert(str_c(msg));"
                "  tlib.exit = true;"
                "}",
                error);
-        // })
+        })
     } else {
         // Exit normally
         IF_LINUX({ linux_exit_group(0); })

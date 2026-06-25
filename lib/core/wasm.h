@@ -3,8 +3,6 @@
 #pragma once
 #include "type.h"
 
-#if OS_WASM
-
 #define WASM_PAGE_SIZE (64 * 1024)
 static size_t wasm_memory_grow(size_t pages) {
     return __builtin_wasm_memory_grow(0, pages);
@@ -22,7 +20,6 @@ WASM_IMPORT(js_push)     void js_push_u64(u64 a);
 WASM_IMPORT(js_push)     void js_push_size(size_t a);
 WASM_IMPORT(js_push)     void js_push_ptr(void *a);
 WASM_IMPORT(js_push_str) void js_push_str(char *a);
-
 WASM_IMPORT(js_call)     void js_call_void(char *code);
 WASM_IMPORT(js_call)     i32  js_call_i32(char *code);
 WASM_IMPORT(js_call)     i64  js_call_i64(char *code);
@@ -45,9 +42,6 @@ WASM_IMPORT(js_call)     i64  js_call_i64(char *code);
         REPEAT(JS_PUSH, __VA_ARGS__); \
         js_call_ ## return_type (code); \
     })
-#else
-#define js_ret(...)
-#endif
 
 #define js(code, ...) js_ret(code, void, ## __VA_ARGS__)
 

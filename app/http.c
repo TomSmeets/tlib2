@@ -7,6 +7,7 @@ static bool update = 1;
 static u64 value = 0;
 static bool init = 0;
 
+#if OS_WASM
 void js_inc(void) {
     value++;
     update = 1;
@@ -16,6 +17,7 @@ void js_dec(void) {
     value--;
     update = 1;
 }
+#endif
 
 typedef struct Todo Todo;
 struct Todo {

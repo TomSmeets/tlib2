@@ -9,7 +9,6 @@
 #include "sound.h"
 #include "time.h"
 #include "vec.h"
-#include "wasm.h"
 
 static void snake_play_sound(Pix *pix, f32 freq, f32 duration, f32 attack, f32 decay) {
     // Construct sample array
@@ -100,6 +99,7 @@ static void os_main(void) {
         snake->rand = rand_new();
         snake->level = snake_level_new(&snake->rand);
 
+#if OS_WASM
         js_set_html(
             "<canvas id='canvas'></canvas>"
             "<table>"
@@ -138,6 +138,7 @@ static void os_main(void) {
             "    background-color: white;"
             "}"
         );
+#endif
     }
 
     if (snake->level->game_over) {
@@ -206,7 +207,9 @@ static void os_main(void) {
 
     time_t delay = (snake->input_sprint || snake->input_sprint2) ? 50 * TIME_MS : 150 * TIME_MS;
     time_t diff = now + delay - time_now();
+#if OS_WASM
     js("(x) => document.getElementById('score').innerText = x", snake->level->score);
     js("(x) => document.getElementById('highscore').innerText = x", snake->high_score);
+#endif
     os_sleep(diff);
 }
