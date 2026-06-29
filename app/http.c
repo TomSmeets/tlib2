@@ -39,6 +39,13 @@ static i64 linux_accept(int fd, sockaddr_in *addr, int flags) {
     return linux_syscall4(0x120, fd, (intptr_t)addr, (intptr_t)&len, flags);
 }
 
+#define SOL_SOCKET 1
+#define SO_REUSEADDR 2
+
+static i64 linux_setsockopt(int fd, int level, int optname, char *optval, int optlen) {
+    return linux_syscall5(0x36, fd, level, optname, (intptr_t)optval, optlen);
+}
+
 static u32 net_ip4(u8 a, u8 b, u8 c, u8 d) {
     u32 res = 0;
     res |= (u32)a << 0;
@@ -70,18 +77,30 @@ static void os_main(void) {
     addr.sin_addr[2] = 0;
     addr.sin_addr[3] = 1;
     addr.sin_port = u16_swap(4444);
-    print("Bind: ", linux_bind(fd, &addr));
-    print("Listen: ", linux_listen(fd, 1));
 
-    sockaddr_in client_addr = {};
-    int client_fd = linux_accept(fd, &client_addr, 0);
-    print("Accept: ", client_fd);
-    print("Port: ", u16_swap(client_addr.sin_port));
-    print("Host: ", client_addr.sin_addr[0], ".", client_addr.sin_addr[1], ".", client_addr.sin_addr[2], ".", client_addr.sin_addr[3]);
-    char buffer[64];
-    sys_read(client_fd, buffer, sizeof(buffer));
-    sys_write(client_fd, buffer, sizeof(buffer));
-    sys_close(client_fd);
+    int one = 1;
+    debug(linux_setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one)));
+    debug(linux_bind(fd, &addr));
+    debug(linux_listen(fd, 1));
+
+    for (;;) {
+        sockaddr_in client_addr = {};
+        int client_fd = linux_accept(fd, &client_addr, 0);
+        print("Accept: ", client_fd);
+        print("Port: ", u16_swap(client_addr.sin_port));
+        print("Host: ", client_addr.sin_addr[0], ".", client_addr.sin_addr[1], ".", client_addr.sin_addr[2], ".", client_addr.sin_addr[3]);
+        char buffer[1024 * 4];
+        size_t n = sys_read(client_fd, buffer, sizeof(buffer));
+        debug(buf_from(buffer, n));
+
+        char *out = "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/html; charset=UTF-8\r\n"
+                    "\r\n"
+                    "Hello World!\r\n";
+        debug(sys_write(client_fd, out, str_len(out)));
+        debug(sys_close(client_fd));
+    }
+
     sys_close(fd);
     os_exit();
 }
