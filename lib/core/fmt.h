@@ -129,6 +129,9 @@ static void fmt_no_color(Fmt *fmt) {
 
 // Format any integer
 static void fmt_int(Fmt *fmt, bool is_signed, u64 value) {
+    bool negative = is_signed && (i64)value < 0;
+    if (negative) value = -(i64)value;
+
     // Configuration
     u32 base = fmt->base ?: 10;
 
@@ -166,10 +169,7 @@ static void fmt_int(Fmt *fmt, bool is_signed, u64 value) {
     }
 
     // Append sign char
-    if (is_signed && (i64)value < 0) {
-        buffer[count++] = '-';
-        value = -(i64)value;
-    }
+    if (negative) buffer[count++] = '-';
 
     // Whitespace padding
     while (count < fmt->pad) {
