@@ -39,7 +39,6 @@ static i64 linux_accept(int fd, sockaddr_in *addr, int flags) {
     return linux_syscall4(0x120, fd, (intptr_t)addr, (intptr_t)&len, flags);
 }
 
-
 static u32 net_ip4(u8 a, u8 b, u8 c, u8 d) {
     u32 res = 0;
     res |= (u32)a << 0;
