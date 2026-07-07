@@ -36,7 +36,7 @@ static void build_cmd_build(Cli *cli, Memory *mem) {
         build->wasm = !release;
         build->html = 1;
     }
-    build_js(build, "lib/core/os_wasm.js");
+    build_js(build, "src/core/os_wasm.js");
     build_build(build);
     if (run && !error) proc_shell(fstr(mem, "out/", name, "/", name, ".elf"));
 }
@@ -61,7 +61,7 @@ static void build_cmd_fuzz(Cli *cli) {
     bool build_only = cli_flag(cli, "-b", "--build", "Build only");
     if (!cli_check(cli)) return;
 
-    proc_shell("clang -std=c23 -Ilib/core -Ilib/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz");
+    proc_shell("clang -std=c23 -Isrc/core -Isrc/deflate -g -O2 -fsanitize=fuzzer,address app/fuzz.c -o out/fuzz");
     if (error) return;
     if (build_only) return;
     proc_shell("out/fuzz");
