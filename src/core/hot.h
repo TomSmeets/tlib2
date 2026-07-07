@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // hot.h - Hot-Reload compiled C programs
 #pragma once
 #include "elf.h"

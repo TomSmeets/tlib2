@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // pix_api.h - Simple 2d game engine (Interface)
 #pragma once
 #include "input.h"

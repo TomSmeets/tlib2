@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Tom Smeets <tom@tsmeets.nl>
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // input.h - Generic input event type
 #pragma once
 #include "type.h"
