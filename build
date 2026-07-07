@@ -11,7 +11,8 @@ clang \
   -Wno-unused-variable \
   -Wno-unused-but-set-variable \
   -std=gnu23 -O0 -g \
-  -I lib/core  \
+  -I src/core  \
+  -I src/base  \
   -o out/build \
   app/build.c
 
