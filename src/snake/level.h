@@ -1,3 +1,5 @@
+// Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
+// level.h - Snake level
 #pragma once
 #include "mem.h"
 #include "rand.h"
