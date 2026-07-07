@@ -2,6 +2,7 @@
 // pix.h - Simple 2d game engine
 #pragma once
 #include "pix_api.h"
+#include "sound.h"
 
 #if OS_LINUX || OS_WINDOWS
 #include "pix_sdl.h"

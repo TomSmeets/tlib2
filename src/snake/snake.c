@@ -1,11 +1,11 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // snake.c - A simple snake game
 #include "fmt.h"
-#include "level.h"
 #include "os_headers.h"
 #include "os_main.h"
 #include "pix.h"
 #include "rand.h"
+#include "snake_level.h"
 #include "sound.h"
 #include "time.h"
 #include "vec.h"

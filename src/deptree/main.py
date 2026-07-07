@@ -22,20 +22,29 @@ for mod_name in os.listdir(src_path):
 # print(deps)
 
 print("digraph {")
+print("overlap = false;")
 for mod,files in deps.items():
     print(f"subgraph cluster_{mod} {{")
     print(f"label = {mod}")
-    print(f"_mod_{mod} [ width=0  fixedsize=true style=invis ];")
     for file,deps2 in files.items():
         print(f'"{file}";')
-        for dep2 in deps2:
-            # owner = [mod for mod,files in deps.items() if dep2 in files]
-            # if owner == [] or owner[0] == mod:
-            print(f'"{file}" -> "{dep2}";')
-            # else:
-                # print(f'"_mod_{mod}" -> "_mod_{owner[0]}";')
-
     print("}")
+
+print(f"subgraph cluster_modules {{")
+print(f"label = Modules")
+for mod,files in deps.items():
+    print(f'"{mod}";')
+print("}")
+
+for mod,files in deps.items():
+    for file,deps2 in files.items():
+        for dep2 in deps2:
+            owner = [mod for mod,files in deps.items() if dep2 in files]
+            if owner == [] or owner[0] == mod:
+                print(f'"{file}" -> "{dep2}";')
+            else:
+                print(f'"{file}" -> "{dep2}"[color=gray];')
+                # print(f"{mod} -> {owner[0]};")
 print("}")
 
 # for mod_name in os.listdir(src_path):
