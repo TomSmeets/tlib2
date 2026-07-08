@@ -1,5 +1,5 @@
 #pragma once
-#include "alsa.h"
+#include "audio.h"
 #include "macro.h"
 #include "math.h"
 #include "type.h"
@@ -35,9 +35,8 @@ static u32 *snd_u32(Sound *s) {
 // Create a 0-1 step at a given frequency
 static f32 snd_step(Sound *s, f32 freq) {
     f32 *t = snd_var(s);
-    f32 dt = 1.0f / (f32)SAMPLE_RATE;
     f32 v = *t;
-    *t += dt * freq;
+    *t += AUDIO_DT * freq;
     *t -= (i32)*t;
     return v;
 }
@@ -56,7 +55,7 @@ static f32 snd_sin(Sound *s, f32 freq) {
 static f32 snd_lowpass(Sound *sound, f32 cutoff_freq, f32 sample) {
     f32 *value = snd_var(sound);
     f32 ret = *value;
-    f32 a = 1.0f - f_exp(-1.0f / (f32)SAMPLE_RATE * M_PI * 2.0 * cutoff_freq);
+    f32 a = 1.0f - f_exp(-AUDIO_DT * M_PI * 2.0 * cutoff_freq);
     *value += (sample - ret) * a;
     return ret;
 }
@@ -89,11 +88,11 @@ static f32 snd_freq(Sound *snd, f32 in) {
     f32 *prev = snd_var(snd);
     f32 *count = snd_var(snd);
     u32 *time = snd_u32(snd);
-    u32 n = SAMPLE_RATE / 100;
+    u32 n = AUDIO_RATE / 100;
 
     bool cross = (*prev > 0) != (in > 0);
     *prev = in;
-    if (cross) (*count) += 0.5f * (f32)SAMPLE_RATE / (f32)n;
+    if (cross) (*count) += 0.5f * (f32)AUDIO_RATE / (f32)n;
     (*time)++;
 
     f32 *freq = snd_var(snd);
