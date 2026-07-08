@@ -49,6 +49,10 @@ static Command build_compile_command(Build_Platform platform, Build_Mode mode, c
         cmd_arg2(&cmd, "-Xlinker", "--strip-all");
     }
 
+    if (platform == Platform_Linux) {
+        cmd_arg(&cmd, "-lm");
+    }
+
     if (platform == Platform_Windows) {
         cmd_arg2(&cmd, "-target", "x86_64-unknown-windows-gnu");
     }

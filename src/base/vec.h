@@ -12,3 +12,15 @@ typedef struct {
     f32 x;
     f32 y;
 } v2f;
+
+static v2f v2f_clamp(v2f v, f32 min, f32 max) {
+    v.x = f32_clamp(v.x, min, max);
+    v.y = f32_clamp(v.y, min, max);
+    return v;
+}
+
+static v2f v2f_scale(v2f v, f32 scale) {
+    v.x *= scale;
+    v.y *= scale;
+    return v;
+}
