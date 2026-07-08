@@ -12,7 +12,7 @@
 #include "os_main.h"
 #include "read.h"
 #include "str_test.h"
-#include "tlang/tlang.h"
+#include "tlang.h"
 #include "tom.h"
 
 #define TEST(FCN, ...) \
