@@ -4,9 +4,8 @@
 #include "type.h"
 
 #define INF (1.0f / 0.0f)
-#define LN2 0.69314718f
-#define PI 3.14159265358979323846264338327950288
-#define DEG_TO_RAD (PI / 180.0)
+#define PI 3.14159265358979323846264338327950288f
+#define DEG_TO_RAD (PI / 180.0f)
 
 // Return minimum value
 static f32 f_min(f32 a, f32 b) {
@@ -37,7 +36,7 @@ static i32 f_floor(f32 x) {
 
 // Round towards nearest integer
 static i32 f_round(f32 x) {
-    return f_floor(x + 0.5);
+    return f_floor(x + 0.5f);
 }
 
 // Round towards 0
@@ -81,56 +80,10 @@ static u32 f_to_bits(f32 value) {
 }
 
 // Smooth step function from 0 to 1
-static f32 f_step(f32 x) {
+static f32 f_smoothstep(f32 x) {
     if (x <= 0) return 0;
     if (x >= 1) return 1;
-    x = 1 - x;
-    x = x * x * x;
-    x = 1 - x;
-    return x;
-}
-
-// ===== u32 =====
-
-// Return minimum value
-static u32 u_min(u32 a, u32 b) {
-    return a <= b ? a : b;
-}
-
-// Return maximum value
-static u32 u_max(u32 a, u32 b) {
-    return a >= b ? a : b;
-}
-
-// Clamp value between min and max
-static u32 u_clamp(u32 in, u32 min, u32 max) {
-    if (in < min) return min;
-    if (in > max) return max;
-    return in;
-}
-
-// ===== i32 =====
-
-// Return minimum value
-static i32 i_min(i32 a, i32 b) {
-    return a <= b ? a : b;
-}
-
-// Return maximum value
-static i32 i_max(i32 a, i32 b) {
-    return a >= b ? a : b;
-}
-
-// Clamp value between min and max
-static i32 i_clamp(i32 in, i32 min, i32 max) {
-    if (in < min) return min;
-    if (in > max) return max;
-    return in;
-}
-
-// Absolute value of x
-static u32 i_abs(i32 x) {
-    return (x < 0) ? -x : x;
+    return x * x * (3.0f - 2.0f * x);
 }
 
 // https://gist.github.com/petrsm/079de9396d63e00d5994a7cc936ae9c7
@@ -196,6 +149,7 @@ static f32 f_sqrt(f32 x) {
     if (x <= 0) return 0;
     return x * f_rsqrt(x);
 }
+
 // fast inverse tangent approximation
 static f32 f_atan(f32 x) {
     return 0.25f * PI * x - x * (f_abs(x) - 1) * (0.2447f + 0.0663f * f_abs(x));
@@ -235,4 +189,47 @@ static f32 f_asin(f32 x) {
 
 static f32 f_acos(f32 x) {
     return 0.5f * PI - f_asin(x);
+}
+
+// ===== u32 =====
+
+// Return minimum value
+static u32 u_min(u32 a, u32 b) {
+    return a <= b ? a : b;
+}
+
+// Return maximum value
+static u32 u_max(u32 a, u32 b) {
+    return a >= b ? a : b;
+}
+
+// Clamp value between min and max
+static u32 u_clamp(u32 in, u32 min, u32 max) {
+    if (in < min) return min;
+    if (in > max) return max;
+    return in;
+}
+
+// ===== i32 =====
+
+// Return minimum value
+static i32 i_min(i32 a, i32 b) {
+    return a <= b ? a : b;
+}
+
+// Return maximum value
+static i32 i_max(i32 a, i32 b) {
+    return a >= b ? a : b;
+}
+
+// Clamp value between min and max
+static i32 i_clamp(i32 in, i32 min, i32 max) {
+    if (in < min) return min;
+    if (in > max) return max;
+    return in;
+}
+
+// Absolute value of x
+static u32 i_abs(i32 x) {
+    return (x < 0) ? -x : x;
 }
