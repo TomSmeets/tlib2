@@ -23,28 +23,29 @@ for mod_name in os.listdir(src_path):
 
 print("digraph {")
 print("overlap = false;")
-for mod,files in deps.items():
-    print(f"subgraph cluster_{mod} {{")
-    print(f"label = {mod}")
+print("edge[color=gray]")
+print('node[style="filled",colorscheme=set39]');
+for i,(mod,files) in enumerate(deps.items()):
+    # print(f"subgraph cluster_{mod} {{")
+    # print(f"label = {mod}")
     for file,deps2 in files.items():
-        print(f'"{file}";')
-    print("}")
+        print(f'"{file}"[fillcolor={i+1}];')
+    # print("}")
 
 print(f"subgraph cluster_modules {{")
 print(f"label = Modules")
-for mod,files in deps.items():
-    print(f'"{mod}";')
+for i,(mod,files) in enumerate(deps.items()):
+    print(f'"{mod}"[fillcolor={i+1}];')
 print("}")
 
 for mod,files in deps.items():
     for file,deps2 in files.items():
         for dep2 in deps2:
             owner = [mod for mod,files in deps.items() if dep2 in files]
-            if owner == [] or owner[0] == mod:
-                print(f'"{file}" -> "{dep2}";')
-            else:
-                print(f'"{file}" -> "{dep2}"[color=gray];')
-                # print(f"{mod} -> {owner[0]};")
+            print(f'"{file}" -> "{dep2}";')
+
+            if not (owner == [] or owner[0] == mod):
+                print(f"{mod} -> {owner[0]};")
 print("}")
 
 # for mod_name in os.listdir(src_path):
