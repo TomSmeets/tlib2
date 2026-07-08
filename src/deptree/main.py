@@ -24,7 +24,7 @@ for mod_name in os.listdir(src_path):
 print("digraph {")
 print("overlap = false;")
 print("edge[color=gray]")
-print('node[style="filled",colorscheme=set39]');
+print('node[style="filled",colorscheme=set312]');
 for i,(mod,files) in enumerate(deps.items()):
     # print(f"subgraph cluster_{mod} {{")
     # print(f"label = {mod}")
