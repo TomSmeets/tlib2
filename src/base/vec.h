@@ -1,6 +1,7 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // vec.h - Vector type
 #pragma once
+#include "math.h"
 #include "type.h"
 
 typedef struct {
