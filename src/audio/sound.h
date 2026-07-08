@@ -49,14 +49,14 @@ static f32 snd_saw(Sound *s, f32 freq) {
 
 // Sine wave
 static f32 snd_sin(Sound *s, f32 freq) {
-    return f32_sin(snd_saw(s, freq) * M_PI);
+    return f_sin(snd_saw(s, freq) * M_PI);
 }
 
 // Simple low-pass filter
 static f32 snd_lowpass(Sound *sound, f32 cutoff_freq, f32 sample) {
     f32 *value = snd_var(sound);
     f32 ret = *value;
-    f32 a = 1.0f - f32_exp(-1.0f / (f32)SAMPLE_RATE * M_PI * 2.0 * cutoff_freq);
+    f32 a = 1.0f - f_exp(-1.0f / (f32)SAMPLE_RATE * M_PI * 2.0 * cutoff_freq);
     *value += (sample - ret) * a;
     return ret;
 }
@@ -74,7 +74,7 @@ static f32 snd_delay(Sound *s, f32 in, u32 n) {
 
 // Calculate rms volume
 static f32 snd_volume(Sound *snd, f32 input) {
-    return f32_sqrt(snd_lowpass(snd, 1, input * input));
+    return f_sqrt(snd_lowpass(snd, 1, input * input));
 }
 
 static f32 snd_hold(Sound *snd, bool set, f32 input) {

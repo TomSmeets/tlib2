@@ -14,8 +14,8 @@ typedef struct {
 } v2f;
 
 static v2f v2f_clamp(v2f v, f32 min, f32 max) {
-    v.x = f32_clamp(v.x, min, max);
-    v.y = f32_clamp(v.y, min, max);
+    v.x = f_clamp(v.x, min, max);
+    v.y = f_clamp(v.y, min, max);
     return v;
 }
 

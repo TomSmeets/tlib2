@@ -1,8 +1,8 @@
 // Copyright (c) 2026 - Tom Smeets <tom@tsmeets.nl>
 // alsa.h - Simple alsa audio api wrapper
 #pragma once
-#include "type.h"
 #include "dl.h"
+#include "type.h"
 
 #if 0
 #include <alsa/asoundlib.h>
@@ -27,7 +27,9 @@ typedef struct {
     int (*snd_pcm_open)(snd_pcm_t **pcm, const char *name, snd_pcm_stream_t stream, int mode);
     int (*snd_pcm_drain)(snd_pcm_t *pcm);
     int (*snd_pcm_close)(snd_pcm_t *pcm);
-    int (*snd_pcm_set_params)(snd_pcm_t *pcm, snd_pcm_format_t format, snd_pcm_access_t access, uint channels, uint rate, int soft_resample, uint latency);
+    int (*snd_pcm_set_params)(
+        snd_pcm_t *pcm, snd_pcm_format_t format, snd_pcm_access_t access, uint channels, uint rate, int soft_resample, uint latency
+    );
     long (*snd_pcm_writei)(snd_pcm_t *pcm, const void *buffer, ulong size);
 } Alsa_API;
 
