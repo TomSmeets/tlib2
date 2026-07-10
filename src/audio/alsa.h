@@ -4,7 +4,7 @@
 #include "dl.h"
 #include "type.h"
 
-#if 1
+#if 0
 #include <alsa/asoundlib.h>
 #else
 typedef struct snd_pcm_t snd_pcm_t;
